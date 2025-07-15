@@ -1,0 +1,15 @@
+steps:
+  # Build the production Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.production', '-t', 'gcr.io/$PROJECT_ID/roadtrip-backend-staging:latest', '.']
+  
+  # Push the image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/roadtrip-backend-staging:latest']
+
+# Tag the latest build
+images:
+  - 'gcr.io/$PROJECT_ID/roadtrip-backend-staging:latest'
+
+# Build timeout
+timeout: '1200s'

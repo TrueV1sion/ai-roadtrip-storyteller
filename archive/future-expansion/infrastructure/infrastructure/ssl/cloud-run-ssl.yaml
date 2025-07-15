@@ -1,0 +1,86 @@
+# Cloud Run SSL/TLS Configuration
+# Cloud Run automatically handles SSL/TLS termination
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: roadtrip-api
+  annotations:
+    run.googleapis.com/ingress: all
+    # Force HTTPS redirect
+    run.googleapis.com/redirect-http-to-https: "true"
+spec:
+  template:
+    metadata:
+      annotations:
+        # Use latest revision
+        run.googleapis.com/execution-environment: gen2
+        # CPU allocation
+        run.googleapis.com/cpu-throttling: "false"
+        # Startup probe
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      serviceAccountName: roadtrip-app@PROJECT_ID.iam.gserviceaccount.com
+      containerConcurrency: 100
+      timeoutSeconds: 60
+      containers:
+      - image: gcr.io/PROJECT_ID/roadtrip-api:latest
+        name: roadtrip-api
+        ports:
+        - containerPort: 8000
+          name: http1
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: FORCE_HTTPS
+          value: "true"
+        - name: SECURE_COOKIES
+          value: "true"
+        - name: GOOGLE_CLOUD_PROJECT_ID
+          value: "PROJECT_ID"
+        - name: PORT
+          value: "8000"
+        resources:
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+  traffic:
+  - percent: 100
+    latestRevision: true
+
+---
+# Custom domain mapping
+apiVersion: domains.cloudrun.com/v1
+kind: DomainMapping
+metadata:
+  name: api.roadtrip.app
+spec:
+  routeName: roadtrip-api
+  certificateMode: AUTOMATIC  # Let Google manage SSL certificate

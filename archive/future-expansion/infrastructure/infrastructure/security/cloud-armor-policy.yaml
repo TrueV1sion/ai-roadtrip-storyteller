@@ -1,0 +1,257 @@
+# Cloud Armor Security Policy for WAF
+# Protects against common web attacks and threats
+
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeSecurityPolicy
+metadata:
+  name: roadtrip-waf-policy
+  namespace: roadtrip-prod
+spec:
+  description: "WAF policy for AI Road Trip Storyteller"
+  
+  # Default rule - allow traffic
+  defaultRule:
+    action: "allow"
+    priority: 2147483647
+    match:
+      versionedExpr: "SRC_IPS_V1"
+      config:
+        srcIpRanges:
+          - "*"
+    description: "Default allow rule"
+  
+  rules:
+    # Block SQL injection attempts
+    - action: "deny(403)"
+      priority: 1000
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('sqli-stable',
+              ['owasp-crs-v030001-id942110-sqli',
+               'owasp-crs-v030001-id942120-sqli',
+               'owasp-crs-v030001-id942150-sqli',
+               'owasp-crs-v030001-id942180-sqli',
+               'owasp-crs-v030001-id942200-sqli',
+               'owasp-crs-v030001-id942210-sqli',
+               'owasp-crs-v030001-id942260-sqli',
+               'owasp-crs-v030001-id942300-sqli',
+               'owasp-crs-v030001-id942310-sqli',
+               'owasp-crs-v030001-id942330-sqli',
+               'owasp-crs-v030001-id942340-sqli',
+               'owasp-crs-v030001-id942380-sqli',
+               'owasp-crs-v030001-id942390-sqli',
+               'owasp-crs-v030001-id942400-sqli',
+               'owasp-crs-v030001-id942410-sqli',
+               'owasp-crs-v030001-id942430-sqli',
+               'owasp-crs-v030001-id942440-sqli',
+               'owasp-crs-v030001-id942450-sqli',
+               'owasp-crs-v030001-id942251-sqli',
+               'owasp-crs-v030001-id942420-sqli',
+               'owasp-crs-v030001-id942431-sqli',
+               'owasp-crs-v030001-id942460-sqli',
+               'owasp-crs-v030001-id942421-sqli',
+               'owasp-crs-v030001-id942432-sqli'])
+      description: "SQL injection protection"
+    
+    # Block XSS attacks
+    - action: "deny(403)"
+      priority: 1001
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('xss-stable',
+              ['owasp-crs-v030001-id941110-xss',
+               'owasp-crs-v030001-id941120-xss',
+               'owasp-crs-v030001-id941130-xss',
+               'owasp-crs-v030001-id941140-xss',
+               'owasp-crs-v030001-id941150-xss',
+               'owasp-crs-v030001-id941160-xss',
+               'owasp-crs-v030001-id941170-xss',
+               'owasp-crs-v030001-id941180-xss',
+               'owasp-crs-v030001-id941190-xss',
+               'owasp-crs-v030001-id941200-xss',
+               'owasp-crs-v030001-id941210-xss',
+               'owasp-crs-v030001-id941220-xss',
+               'owasp-crs-v030001-id941230-xss',
+               'owasp-crs-v030001-id941240-xss',
+               'owasp-crs-v030001-id941250-xss',
+               'owasp-crs-v030001-id941260-xss',
+               'owasp-crs-v030001-id941270-xss',
+               'owasp-crs-v030001-id941280-xss',
+               'owasp-crs-v030001-id941290-xss',
+               'owasp-crs-v030001-id941300-xss',
+               'owasp-crs-v030001-id941310-xss',
+               'owasp-crs-v030001-id941320-xss',
+               'owasp-crs-v030001-id941330-xss',
+               'owasp-crs-v030001-id941340-xss',
+               'owasp-crs-v030001-id941350-xss'])
+      description: "XSS attack protection"
+    
+    # Block Local File Inclusion (LFI) attacks
+    - action: "deny(403)"
+      priority: 1002
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('lfi-stable',
+              ['owasp-crs-v030001-id930100-lfi',
+               'owasp-crs-v030001-id930110-lfi',
+               'owasp-crs-v030001-id930120-lfi',
+               'owasp-crs-v030001-id930130-lfi'])
+      description: "Local file inclusion protection"
+    
+    # Block Remote File Inclusion (RFI) attacks
+    - action: "deny(403)"
+      priority: 1003
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('rfi-stable',
+              ['owasp-crs-v030001-id931100-rfi',
+               'owasp-crs-v030001-id931110-rfi',
+               'owasp-crs-v030001-id931120-rfi',
+               'owasp-crs-v030001-id931130-rfi'])
+      description: "Remote file inclusion protection"
+    
+    # Block Remote Code Execution (RCE) attacks
+    - action: "deny(403)"
+      priority: 1004
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('rce-stable',
+              ['owasp-crs-v030001-id932100-rce',
+               'owasp-crs-v030001-id932105-rce',
+               'owasp-crs-v030001-id932110-rce',
+               'owasp-crs-v030001-id932115-rce',
+               'owasp-crs-v030001-id932120-rce',
+               'owasp-crs-v030001-id932130-rce',
+               'owasp-crs-v030001-id932140-rce',
+               'owasp-crs-v030001-id932150-rce',
+               'owasp-crs-v030001-id932160-rce',
+               'owasp-crs-v030001-id932170-rce',
+               'owasp-crs-v030001-id932171-rce'])
+      description: "Remote code execution protection"
+    
+    # Block PHP injection attacks
+    - action: "deny(403)"
+      priority: 1005
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('php-stable',
+              ['owasp-crs-v030001-id933100-php',
+               'owasp-crs-v030001-id933110-php',
+               'owasp-crs-v030001-id933120-php',
+               'owasp-crs-v030001-id933130-php',
+               'owasp-crs-v030001-id933140-php',
+               'owasp-crs-v030001-id933150-php',
+               'owasp-crs-v030001-id933160-php',
+               'owasp-crs-v030001-id933170-php',
+               'owasp-crs-v030001-id933180-php'])
+      description: "PHP injection protection"
+    
+    # Block session fixation attacks
+    - action: "deny(403)"
+      priority: 1006
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('sessionfixation-stable',
+              ['owasp-crs-v030001-id943100-sessionfixation',
+               'owasp-crs-v030001-id943110-sessionfixation',
+               'owasp-crs-v030001-id943120-sessionfixation'])
+      description: "Session fixation protection"
+    
+    # Block scanner detection
+    - action: "deny(403)"
+      priority: 1007
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('scannerdetection-stable',
+              ['owasp-crs-v030001-id913100-scannerdetection',
+               'owasp-crs-v030001-id913101-scannerdetection',
+               'owasp-crs-v030001-id913102-scannerdetection',
+               'owasp-crs-v030001-id913110-scannerdetection',
+               'owasp-crs-v030001-id913120-scannerdetection'])
+      description: "Scanner and bot detection"
+    
+    # Block protocol attacks
+    - action: "deny(403)"
+      priority: 1008
+      match:
+        expr:
+          expression: |
+            evaluatePreconfiguredExpr('protocolattack-stable',
+              ['owasp-crs-v030001-id921110-protocolattack',
+               'owasp-crs-v030001-id921120-protocolattack',
+               'owasp-crs-v030001-id921130-protocolattack',
+               'owasp-crs-v030001-id921140-protocolattack',
+               'owasp-crs-v030001-id921150-protocolattack',
+               'owasp-crs-v030001-id921151-protocolattack',
+               'owasp-crs-v030001-id921160-protocolattack'])
+      description: "Protocol attack protection"
+    
+    # Rate limiting rule - 100 requests per minute per IP
+    - action: "rate_based_ban"
+      priority: 2000
+      match:
+        versionedExpr: "SRC_IPS_V1"
+        config:
+          srcIpRanges:
+            - "*"
+      rateLimitOptions:
+        conformAction: "allow"
+        exceedAction: "deny(429)"
+        enforceOnKey: "IP"
+        rateLimitThreshold:
+          count: 100
+          intervalSec: 60
+        banDurationSec: 600
+      description: "Rate limiting - 100 req/min per IP"
+    
+    # Geographic restrictions - block high-risk countries
+    - action: "deny(403)"
+      priority: 3000
+      match:
+        expr:
+          expression: "origin.region_code in ['CN', 'RU', 'KP', 'IR']"
+      description: "Geographic restrictions"
+    
+    # Allow health check endpoints
+    - action: "allow"
+      priority: 100
+      match:
+        expr:
+          expression: "request.path.matches('/health') || request.path.matches('/healthz')"
+      description: "Allow health checks"
+    
+    # Block requests with suspicious user agents
+    - action: "deny(403)"
+      priority: 1009
+      match:
+        expr:
+          expression: |
+            has(request.headers['user-agent']) &&
+            request.headers['user-agent'].matches('(?i)(crawler|scraper|bot|spider|curl|wget|python|java|ruby)')
+      description: "Block suspicious user agents"
+    
+    # Protect admin endpoints
+    - action: "deny(403)"
+      priority: 500
+      match:
+        expr:
+          expression: |
+            request.path.matches('/admin') && 
+            !inIpRange(origin.ip, '10.0.0.0/8') &&
+            !inIpRange(origin.ip, '172.16.0.0/12') &&
+            !inIpRange(origin.ip, '192.168.0.0/16')
+      description: "Protect admin endpoints - internal access only"
+    
+  # Adaptive protection - automatically tune based on traffic
+  adaptiveProtectionConfig:
+    layer7DdosDefenseConfig:
+      enable: true
+      ruleVisibility: "STANDARD"

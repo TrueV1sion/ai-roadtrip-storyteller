@@ -1,0 +1,57 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/urls: '["https://roadtrip-backend-staging-792001900150.us-central1.run.app","https://roadtrip-backend-staging-k2nimm2ira-uc.a.run.app"]'
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: roadtrip-backend-staging
+  namespace: '792001900150'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '10'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 528.0.0
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: tgnnqceqbv
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: ENVIRONMENT
+          value: staging
+        - name: GOOGLE_CLOUD_PROJECT
+          value: roadtrip-460720
+        - name: VERTEX_AI_LOCATION
+          value: us-central1
+        - name: DATABASE_URL
+          value: postgresql://postgres:password@localhost:5432/roadtrip
+        - name: SECRET_KEY
+          value: test-secret-key-staging
+        - name: JWT_SECRET_KEY
+          value: test-jwt-secret-key-staging
+        image: gcr.io/roadtrip-460720/roadtrip-backend-staging:latest
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '2'
+            memory: 2Gi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: roadtrip-staging-e6a9121e@roadtrip-460720.iam.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - latestRevision: true
+    percent: 100

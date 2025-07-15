@@ -1,0 +1,169 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-collector
+  namespace: roadtrip
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc-otlp
+    port: 4317
+    targetPort: 4317
+    protocol: TCP
+  - name: http-otlp
+    port: 4318
+    targetPort: 4318
+    protocol: TCP
+  - name: jaeger-thrift
+    port: 14268
+    targetPort: 14268
+    protocol: TCP
+  selector:
+    app: jaeger
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-query
+  namespace: roadtrip
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 16686
+    targetPort: 16686
+    protocol: TCP
+  selector:
+    app: jaeger
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: roadtrip
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+      - name: jaeger
+        image: jaegertracing/all-in-one:1.50
+        env:
+        - name: COLLECTOR_OTLP_ENABLED
+          value: "true"
+        - name: SPAN_STORAGE_TYPE
+          value: "elasticsearch"
+        - name: ES_SERVER_URLS
+          value: "http://elasticsearch:9200"
+        - name: ES_INDEX_PREFIX
+          value: "roadtrip"
+        - name: ES_TAGS_AS_FIELDS_ALL
+          value: "true"
+        - name: ES_NUM_SHARDS
+          value: "3"
+        - name: ES_NUM_REPLICAS
+          value: "1"
+        - name: METRICS_STORAGE_TYPE
+          value: "prometheus"
+        - name: PROMETHEUS_SERVER_URL
+          value: "http://prometheus:9090"
+        ports:
+        - containerPort: 4317
+          name: grpc-otlp
+        - containerPort: 4318
+          name: http-otlp
+        - containerPort: 14268
+          name: jaeger-thrift
+        - containerPort: 16686
+          name: ui
+        - containerPort: 14269
+          name: admin
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 14269
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 14269
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+# For development/simple deployment, use in-memory storage
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger-simple
+  namespace: roadtrip
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger-simple
+  template:
+    metadata:
+      labels:
+        app: jaeger-simple
+    spec:
+      containers:
+      - name: jaeger
+        image: jaegertracing/all-in-one:1.50
+        env:
+        - name: COLLECTOR_OTLP_ENABLED
+          value: "true"
+        ports:
+        - containerPort: 4317
+          name: grpc-otlp
+        - containerPort: 4318
+          name: http-otlp
+        - containerPort: 16686
+          name: ui
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+---
+# Service for simple deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-simple
+  namespace: roadtrip
+spec:
+  type: NodePort
+  ports:
+  - name: grpc-otlp
+    port: 4317
+    targetPort: 4317
+    protocol: TCP
+    nodePort: 30317
+  - name: http-otlp
+    port: 4318
+    targetPort: 4318
+    protocol: TCP
+    nodePort: 30318
+  - name: ui
+    port: 16686
+    targetPort: 16686
+    protocol: TCP
+    nodePort: 30686
+  selector:
+    app: jaeger-simple

@@ -1,0 +1,65 @@
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir gunicorn
+
+# Copy application code
+COPY app/ ./app/
+COPY alembic.ini ./
+
+# Create necessary directories
+RUN mkdir -p /tmp /app/logs
+
+# Set up Google Cloud credentials if provided
+# The credentials will be provided via environment variables or metadata server
+ENV GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Create a simple startup script
+RUN echo '#!/bin/bash\n\
+# Write Google Cloud credentials if provided via env var\n\
+if [ ! -z "$GOOGLE_SERVICE_ACCOUNT_JSON" ]; then\n\
+    echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > /tmp/gcp-key.json\n\
+fi\n\
+\n\
+# Run database migrations (SQLite will auto-create)\n\
+alembic upgrade head || echo "Migration skipped"\n\
+\n\
+# Start the application\n\
+exec gunicorn app.main:app \\\n\
+    --worker-class uvicorn.workers.UvicornWorker \\\n\
+    --workers 1 \\\n\
+    --bind 0.0.0.0:${PORT:-8080} \\\n\
+    --timeout 300 \\\n\
+    --access-logfile - \\\n\
+    --error-logfile -' > /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:8080/health/ || exit 1
+
+# Run the startup script
+CMD ["/app/start.sh"]

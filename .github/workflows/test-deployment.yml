@@ -1,0 +1,106 @@
+name: Test Deployment Scripts
+
+on:
+  pull_request:
+    paths:
+      - 'deploy.sh'
+      - 'scripts/**'
+      - '.github/workflows/test-deployment.yml'
+  push:
+    branches: [main, staging]
+
+jobs:
+  test-scripts:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Test deployment script syntax
+      run: |
+        bash -n deploy.sh
+        bash -n scripts/grant-iam-permissions.sh
+        bash -n scripts/setup-secrets.sh
+
+    - name: Test for interactive prompts
+      run: |
+        # Fail if any script contains interactive prompts
+        if grep -r "read -p\|Read-Host\|input()\|pause" deploy.sh scripts/*.sh; then
+          echo "ERROR: Interactive prompts found in scripts!"
+          exit 1
+        fi
+        echo "✓ No interactive prompts found"
+
+    - name: Test script exit codes
+      run: |
+        # Test that scripts fail properly when required args missing
+        set +e
+        
+        # This should fail with missing project ID
+        ./deploy.sh 2>/dev/null
+        if [[ $? -eq 0 ]]; then
+          echo "ERROR: deploy.sh should fail without project ID"
+          exit 1
+        fi
+        
+        echo "✓ Scripts properly handle missing arguments"
+
+    - name: Check for hardcoded secrets
+      run: |
+        # Fail if any obvious secrets are hardcoded
+        if grep -r -E "password.*=|secret.*=|key.*=|token.*=" deploy.sh scripts/*.sh | grep -v "example\|template\|env"; then
+          echo "ERROR: Possible hardcoded secrets found!"
+          exit 1
+        fi
+        echo "✓ No hardcoded secrets found"
+
+    - name: Validate shellcheck
+      run: |
+        # Install shellcheck
+        sudo apt-get update && sudo apt-get install -y shellcheck
+        
+        # Check all shell scripts
+        find . -name "*.sh" -type f -exec shellcheck {} \; || true
+
+  test-iam-script:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Test IAM script in dry-run mode
+      run: |
+        # Mock gcloud to test script behavior
+        mkdir -p mock-bin
+        cat > mock-bin/gcloud << 'EOF'
+        #!/bin/bash
+        echo "MOCK: gcloud $@"
+        exit 0
+        EOF
+        chmod +x mock-bin/gcloud
+        
+        # Test script with mock
+        PATH="mock-bin:$PATH" ./scripts/grant-iam-permissions.sh test-project test-sa@test.iam
+
+    - name: Ensure script is idempotent
+      run: |
+        # Running twice should work without errors
+        PATH="mock-bin:$PATH" ./scripts/grant-iam-permissions.sh test-project test-sa@test.iam
+        PATH="mock-bin:$PATH" ./scripts/grant-iam-permissions.sh test-project test-sa@test.iam
+
+  documentation-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Check deployment documentation
+      run: |
+        # Ensure critical docs exist
+        [[ -f "DEPLOYMENT.md" ]] || (echo "ERROR: DEPLOYMENT.md missing" && exit 1)
+        [[ -f "AGENT_PROTOCOL.md" ]] || (echo "ERROR: AGENT_PROTOCOL.md missing" && exit 1)
+        
+        echo "✓ Required documentation exists"

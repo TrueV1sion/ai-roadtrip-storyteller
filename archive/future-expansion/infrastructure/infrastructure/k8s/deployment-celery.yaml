@@ -1,0 +1,196 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roadtrip-celery-worker
+  namespace: production
+  labels:
+    app: roadtrip-celery
+    component: worker
+    version: v1
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: roadtrip-celery
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: roadtrip-celery
+        component: worker
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: roadtrip-app
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: celery-worker
+        image: us-central1-docker.pkg.dev/PROJECT_ID/roadtrip-docker/roadtrip-api:latest
+        imagePullPolicy: Always
+        command: ["celery", "-A", "backend.app.celery_app", "worker", "--loglevel=info", "--concurrency=4"]
+        env:
+        - name: CELERY_WORKER_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        envFrom:
+        - configMapRef:
+            name: roadtrip-config
+        - secretRef:
+            name: roadtrip-secrets
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        livenessProbe:
+          exec:
+            command:
+            - celery
+            - -A
+            - backend.app.celery_app
+            - inspect
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: celery-data
+          mountPath: /var/celery
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: celery-data
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - roadtrip-celery
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: "spot"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roadtrip-celery-beat
+  namespace: production
+  labels:
+    app: roadtrip-celery-beat
+    component: scheduler
+    version: v1
+spec:
+  replicas: 1  # Only one beat scheduler should run
+  strategy:
+    type: Recreate  # Ensure only one instance runs at a time
+  selector:
+    matchLabels:
+      app: roadtrip-celery-beat
+      component: scheduler
+  template:
+    metadata:
+      labels:
+        app: roadtrip-celery-beat
+        component: scheduler
+        version: v1
+    spec:
+      serviceAccountName: roadtrip-app
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: celery-beat
+        image: us-central1-docker.pkg.dev/PROJECT_ID/roadtrip-docker/roadtrip-api:latest
+        imagePullPolicy: Always
+        command: ["celery", "-A", "backend.app.celery_app", "beat", "--loglevel=info"]
+        envFrom:
+        - configMapRef:
+            name: roadtrip-config
+        - secretRef:
+            name: roadtrip-secrets
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "ps aux | grep 'celery beat' | grep -v grep"
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: celery-beat-schedule
+          mountPath: /var/celery-beat
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: celery-beat-schedule
+        persistentVolumeClaim:
+          claimName: celery-beat-schedule-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: celery-beat-schedule-pvc
+  namespace: production
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard-rwo

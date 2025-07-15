@@ -1,0 +1,32 @@
+groups:
+- name: slo_alerts
+  rules:
+  - alert: HighErrorRate
+    annotations:
+      description: Error rate is {{ $value | humanizePercentage }} which exceeds 1%
+        threshold
+      summary: High error rate detected
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.01
+    for: 5m
+    labels:
+      severity: critical
+      team: backend
+  - alert: HighLatency
+    annotations:
+      description: P95 latency is {{ $value }}s which exceeds 500ms threshold
+      summary: High latency detected
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+      > 0.5
+    for: 5m
+    labels:
+      severity: warning
+      team: backend
+  - alert: LowAvailability
+    annotations:
+      description: Backend service has been down for more than 1 minute
+      summary: Service is down
+    expr: up{job="backend"} < 1
+    for: 1m
+    labels:
+      severity: critical
+      team: ops

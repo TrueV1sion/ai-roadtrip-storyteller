@@ -1,0 +1,95 @@
+# Stage 1: Build stage with dependencies
+FROM python:3.9-slim as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and activate virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip and install wheel
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools
+
+# Copy requirements first for better caching
+WORKDIR /build
+COPY requirements.prod.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Runtime stage
+FROM python:3.9-slim
+
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser -u 1000 appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy application code with proper ownership
+COPY --chown=appuser:appuser backend ./backend
+COPY --chown=appuser:appuser healthcheck.sh ./healthcheck.sh
+RUN chmod +x ./healthcheck.sh
+
+# Set environment variables for staging
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app/backend \
+    PORT=8080 \
+    ENVIRONMENT=staging \
+    LOG_LEVEL=INFO \
+    # Staging-specific settings with fallbacks
+    TEST_MODE=mock \
+    FORCE_HTTPS=false \
+    SECURE_COOKIES=false \
+    # Google Cloud settings
+    GOOGLE_CLOUD_PROJECT=roadtrip-460720 \
+    GOOGLE_AI_LOCATION=us-central1 \
+    # Graceful degradation flags
+    REDIS_OPTIONAL=true \
+    TTS_OPTIONAL=true \
+    ALLOW_MOCK_MODE=true
+
+# Create required directories
+RUN mkdir -p /app/backend/logs /app/backend/uploads /app/backend/static && \
+    chown -R appuser:appuser /app
+
+# Health check with staging-specific tolerance
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=5 \
+    CMD ./healthcheck.sh || exit 1
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8080
+
+# Use gunicorn with staging-optimized settings
+CMD exec gunicorn backend.app.main:app \
+    --bind 0.0.0.0:${PORT} \
+    --workers 2 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --worker-connections 100 \
+    --timeout 120 \
+    --graceful-timeout 30 \
+    --max-requests 500 \
+    --max-requests-jitter 50 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level ${LOG_LEVEL} \
+    --preload

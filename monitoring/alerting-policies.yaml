@@ -1,0 +1,298 @@
+# Google Cloud Monitoring Alerting Policies
+# These policies define when to trigger alerts for the AI Road Trip Storyteller
+
+# Service Availability Alert
+- displayName: "Road Trip API - Service Down"
+  documentation:
+    content: |
+      The Road Trip API service is down or not responding to health checks.
+      
+      Immediate actions:
+      1. Check Cloud Run service status
+      2. Review application logs for errors
+      3. Check resource limits (CPU/Memory)
+      4. Consider rolling back if recent deployment
+      
+      Escalation:
+      - Page on-call engineer after 5 minutes
+      - Execute rollback procedure if needed
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "Uptime check failure"
+    conditionThreshold:
+      filter: resource.type="uptime_url"
+      comparison: COMPARISON_EQUAL
+      thresholdValue: 1
+      duration: "300s"  # 5 minutes
+      aggregations:
+      - alignmentPeriod: "60s"
+        perSeriesAligner: ALIGN_FRACTION_TRUE
+        crossSeriesReducer: REDUCE_FRACTION_TRUE
+        groupByFields:
+        - "resource.label.host"
+  notificationChannels: [] # Add notification channel IDs
+  alertStrategy:
+    autoClose: "86400s"  # 24 hours
+  severity: CRITICAL
+
+# High Error Rate Alert  
+- displayName: "Road Trip API - High Error Rate"
+  documentation:
+    content: |
+      The Road Trip API is experiencing a high rate of 4xx/5xx errors.
+      
+      Investigation steps:
+      1. Check application logs for error patterns
+      2. Verify API integrations (Google Maps, Vertex AI)
+      3. Check database connectivity
+      4. Review recent deployments
+      
+      Potential causes:
+      - API quota exceeded
+      - Database connection issues
+      - Invalid requests from clients
+      - Service dependencies down
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "HTTP 4xx/5xx error rate > 5%"
+    conditionThreshold:
+      filter: |
+        resource.type="cloud_run_revision"
+        resource.labels.service_name="roadtrip-api"
+        metric.type="run.googleapis.com/request_count"
+        metric.labels.response_code_class!="2xx"
+      comparison: COMPARISON_GREATER_THAN
+      thresholdValue: 0.05  # 5%
+      duration: "600s"  # 10 minutes
+      aggregations:
+      - alignmentPeriod: "300s"  # 5 minutes
+        perSeriesAligner: ALIGN_RATE
+        crossSeriesReducer: REDUCE_SUM
+        groupByFields:
+        - "resource.label.service_name"
+  notificationChannels: []
+  alertStrategy:
+    autoClose: "3600s"  # 1 hour
+  severity: MAJOR
+
+# High Response Time Alert
+- displayName: "Road Trip API - High Response Time"
+  documentation:
+    content: |
+      The Road Trip API response times are higher than normal.
+      
+      Investigation steps:
+      1. Check Cloud Run metrics for CPU/Memory usage
+      2. Review database query performance
+      3. Check AI service (Vertex AI) latency
+      4. Monitor external API response times
+      
+      Optimization actions:
+      - Scale up Cloud Run instances
+      - Optimize database queries
+      - Enable more aggressive caching
+      - Review code for performance bottlenecks
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "Response time > 2 seconds"
+    conditionThreshold:
+      filter: |
+        resource.type="cloud_run_revision"
+        resource.labels.service_name="roadtrip-api"
+        metric.type="run.googleapis.com/request_latencies"
+      comparison: COMPARISON_GREATER_THAN
+      thresholdValue: 2000  # 2 seconds in milliseconds
+      duration: "300s"  # 5 minutes
+      aggregations:
+      - alignmentPeriod: "60s"
+        perSeriesAligner: ALIGN_DELTA
+        crossSeriesReducer: REDUCE_PERCENTILE_95
+        groupByFields:
+        - "resource.label.service_name"
+  notificationChannels: []
+  alertStrategy:
+    autoClose: "1800s"  # 30 minutes
+  severity: MINOR
+
+# High Memory Usage Alert
+- displayName: "Road Trip API - High Memory Usage"
+  documentation:
+    content: |
+      The Road Trip API containers are using high amounts of memory.
+      
+      Investigation steps:
+      1. Check for memory leaks in application code
+      2. Review caching strategies and limits
+      3. Monitor request patterns and load
+      4. Check for large response payloads
+      
+      Immediate actions:
+      - Scale up Cloud Run instances
+      - Increase memory allocation
+      - Review and optimize caching
+      - Consider memory profiling
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "Memory usage > 80%"
+    conditionThreshold:
+      filter: |
+        resource.type="cloud_run_revision"
+        resource.labels.service_name="roadtrip-api"
+        metric.type="run.googleapis.com/container/memory/utilizations"
+      comparison: COMPARISON_GREATER_THAN
+      thresholdValue: 0.8  # 80%
+      duration: "600s"  # 10 minutes
+      aggregations:
+      - alignmentPeriod: "60s"
+        perSeriesAligner: ALIGN_MEAN
+        crossSeriesReducer: REDUCE_MAX
+        groupByFields:
+        - "resource.label.service_name"
+  notificationChannels: []
+  alertStrategy:
+    autoClose: "1800s"  # 30 minutes
+  severity: MAJOR
+
+# Database Connection Issues
+- displayName: "Road Trip API - Database Connection Issues"
+  documentation:
+    content: |
+      The application is experiencing database connection issues.
+      
+      Investigation steps:
+      1. Check Cloud SQL instance status
+      2. Verify connection pool settings
+      3. Review database performance metrics
+      4. Check for connection limit exhaustion
+      
+      Immediate actions:
+      - Restart Cloud SQL instance if needed
+      - Adjust connection pool size
+      - Scale database instance
+      - Check for long-running queries
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "Database connection errors"
+    conditionAbsent:
+      filter: |
+        resource.type="cloud_sql_database"
+        metric.type="cloudsql.googleapis.com/database/up"
+      duration: "120s"  # 2 minutes
+      aggregations:
+      - alignmentPeriod: "60s"
+        perSeriesAligner: ALIGN_FRACTION_TRUE
+        crossSeriesReducer: REDUCE_FRACTION_TRUE
+  notificationChannels: []
+  alertStrategy:
+    autoClose: "1800s"  # 30 minutes
+  severity: CRITICAL
+
+# AI Service Latency Alert
+- displayName: "Road Trip API - AI Service High Latency"
+  documentation:
+    content: |
+      The Vertex AI service is experiencing high latency.
+      
+      Investigation steps:
+      1. Check Vertex AI service status
+      2. Review API quota and limits
+      3. Monitor request patterns to AI service
+      4. Check for large prompt sizes
+      
+      Mitigation:
+      - Implement request caching
+      - Optimize prompt engineering
+      - Consider fallback responses
+      - Scale AI service requests
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "AI service response time > 10 seconds"
+    conditionThreshold:
+      filter: |
+        resource.type="cloud_run_revision"
+        resource.labels.service_name="roadtrip-api"
+        metric.type="logging.googleapis.com/user/ai_service_latency"
+      comparison: COMPARISON_GREATER_THAN
+      thresholdValue: 10000  # 10 seconds in milliseconds
+      duration: "300s"  # 5 minutes
+      aggregations:
+      - alignmentPeriod: "60s"
+        perSeriesAligner: ALIGN_MEAN
+        crossSeriesReducer: REDUCE_PERCENTILE_95
+  notificationChannels: []
+  alertStrategy:
+    autoClose: "1800s"  # 30 minutes
+  severity: MINOR
+
+# Cold Start Alert
+- displayName: "Road Trip API - Excessive Cold Starts"
+  documentation:
+    content: |
+      The service is experiencing excessive cold starts.
+      
+      Investigation steps:
+      1. Review traffic patterns
+      2. Check minimum instance settings
+      3. Monitor container startup time
+      4. Review application initialization
+      
+      Optimization:
+      - Increase minimum instances
+      - Optimize application startup
+      - Consider keeping instances warm
+      - Review container image size
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "Cold start rate > 20%"
+    conditionThreshold:
+      filter: |
+        resource.type="cloud_run_revision"
+        resource.labels.service_name="roadtrip-api"
+        metric.type="run.googleapis.com/container/startup_latencies"
+      comparison: COMPARISON_GREATER_THAN
+      thresholdValue: 0.2  # 20%
+      duration: "600s"  # 10 minutes
+      aggregations:
+      - alignmentPeriod: "300s"
+        perSeriesAligner: ALIGN_RATE
+        crossSeriesReducer: REDUCE_FRACTION_TRUE
+  notificationChannels: []
+  alertStrategy:
+    autoClose: "3600s"  # 1 hour
+  severity: MINOR
+
+# Quota Exhaustion Alert
+- displayName: "Road Trip API - API Quota Near Exhaustion"
+  documentation:
+    content: |
+      One or more external API quotas are near exhaustion.
+      
+      Investigation steps:
+      1. Check Google Maps API quota usage
+      2. Review Vertex AI quota consumption
+      3. Monitor other external API limits
+      4. Analyze request patterns
+      
+      Immediate actions:
+      - Request quota increases
+      - Implement request caching
+      - Optimize API usage patterns
+      - Consider request throttling
+    mimeType: "text/markdown"
+  conditions:
+  - displayName: "API quota usage > 80%"
+    conditionThreshold:
+      filter: |
+        metric.type="serviceruntime.googleapis.com/quota/used"
+        metric.labels.quota_metric="maps-backend.googleapis.com/requests"
+      comparison: COMPARISON_GREATER_THAN
+      thresholdValue: 0.8  # 80%
+      duration: "300s"  # 5 minutes
+      aggregations:
+      - alignmentPeriod: "300s"
+        perSeriesAligner: ALIGN_MAX
+        crossSeriesReducer: REDUCE_MAX
+  notificationChannels: []
+  alertStrategy:
+    autoClose: "3600s"  # 1 hour
+  severity: MAJOR

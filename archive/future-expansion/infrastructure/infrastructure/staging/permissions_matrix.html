@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Road Trip Storyteller - IAM Permissions Matrix</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .service-account {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        .role-name {
+            font-family: monospace;
+            font-size: 13px;
+            background: #f1f3f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .critical {
+            background: #ffebee;
+            color: #c62828;
+            font-weight: 600;
+        }
+        .important {
+            background: #fff3e0;
+            color: #e65100;
+            font-weight: 600;
+        }
+        .optional {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .impact {
+            font-size: 12px;
+            color: #666;
+        }
+        .permission-list {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .copy-button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .copy-button:hover {
+            background: #1565c0;
+        }
+        .grant-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .command-block {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-missing { background: #f44336; }
+        .status-granted { background: #4caf50; }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .feature-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .feature-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .feature-card.disabled {
+            opacity: 0.6;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 IAM Permissions Matrix</h1>
+        <p class="subtitle">AI Road Trip Storyteller - Staging Environment</p>
+        
+        <div class="service-account">
+            <strong>Service Account:</strong> roadtrip-staging-e6a9121e@roadtrip-460720.iam.gserviceaccount.com
+        </div>
+
+        <h2>📊 Permissions Overview</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Priority</th>
+                    <th>Purpose</th>
+                    <th>Impact if Missing</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="role-name">roles/aiplatform.user</span></td>
+                    <td><span class="critical">CRITICAL</span></td>
+                    <td>AI story generation</td>
+                    <td class="impact">❌ No AI features - core functionality broken</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/secretmanager.secretAccessor</span></td>
+                    <td><span class="critical">CRITICAL</span></td>
+                    <td>Access secure credentials</td>
+                    <td class="impact">❌ Security compromised - must use env vars</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/cloudsql.client</span></td>
+                    <td><span class="critical">CRITICAL</span></td>
+                    <td>Database connectivity</td>
+                    <td class="impact">⚠️ Falls back to SQLite - limited persistence</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/redis.editor</span></td>
+                    <td><span class="important">IMPORTANT</span></td>
+                    <td>Caching & rate limiting</td>
+                    <td class="impact">⚠️ No caching - higher costs, slower</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/storage.objectAdmin</span></td>
+                    <td><span class="important">IMPORTANT</span></td>
+                    <td>File storage</td>
+                    <td class="impact">⚠️ No file uploads/audio storage</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/cloudtexttospeech.client</span></td>
+                    <td><span class="important">IMPORTANT</span></td>
+                    <td>Voice narration</td>
+                    <td class="impact">⚠️ No voice features</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/compute.networkUser</span></td>
+                    <td><span class="important">IMPORTANT</span></td>
+                    <td>VPC networking</td>
+                    <td class="impact">⚠️ Cannot use private IPs</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/vpcaccess.user</span></td>
+                    <td><span class="important">IMPORTANT</span></td>
+                    <td>VPC connector access</td>
+                    <td class="impact">⚠️ Cloud Run can't reach private resources</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/logging.logWriter</span></td>
+                    <td><span class="optional">OPTIONAL</span></td>
+                    <td>Centralized logging</td>
+                    <td class="impact">ℹ️ Local logs only</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/monitoring.metricWriter</span></td>
+                    <td><span class="optional">OPTIONAL</span></td>
+                    <td>Custom metrics</td>
+                    <td class="impact">ℹ️ Basic monitoring only</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+                <tr>
+                    <td><span class="role-name">roles/cloudtrace.agent</span></td>
+                    <td><span class="optional">OPTIONAL</span></td>
+                    <td>Request tracing</td>
+                    <td class="impact">ℹ️ No distributed tracing</td>
+                    <td><span class="status-indicator status-missing"></span>Missing</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🚀 Feature Impact Analysis</h2>
+        <div class="feature-grid">
+            <div class="feature-card disabled">
+                <h3>🤖 AI Story Generation</h3>
+                <p><strong>Status:</strong> ❌ Disabled</p>
+                <p><strong>Required:</strong> roles/aiplatform.user</p>
+                <p>Core feature - generates personalized road trip stories</p>
+            </div>
+            <div class="feature-card disabled">
+                <h3>🔊 Voice Narration</h3>
+                <p><strong>Status:</strong> ❌ Disabled</p>
+                <p><strong>Required:</strong> roles/cloudtexttospeech.client</p>
+                <p>Text-to-speech for story narration</p>
+            </div>
+            <div class="feature-card disabled">
+                <h3>💾 Data Persistence</h3>
+                <p><strong>Status:</strong> ⚠️ Limited</p>
+                <p><strong>Required:</strong> roles/cloudsql.client</p>
+                <p>Using SQLite fallback instead of PostgreSQL</p>
+            </div>
+            <div class="feature-card disabled">
+                <h3>⚡ Performance</h3>
+                <p><strong>Status:</strong> ⚠️ Degraded</p>
+                <p><strong>Required:</strong> roles/redis.editor</p>
+                <p>No caching - higher latency and costs</p>
+            </div>
+        </div>
+
+        <div class="grant-section">
+            <h2>✅ How to Grant Permissions</h2>
+            
+            <h3>Option 1: Quick Command (Requires Owner/IAM Admin Role)</h3>
+            <p>Copy and run this command to grant all permissions at once:</p>
+            <div class="command-block" id="grant-command">
+# Grant all required permissions
+SERVICE_ACCOUNT="roadtrip-staging-e6a9121e@roadtrip-460720.iam.gserviceaccount.com"
+PROJECT_ID="roadtrip-460720"
+
+for role in \
+  "roles/cloudsql.client" \
+  "roles/redis.editor" \
+  "roles/secretmanager.secretAccessor" \
+  "roles/storage.objectAdmin" \
+  "roles/aiplatform.user" \
+  "roles/cloudtexttospeech.client" \
+  "roles/logging.logWriter" \
+  "roles/monitoring.metricWriter" \
+  "roles/cloudtrace.agent" \
+  "roles/compute.networkUser" \
+  "roles/vpcaccess.user"; do
+  
+  gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$SERVICE_ACCOUNT" \
+    --role="$role"
+done</div>
+            <button class="copy-button" onclick="copyCommand()">📋 Copy Command</button>
+
+            <h3>Option 2: Google Cloud Console</h3>
+            <ol>
+                <li>Go to <a href="https://console.cloud.google.com/iam-admin/iam?project=roadtrip-460720" target="_blank">IAM & Admin Console</a></li>
+                <li>Click "Grant Access"</li>
+                <li>Paste the service account email</li>
+                <li>Add each role from the table above</li>
+                <li>Click "Save"</li>
+            </ol>
+
+            <h3>Option 3: Request from Admin</h3>
+            <p>If you don't have permissions, send the <code>iam_request_template.txt</code> file to your project administrator.</p>
+        </div>
+    </div>
+
+    <script>
+        function copyCommand() {
+            const command = document.getElementById('grant-command').textContent;
+            navigator.clipboard.writeText(command).then(() => {
+                alert('Command copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

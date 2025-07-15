@@ -1,0 +1,354 @@
+name: Deploy to Google Cloud Platform
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_NAME: roadtrip-api
+  REGION: us-central1
+  IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/roadtrip-api
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: roadtrip_test
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: roadtrip_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run linting
+      run: |
+        black backend/ --check
+        flake8 backend/
+        mypy backend/
+        bandit -r backend/
+
+    - name: Run tests with coverage
+      env:
+        DATABASE_URL: postgresql://roadtrip_test:test_password@localhost:5432/roadtrip_test
+        REDIS_URL: redis://localhost:6379/0
+        JWT_SECRET_KEY: test-secret-key
+        APP_ENV: test
+      run: |
+        pytest tests/ --cov=backend/app --cov-report=xml --cov-fail-under=80
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: true
+
+  test-mobile:
+    name: Mobile App Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: mobile/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./mobile
+      run: npm ci
+
+    - name: Run linting
+      working-directory: ./mobile
+      run: npm run lint
+
+    - name: Run tests
+      working-directory: ./mobile
+      run: npm test -- --coverage --passWithNoTests
+
+  build-and-push:
+    name: Build and Push Docker Image
+    needs: [test, test-mobile]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        export_default_credentials: true
+
+    - name: Configure Docker for GCR
+      run: |
+        gcloud auth configure-docker
+
+    - name: Build Docker image
+      run: |
+        docker build -t $IMAGE:$GITHUB_SHA .
+        docker tag $IMAGE:$GITHUB_SHA $IMAGE:latest
+
+    - name: Push Docker image
+      run: |
+        docker push $IMAGE:$GITHUB_SHA
+        docker push $IMAGE:latest
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+    - name: Run database migrations
+      run: |
+        gcloud run jobs create migrate-staging-$GITHUB_SHA \
+          --image $IMAGE:$GITHUB_SHA \
+          --region $REGION \
+          --command "alembic" \
+          --args "upgrade,head" \
+          --set-env-vars "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" \
+          --max-retries 3 \
+          --parallelism 1 \
+          --task-timeout 5m
+        
+        gcloud run jobs execute migrate-staging-$GITHUB_SHA \
+          --region $REGION \
+          --wait
+
+    - name: Deploy to Cloud Run (Staging)
+      run: |
+        gcloud run deploy $SERVICE_NAME-staging \
+          --image $IMAGE:$GITHUB_SHA \
+          --platform managed \
+          --region $REGION \
+          --allow-unauthenticated \
+          --set-env-vars "APP_ENV=staging" \
+          --set-secrets "DATABASE_URL=staging-database-url:latest" \
+          --set-secrets "REDIS_URL=staging-redis-url:latest" \
+          --set-secrets "JWT_SECRET_KEY=jwt-secret-key:latest" \
+          --set-secrets "GOOGLE_MAPS_API_KEY=google-maps-api-key:latest" \
+          --service-account roadtrip-cloudrun-sa@$PROJECT_ID.iam.gserviceaccount.com \
+          --min-instances 1 \
+          --max-instances 10 \
+          --cpu 2 \
+          --memory 4Gi \
+          --timeout 300
+
+    - name: Run smoke tests
+      run: |
+        STAGING_URL=$(gcloud run services describe $SERVICE_NAME-staging --region $REGION --format 'value(status.url)')
+        python scripts/smoke_tests.py --url $STAGING_URL
+
+  deploy-production:
+    name: Deploy to Production
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+    - name: Run database migrations
+      run: |
+        gcloud run jobs create migrate-prod-$GITHUB_SHA \
+          --image $IMAGE:$GITHUB_SHA \
+          --region $REGION \
+          --command "alembic" \
+          --args "upgrade,head" \
+          --set-env-vars "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" \
+          --max-retries 3 \
+          --parallelism 1 \
+          --task-timeout 5m
+        
+        gcloud run jobs execute migrate-prod-$GITHUB_SHA \
+          --region $REGION \
+          --wait
+
+    - name: Deploy to Cloud Run (Canary - 10%)
+      run: |
+        gcloud run deploy $SERVICE_NAME \
+          --image $IMAGE:$GITHUB_SHA \
+          --platform managed \
+          --region $REGION \
+          --no-traffic \
+          --tag canary-$GITHUB_SHA \
+          --set-env-vars "APP_ENV=production" \
+          --set-secrets "DATABASE_URL=db-password:latest" \
+          --set-secrets "REDIS_URL=redis-password:latest" \
+          --set-secrets "JWT_SECRET_KEY=jwt-secret-key:latest" \
+          --set-secrets "SECRET_KEY=app-secret-key:latest" \
+          --set-secrets "GOOGLE_MAPS_API_KEY=google-maps-api-key:latest" \
+          --set-secrets "OPENWEATHERMAP_API_KEY=openweathermap-api-key:latest" \
+          --set-secrets "SENTRY_DSN=sentry-dsn:latest" \
+          --service-account roadtrip-cloudrun-sa@$PROJECT_ID.iam.gserviceaccount.com \
+          --min-instances 2 \
+          --max-instances 100 \
+          --cpu 2 \
+          --memory 4Gi \
+          --timeout 300 \
+          --concurrency 1000
+
+    - name: Route 10% traffic to canary
+      run: |
+        gcloud run services update-traffic $SERVICE_NAME \
+          --region $REGION \
+          --to-tags canary-$GITHUB_SHA=10
+
+    - name: Monitor canary (5 minutes)
+      run: |
+        echo "Monitoring canary deployment for 5 minutes..."
+        sleep 300
+        
+        # Check error rate
+        ERROR_RATE=$(gcloud logging read \
+          "resource.type=cloud_run_revision \
+          AND resource.labels.service_name=$SERVICE_NAME \
+          AND resource.labels.revision_name=~\"canary-$GITHUB_SHA\" \
+          AND severity>=ERROR" \
+          --limit 100 \
+          --format "value(timestamp)" | wc -l)
+        
+        if [ $ERROR_RATE -gt 10 ]; then
+          echo "High error rate detected in canary. Rolling back..."
+          gcloud run services update-traffic $SERVICE_NAME \
+            --region $REGION \
+            --to-latest
+          exit 1
+        fi
+
+    - name: Promote canary to 50%
+      run: |
+        gcloud run services update-traffic $SERVICE_NAME \
+          --region $REGION \
+          --to-tags canary-$GITHUB_SHA=50
+
+    - name: Monitor 50% deployment (5 minutes)
+      run: |
+        echo "Monitoring 50% deployment..."
+        sleep 300
+
+    - name: Full production deployment
+      run: |
+        gcloud run services update-traffic $SERVICE_NAME \
+          --region $REGION \
+          --to-latest
+
+    - name: Tag successful deployment
+      run: |
+        gcloud artifacts docker tags add \
+          $REGION-docker.pkg.dev/$PROJECT_ID/roadtrip-images/app:$GITHUB_SHA \
+          $REGION-docker.pkg.dev/$PROJECT_ID/roadtrip-images/app:production-$(date +%Y%m%d-%H%M%S)
+
+    - name: Notify deployment success
+      if: success()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: 'Production deployment successful! Version: ${{ github.sha }}'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Rollback on failure
+      if: failure()
+      run: |
+        echo "Deployment failed. Rolling back to previous version..."
+        gcloud run services update-traffic $SERVICE_NAME \
+          --region $REGION \
+          --to-revisions LATEST=100
+        
+        # Notify rollback
+        curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"⚠️ Production deployment failed and was rolled back. Version: ${{ github.sha }}"}' \
+          ${{ secrets.SLACK_WEBHOOK }}
+
+  security-scan:
+    name: Security Scanning
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run container scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'

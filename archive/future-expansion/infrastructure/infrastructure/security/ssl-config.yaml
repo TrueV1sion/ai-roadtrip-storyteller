@@ -1,0 +1,186 @@
+# SSL/TLS Configuration for Google Cloud Load Balancer
+# Enforces strong TLS settings and HTTPS redirect
+
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeSSLPolicy
+metadata:
+  name: roadtrip-ssl-policy
+  namespace: roadtrip-prod
+spec:
+  description: "SSL policy for AI Road Trip Storyteller"
+  minTlsVersion: "TLS_1_2"
+  profile: "RESTRICTED"
+  customFeatures:
+    - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+    - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+    - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+    - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeURLMap
+metadata:
+  name: roadtrip-https-redirect
+  namespace: roadtrip-prod
+spec:
+  description: "HTTPS redirect for AI Road Trip Storyteller"
+  defaultUrlRedirect:
+    httpsRedirect: true
+    stripQuery: false
+
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeManagedSSLCertificate
+metadata:
+  name: roadtrip-ssl-cert
+  namespace: roadtrip-prod
+spec:
+  managed:
+    domains:
+      - "api.roadtripstoryteller.com"
+      - "www.roadtripstoryteller.com"
+      - "roadtripstoryteller.com"
+
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeBackendService
+metadata:
+  name: roadtrip-backend-service
+  namespace: roadtrip-prod
+spec:
+  protocol: "HTTPS"
+  portName: "https"
+  timeoutSec: 30
+  
+  # Session affinity for voice streaming
+  sessionAffinity: "CLIENT_IP"
+  affinityCookieTtlSec: 3600
+  
+  # Health check configuration
+  healthChecks:
+    - name: roadtrip-health-check
+  
+  # Security headers via Cloud CDN
+  securitySettings:
+    clientTlsPolicy: roadtrip-client-tls-policy
+  
+  # Custom headers
+  customRequestHeaders:
+    - "X-Client-Region:{client_region}"
+    - "X-Client-City:{client_city}"
+  
+  customResponseHeaders:
+    - "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload"
+    - "X-Content-Type-Options: nosniff"
+    - "X-Frame-Options: DENY"
+    - "X-XSS-Protection: 1; mode=block"
+    - "Referrer-Policy: strict-origin-when-cross-origin"
+    - "Content-Security-Policy: default-src 'self' https://apis.google.com https://www.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.roadtripstoryteller.com wss://api.roadtripstoryteller.com https://maps.googleapis.com"
+    - "Permissions-Policy: geolocation=(self), microphone=(self), camera=(), payment=(), usb=()"
+  
+  # Enable Cloud CDN
+  cdnPolicy:
+    cacheMode: "CACHE_ALL_STATIC"
+    defaultTtl: 3600
+    maxTtl: 86400
+    clientTtl: 3600
+    negativeCaching: true
+    negativeCachingPolicy:
+      - code: 404
+        ttl: 300
+      - code: 410
+        ttl: 86400
+    
+    # Cache key policy
+    cacheKeyPolicy:
+      includeHost: true
+      includeProtocol: true
+      includeQueryString: false
+      queryStringWhitelist:
+        - "v"
+        - "version"
+        - "user_id"
+  
+  # Backend configuration
+  backends:
+    - group: roadtrip-neg
+      balancingMode: "RATE"
+      maxRatePerEndpoint: 100
+      capacityScaler: 1.0
+
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeHealthCheck
+metadata:
+  name: roadtrip-health-check
+  namespace: roadtrip-prod
+spec:
+  checkIntervalSec: 10
+  timeoutSec: 5
+  healthyThreshold: 2
+  unhealthyThreshold: 3
+  
+  httpsHealthCheck:
+    port: 443
+    portSpecification: "USE_FIXED_PORT"
+    requestPath: "/health"
+    proxyHeader: "NONE"
+
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: roadtrip-gke-cert
+  namespace: roadtrip-prod
+spec:
+  domains:
+    - api.roadtripstoryteller.com
+    - www.roadtripstoryteller.com
+    - roadtripstoryteller.com
+
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: roadtrip-backend-config
+  namespace: roadtrip-prod
+spec:
+  # Cloud Armor security policy
+  securityPolicy:
+    name: "roadtrip-waf-policy"
+  
+  # Cloud CDN configuration
+  cdn:
+    enabled: true
+    cachePolicy:
+      includeHost: true
+      includeProtocol: true
+      includeQueryString: false
+    negativeCaching: true
+    negativeCachingPolicy:
+    - code: 404
+      ttl: 120
+    - code: 410
+      ttl: 86400
+  
+  # Session affinity
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+    affinityCookieTtlSec: 3600
+  
+  # Connection draining timeout
+  connectionDraining:
+    drainingTimeoutSec: 60
+  
+  # Custom request headers
+  customRequestHeaders:
+    headers:
+    - "X-Client-Region:{client_region}"
+    - "X-Client-City:{client_city}"
+    - "X-Forwarded-Proto:{forwarded_proto}"
+  
+  # IAP configuration (if needed)
+  iap:
+    enabled: false
+    oauthclientCredentials:
+      secretName: roadtrip-iap-secret

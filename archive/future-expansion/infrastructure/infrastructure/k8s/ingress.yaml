@@ -1,0 +1,153 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: roadtrip-ingress
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "production-roadtrip-ip"
+    networking.gke.io/managed-certificates: "roadtrip-managed-cert"
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.allow-http: "false"
+    # Security annotations
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    ingress.kubernetes.io/ssl-protocols: "TLSv1.2,TLSv1.3"
+    # Backend configuration
+    cloud.google.com/backend-config: '{"default": "roadtrip-backend-config"}'
+    # CDN configuration
+    cloud.google.com/cdn-enabled: "true"
+    cloud.google.com/cdn-cache-mode: "CACHE_ALL_STATIC"
+spec:
+  rules:
+  - host: api.roadtrip.example.com
+    http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: roadtrip-api
+            port:
+              number: 80
+  - host: roadtrip.example.com
+    http:
+      paths:
+      - path: /api/*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: roadtrip-api
+            port:
+              number: 80
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: roadtrip-frontend
+            port:
+              number: 80
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: roadtrip-managed-cert
+  namespace: production
+spec:
+  domains:
+    - roadtrip.example.com
+    - api.roadtrip.example.com
+    - www.roadtrip.example.com
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: roadtrip-api-network-policy
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: roadtrip-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: production
+    - podSelector:
+        matchLabels:
+          app: roadtrip-ingress-controller
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: production
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443   # HTTPS for external APIs
+    - protocol: TCP
+      port: 53    # DNS
+    - protocol: UDP
+      port: 53    # DNS
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: roadtrip-frontend
+  namespace: production
+  labels:
+    app: roadtrip-frontend
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/backend-config: '{"default": "roadtrip-frontend-config"}'
+spec:
+  type: ClusterIP
+  selector:
+    app: roadtrip-frontend
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: roadtrip-frontend-config
+  namespace: production
+spec:
+  cdn:
+    enabled: true
+    cacheMode: "CACHE_ALL_STATIC"
+    defaultTtl: 3600
+    clientTtl: 7200
+    maxTtl: 86400
+    negativeCaching: true
+    negativeCachingPolicy:
+    - code: 404
+      ttl: 120
+  connectionDraining:
+    drainingTimeoutSec: 60
+  logging:
+    enable: true
+    sampleRate: 1.0

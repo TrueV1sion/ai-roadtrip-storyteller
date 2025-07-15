@@ -1,0 +1,131 @@
+{
+  "name": "roadtrip-knowledge-graph",
+  "displayName": "Road Trip AI Knowledge Graph",
+  "description": "Real-time code analysis and pattern suggestions powered by Knowledge Graph",
+  "version": "0.1.0",
+  "publisher": "roadtrip-ai",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Linters",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "roadtrip-kg.analyzeImpact",
+        "title": "KG: Analyze Impact of Current File"
+      },
+      {
+        "command": "roadtrip-kg.searchPatterns",
+        "title": "KG: Search for Similar Patterns"
+      },
+      {
+        "command": "roadtrip-kg.validateFile",
+        "title": "KG: Validate Current File"
+      },
+      {
+        "command": "roadtrip-kg.showSuggestions",
+        "title": "KG: Show Improvement Suggestions"
+      },
+      {
+        "command": "roadtrip-kg.toggleRealTime",
+        "title": "KG: Toggle Real-time Analysis"
+      }
+    ],
+    "configuration": {
+      "title": "Road Trip Knowledge Graph",
+      "properties": {
+        "roadtrip-kg.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "Knowledge Graph server URL"
+        },
+        "roadtrip-kg.enableRealTimeAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time code analysis"
+        },
+        "roadtrip-kg.showInlineHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline code hints"
+        },
+        "roadtrip-kg.highlightDependencies": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight dependent files"
+        },
+        "roadtrip-kg.severityLevel": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "default": "medium",
+          "description": "Minimum severity level to show"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "roadtrip-kg.analyzeImpact",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "roadtrip-kg.searchPatterns",
+        "key": "ctrl+shift+p",
+        "mac": "cmd+shift+p",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "roadtrip-kg.analyzeImpact",
+          "group": "roadtrip-kg@1"
+        },
+        {
+          "command": "roadtrip-kg.searchPatterns",
+          "group": "roadtrip-kg@2"
+        }
+      ]
+    },
+    "statusBar": [
+      {
+        "id": "roadtrip-kg.status",
+        "alignment": "right",
+        "priority": 100
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.26.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

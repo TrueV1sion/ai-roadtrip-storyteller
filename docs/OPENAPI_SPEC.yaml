@@ -1,0 +1,565 @@
+openapi: 3.0.3
+info:
+  title: AI Road Trip Storyteller API
+  description: |
+    Transform ordinary drives into memorable journeys through AI-powered storytelling.
+    
+    This API provides voice-first navigation, personalized stories, real-time bookings,
+    and immersive entertainment for road trips.
+  version: 1.0.0
+  contact:
+    email: api-support@roadtripstoryteller.com
+  license:
+    name: Proprietary
+    url: https://roadtripstoryteller.com/license
+
+servers:
+  - url: https://api.roadtripstoryteller.com
+    description: Production server
+  - url: https://staging-api.roadtripstoryteller.com
+    description: Staging server
+  - url: http://localhost:8000
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - full_name
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                full_name:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                totp_code:
+                  type: string
+                  description: 2FA code if enabled
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    default: bearer
+                  expires_in:
+                    type: integer
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /api/voice-assistant/interact:
+    post:
+      tags:
+        - Voice Assistant
+      summary: Process voice assistant interaction
+      description: Primary endpoint for all voice-based interactions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_input
+              properties:
+                user_input:
+                  type: string
+                  description: User's voice input as text
+                context:
+                  type: object
+                  properties:
+                    origin:
+                      type: string
+                    destination:
+                      type: string
+                    current_location:
+                      $ref: '#/components/schemas/Location'
+                    preferences:
+                      type: object
+                      properties:
+                        voice_personality:
+                          type: string
+                          enum: [friendly_companion, enthusiastic_guide, knowledgeable_expert]
+                        language:
+                          type: string
+                          default: en
+      responses:
+        '200':
+          description: Voice response generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+                      audio_url:
+                        type: string
+                      actions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            data:
+                              type: object
+                  metadata:
+                    type: object
+                    properties:
+                      processing_time:
+                        type: number
+                      ai_model:
+                        type: string
+                      personality:
+                        type: string
+
+  /api/directions:
+    post:
+      tags:
+        - Navigation
+      summary: Get driving directions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - origin
+                - destination
+              properties:
+                origin:
+                  type: string
+                destination:
+                  type: string
+                waypoints:
+                  type: array
+                  items:
+                    type: string
+                preferences:
+                  type: object
+                  properties:
+                    avoid_highways:
+                      type: boolean
+                    scenic_route:
+                      type: boolean
+                    prefer_fuel_efficient:
+                      type: boolean
+      responses:
+        '200':
+          description: Route calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+
+  /api/booking/search:
+    get:
+      tags:
+        - Bookings
+      summary: Search for hotels
+      parameters:
+        - name: location
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: checkin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: checkout
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: guests
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hotels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Hotel'
+                  total_results:
+                    type: integer
+
+  /api/games/trivia/start:
+    post:
+      tags:
+        - Entertainment
+      summary: Start trivia game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - location
+              properties:
+                location:
+                  $ref: '#/components/schemas/Location'
+                difficulty:
+                  type: string
+                  enum: [easy, medium, hard]
+                category:
+                  type: string
+                players:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Game started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriviaGame'
+
+  /api/event-journey/create:
+    post:
+      tags:
+        - Journeys
+      summary: Create event-based journey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - origin
+                - venue_name
+                - event_type
+                - event_date
+              properties:
+                origin:
+                  type: string
+                venue_name:
+                  type: string
+                event_type:
+                  type: string
+                  enum: [concert, sports, theme_park, theater, festival]
+                event_date:
+                  type: string
+                  format: date-time
+                preferences:
+                  type: object
+                  properties:
+                    arrival_buffer:
+                      type: integer
+                      description: Minutes before event
+                    include_parking:
+                      type: boolean
+                    pre_event_dining:
+                      type: boolean
+                    hotel_needed:
+                      type: boolean
+      responses:
+        '201':
+          description: Event journey created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventJourney'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Location:
+      type: object
+      required:
+        - lat
+        - lng
+      properties:
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+
+    Route:
+      type: object
+      properties:
+        distance:
+          type: string
+        duration:
+          type: string
+        fuel_estimate:
+          type: object
+          properties:
+            gallons:
+              type: number
+            cost:
+              type: string
+        waypoints:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: string
+              arrival_time:
+                type: string
+                format: date-time
+              suggested_duration:
+                type: string
+        polyline:
+          type: string
+        scenic_highlights:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              location:
+                $ref: '#/components/schemas/Location'
+              description:
+                type: string
+
+    Hotel:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        rating:
+          type: number
+        price_per_night:
+          type: string
+        amenities:
+          type: array
+          items:
+            type: string
+        distance_from_route:
+          type: string
+        available_rooms:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              price:
+                type: string
+              cancellation:
+                type: string
+
+    TriviaGame:
+      type: object
+      properties:
+        game_id:
+          type: string
+        current_question:
+          type: object
+          properties:
+            id:
+              type: integer
+            question:
+              type: string
+            options:
+              type: array
+              items:
+                type: string
+            hint:
+              type: string
+        game_state:
+          type: object
+          properties:
+            current_score:
+              type: integer
+            questions_remaining:
+              type: integer
+            time_limit:
+              type: integer
+
+    EventJourney:
+      type: object
+      properties:
+        journey_id:
+          type: string
+        event_details:
+          type: object
+          properties:
+            venue:
+              type: string
+            event_type:
+              type: string
+            date:
+              type: string
+              format: date-time
+        voice_personality:
+          type: string
+        timeline:
+          type: object
+          properties:
+            departure:
+              type: string
+              format: date-time
+            dinner_reservation:
+              type: string
+              format: date-time
+            arrival_at_venue:
+              type: string
+              format: date-time
+        bookings:
+          type: object
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+        request_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    RateLimited:
+      description: Rate limited
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

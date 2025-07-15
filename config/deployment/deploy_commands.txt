@@ -1,0 +1,42 @@
+# Cloud Run Deployment Commands
+
+# First, navigate to your project directory:
+cd C:\Users\jared\OneDrive\Desktop\roadtrip
+
+# Check if Dockerfile exists:
+dir Dockerfile
+
+# If Dockerfile exists, deploy with:
+gcloud run deploy roadtrip-api --source . --region us-central1 --allow-unauthenticated --port 8000
+
+# If you get errors, try these alternatives:
+
+# Option 1: Deploy with explicit configuration
+gcloud run deploy roadtrip-api \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8000 \
+  --memory 2Gi \
+  --cpu 2 \
+  --timeout 60 \
+  --max-instances 100
+
+# Option 2: Build first, then deploy
+gcloud builds submit --tag gcr.io/roadtrip-460720/roadtrip-api
+gcloud run deploy roadtrip-api \
+  --image gcr.io/roadtrip-460720/roadtrip-api \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --port 8000
+
+# Option 3: Use the Dockerfile explicitly
+gcloud run deploy roadtrip-api \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --platform managed \
+  --port 8000
+
+# To see what's happening:
+gcloud logging read "resource.type=build" --limit 10

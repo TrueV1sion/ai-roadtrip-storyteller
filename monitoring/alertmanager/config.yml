@@ -1,0 +1,110 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  
+  routes:
+    # Critical alerts go to PagerDuty
+    - match:
+        severity: critical
+      receiver: pagerduty-critical
+      continue: true
+      
+    # All alerts also go to Slack
+    - match_re:
+        severity: critical|warning
+      receiver: slack-notifications
+      
+    # AI service alerts
+    - match:
+        service: ai
+      receiver: ai-team
+      
+    # Voice service alerts
+    - match:
+        service: voice
+      receiver: voice-team
+      
+    # Booking service alerts
+    - match:
+        service: booking
+      receiver: booking-team
+
+receivers:
+  - name: 'default'
+    slack_configs:
+      - channel: '#alerts'
+        title: 'Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .GroupLabels.alertname }}: {{ .CommonAnnotations.summary }}'
+        details:
+          severity: '{{ .CommonLabels.severity }}'
+          num_alerts: '{{ .Alerts | len }}'
+          
+  - name: 'slack-notifications'
+    slack_configs:
+      - channel: '#roadtrip-alerts'
+        username: 'Prometheus'
+        icon_url: 'https://prometheus.io/assets/prometheus_logo_grey.svg'
+        title: '{{ if eq .Status "firing" }}🚨{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Labels.alertname }}
+          *Severity:* {{ .Labels.severity }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ if .Labels.instance }}*Instance:* {{ .Labels.instance }}{{ end }}
+          {{ if .Labels.endpoint }}*Endpoint:* {{ .Labels.endpoint }}{{ end }}
+          {{ end }}
+        send_resolved: true
+        
+  - name: 'ai-team'
+    slack_configs:
+      - channel: '#ai-team-alerts'
+        title: 'AI Service Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        
+  - name: 'voice-team'
+    slack_configs:
+      - channel: '#voice-team-alerts'
+        title: 'Voice Service Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        
+  - name: 'booking-team'
+    slack_configs:
+      - channel: '#booking-team-alerts'
+        title: 'Booking Service Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+inhibit_rules:
+  # Inhibit less severe alerts if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+    
+  # Don't alert on high latency if service is down
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match:
+      alertname: 'HighLatency'
+    equal: ['instance']
+    
+  # Don't alert on individual failures if error rate is high
+  - source_match:
+      alertname: 'HighErrorRate'
+    target_match_re:
+      alertname: '.*Failures'
+    equal: ['service']

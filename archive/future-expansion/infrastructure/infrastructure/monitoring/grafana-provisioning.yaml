@@ -1,0 +1,79 @@
+apiVersion: 1
+
+providers:
+  - name: 'roadtrip-dashboards'
+    orgId: 1
+    folder: 'AI Road Trip Storyteller'
+    folderUid: 'roadtrip'
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 15s
+      queryTimeout: 60s
+      httpMethod: POST
+    editable: true
+
+  - name: CloudSQL
+    type: postgres
+    access: proxy
+    url: cloudsql-proxy:5432
+    database: roadtrip
+    user: roadtrip_monitor
+    secureJsonData:
+      password: $POSTGRES_MONITOR_PASSWORD
+    jsonData:
+      sslmode: 'require'
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+      postgresVersion: 1500
+      timescaledb: false
+    editable: true
+
+  - name: Redis
+    type: redis-datasource
+    access: proxy
+    url: redis://redis:6379
+    jsonData:
+      client: standalone
+      tlsAuth: false
+      tlsSkipVerify: true
+      pingInterval: 10
+      pipelineWindow: 0
+    editable: true
+
+notifiers:
+  - name: Slack
+    type: slack
+    uid: slack-notifications
+    org_id: 1
+    is_default: true
+    settings:
+      url: $SLACK_WEBHOOK_URL
+      username: AI Road Trip Alerts
+      icon_emoji: ':rotating_light:'
+      mention_channel: here
+      include_image: true
+
+  - name: PagerDuty
+    type: pagerduty
+    uid: pagerduty-critical
+    org_id: 1
+    is_default: false
+    settings:
+      integrationKey: $PAGERDUTY_INTEGRATION_KEY
+      severity: critical
+      class: production
+      component: roadtrip-api
+      group: backend

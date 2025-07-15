@@ -1,0 +1,120 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+
+# Environment files - CRITICAL SECURITY
+.env
+.env.*
+!.env.example
+
+# Secrets and credentials - CRITICAL SECURITY
+**/secrets/
+**/credentials/
+**/credentials_backup/
+*.pem
+*.key
+*.crt
+*.p12
+*_rsa
+*_rsa.pub
+credentials/
+credentials_backup/
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!app.json
+!jest.config.json
+
+# Service account keys
+*-sa.json
+*service-account*.json
+*serviceaccount*.json
+
+# Database credentials
+*.sql
+!alembic/versions/*.sql
+
+# API keys and tokens
+api_keys/
+tokens/
+.env.production
+.env.staging
+.env.development
+.env.local
+.env.*.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# MCP Credentials - NEVER COMMIT
+.credentials/
+.env.mcp
+.mcp-servers/
+
+# Python virtual environments
+venv/
+*/venv/
+knowledge_graph/venv/
+backend/venv/
+agent_taskforce/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+
+# Node modules
+node_modules/
+mobile/node_modules/
+
+# Logs
+logs/
+*.log
+service_status.json
+agent.log
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+.cursor/
+
+# OS files
+Thumbs.db
+ehthumbs.db
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/

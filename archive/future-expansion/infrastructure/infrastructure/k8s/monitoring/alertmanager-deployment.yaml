@@ -1,0 +1,211 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alerts@roadtrip.app'
+      smtp_auth_username: 'alerts@roadtrip.app'
+      smtp_auth_password: '${SMTP_PASSWORD}'
+      smtp_require_tls: true
+      slack_api_url: '${SLACK_WEBHOOK_URL}'
+      resolve_timeout: 5m
+
+    templates:
+      - '/etc/alertmanager/templates/*.tmpl'
+
+    route:
+      receiver: 'default'
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      
+      routes:
+        - match:
+            severity: critical
+          receiver: pagerduty-critical
+          group_wait: 10s
+          repeat_interval: 30m
+          
+        - match:
+            service: security
+          receiver: security-team
+          group_wait: 10s
+          repeat_interval: 1h
+          
+        - match:
+            service: business
+          receiver: business-team
+          repeat_interval: 6h
+          
+        - match:
+            service: database
+          receiver: database-team
+          group_wait: 1m
+
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'dev', 'instance']
+
+    receivers:
+      - name: 'default'
+        slack_configs:
+          - channel: '#roadtrip-alerts'
+            title: 'AI Road Trip Alert'
+            icon_emoji: ':rotating_light:'
+            send_resolved: true
+            text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}{{ end }}'
+            
+      - name: 'pagerduty-critical'
+        pagerduty_configs:
+          - service_key: '${PAGERDUTY_SERVICE_KEY}'
+            description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+            severity: 'critical'
+            client: 'AI Road Trip Storyteller'
+        slack_configs:
+          - channel: '#roadtrip-critical'
+            title: 'CRITICAL: {{ .GroupLabels.alertname }}'
+            color: 'danger'
+            
+      - name: 'security-team'
+        email_configs:
+          - to: 'security@roadtrip.app'
+            headers:
+              Subject: 'Security Alert: {{ .GroupLabels.alertname }}'
+            html: |
+              <h2>Security Alert</h2>
+              <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+              {{ range .Alerts }}
+              <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+              <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+              {{ end }}
+        slack_configs:
+          - channel: '#security-alerts'
+            title: 'Security: {{ .GroupLabels.alertname }}'
+            color: 'warning'
+            
+      - name: 'business-team'
+        slack_configs:
+          - channel: '#business-metrics'
+            title: 'Business Alert: {{ .GroupLabels.alertname }}'
+            send_resolved: true
+            
+      - name: 'database-team'
+        email_configs:
+          - to: 'dba@roadtrip.app'
+            headers:
+              Subject: 'Database Alert: {{ .GroupLabels.alertname }}'
+        slack_configs:
+          - channel: '#database-alerts'
+            title: 'Database: {{ .GroupLabels.alertname }}'
+            color: 'danger'
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      containers:
+        - name: alertmanager
+          image: prom/alertmanager:v0.26.0
+          args:
+            - '--config.file=/etc/alertmanager/alertmanager.yml'
+            - '--storage.path=/alertmanager'
+            - '--cluster.advertise-address=0.0.0.0:9093'
+          ports:
+            - containerPort: 9093
+              name: web
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alertmanager
+            - name: storage
+              mountPath: /alertmanager
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: alertmanager-config
+        - name: storage
+          persistentVolumeClaim:
+            claimName: alertmanager-storage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9093
+      targetPort: 9093
+      name: web
+  selector:
+    app: alertmanager
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: alertmanager-storage
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-secrets
+  namespace: monitoring
+type: Opaque
+stringData:
+  slack-webhook-url: ${SLACK_WEBHOOK_URL}
+  pagerduty-service-key: ${PAGERDUTY_SERVICE_KEY}
+  smtp-password: ${SMTP_PASSWORD}

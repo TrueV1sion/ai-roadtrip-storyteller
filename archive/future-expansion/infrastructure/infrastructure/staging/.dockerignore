@@ -1,0 +1,138 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+*.egg-info/
+dist/
+build/
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+cloudbuild.yaml
+.travis.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Documentation
+docs/
+*.md
+README.md
+LICENSE
+
+# Tests
+tests/
+test_*.py
+*_test.py
+conftest.py
+pytest.ini
+.coveragerc
+
+# Infrastructure
+terraform/
+*.tf
+*.tfvars
+*.tfstate*
+infrastructure/
+k8s/
+
+# Scripts (except healthcheck)
+scripts/
+*.sh
+!healthcheck.sh
+
+# Mobile app
+mobile/
+*.tsx
+*.jsx
+*.js
+package*.json
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+logs/
+tmp/
+
+# Development files
+.env*
+!.env.example
+*.local
+*.development
+*.staging
+*.bak
+*.backup
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Node modules (if any)
+node_modules/
+
+# Security
+credentials/
+secrets/
+*.key
+*.pem
+*.cert
+*.crt
+
+# Monitoring
+monitoring/
+grafana/
+prometheus/
+
+# Database
+*.sql
+*.sqlite
+*.db
+migrations/
+
+# Cache
+.cache/
+*.cache
+
+# OS files
+Thumbs.db
+.Spotlight-V100
+.Trashes
+._*

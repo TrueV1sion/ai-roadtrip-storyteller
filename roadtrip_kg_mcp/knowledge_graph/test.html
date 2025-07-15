@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+</head>
+<body>
+    <h1>Direct Test</h1>
+    <button onclick="testSearch()">Test Search</button>
+    <button onclick="testAnalyze()">Test Analyze</button>
+    <div id="result"></div>
+    
+    <script>
+    function testSearch() {
+        fetch('http://localhost:8000/api/search', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({query: 'agent'})
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('result').innerHTML = 'Search Results: ' + JSON.stringify(data);
+        })
+        .catch(err => {
+            document.getElementById('result').innerHTML = 'Error: ' + err;
+        });
+    }
+    
+    function testAnalyze() {
+        fetch('http://localhost:8000/api/analyze/codebase', {method: 'POST'})
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('result').innerHTML = 'Analyze Results: ' + JSON.stringify(data);
+        })
+        .catch(err => {
+            document.getElementById('result').innerHTML = 'Error: ' + err;
+        });
+    }
+    </script>
+</body>
+</html>

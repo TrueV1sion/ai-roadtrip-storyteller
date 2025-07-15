@@ -1,0 +1,25 @@
+Subject: IAM Permissions Request for AI Road Trip Storyteller Staging
+
+Hello,
+
+I need the following IAM roles granted to the staging service account for the AI Road Trip Storyteller project:
+
+Service Account: roadtrip-staging-e6a9121e@roadtrip-460720.iam.gserviceaccount.com
+Project ID: roadtrip-460720
+
+Required Roles:
+- roles/cloudsql.client (Cloud SQL connectivity)
+- roles/redis.editor (Redis cache access)
+- roles/secretmanager.secretAccessor (Secret access)
+- roles/storage.objectAdmin (Storage management)
+- roles/aiplatform.user (AI services)
+- roles/cloudtexttospeech.client (Voice synthesis)
+- roles/logging.logWriter (Application logging)
+- roles/monitoring.metricWriter (Metrics collection)
+- roles/cloudtrace.agent (Distributed tracing)
+- roles/compute.networkUser (VPC access)
+- roles/vpcaccess.user (VPC connector usage)
+
+These permissions are needed to deploy and run the staging environment.
+
+Thank you!

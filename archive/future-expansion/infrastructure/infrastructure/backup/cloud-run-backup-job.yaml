@@ -1,0 +1,49 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: roadtrip-db-backup
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+    spec:
+      parallelism: 1
+      taskCount: 1
+      template:
+        spec:
+          serviceAccountName: roadtrip-backup@YOUR_PROJECT_ID.iam.gserviceaccount.com
+          containers:
+          - image: gcr.io/YOUR_PROJECT_ID/roadtrip-backup:latest
+            name: backup
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: roadtrip-database-url
+                  key: latest
+            - name: GCS_BACKUP_BUCKET
+              value: roadtrip-db-backups
+            - name: GOOGLE_CLOUD_PROJECT_ID
+              value: YOUR_PROJECT_ID
+            - name: RETENTION_DAYS
+              value: "30"
+            command:
+            - python
+            - /app/scripts/database_backup.py
+            - backup
+            resources:
+              limits:
+                memory: 1Gi
+                cpu: "1"
+            volumeMounts:
+            - mountPath: /var/backups/postgres
+              name: backup-vol
+          volumes:
+          - name: backup-vol
+            emptyDir:
+              sizeLimit: 10Gi
+          maxRetries: 3
+          timeoutSeconds: 1800  # 30 minutes

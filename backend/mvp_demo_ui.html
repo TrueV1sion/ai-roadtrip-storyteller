@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Road Trip Storyteller - MVP Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .voice-button {
+            background: #2196F3;
+        }
+        .voice-button:hover {
+            background: #1976D2;
+        }
+        .voice-button.recording {
+            background: #f44336;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .response {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        .response h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .story {
+            color: #555;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        .route-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .route-info h4 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .directions {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .direction-step {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .direction-step:last-child {
+            border-bottom: none;
+        }
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+        .audio-player {
+            margin-top: 15px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 AI Road Trip Storyteller</h1>
+        <p class="subtitle">Navigate anywhere with magical stories along the way!</p>
+        
+        <div class="input-group">
+            <label for="destination">Where would you like to go?</label>
+            <input type="text" id="destination" placeholder="e.g., Golden Gate Bridge, Disneyland, Yosemite">
+        </div>
+        
+        <div class="input-group">
+            <label for="location">Current Location (optional)</label>
+            <input type="text" id="location" placeholder="e.g., San Francisco" value="San Francisco">
+        </div>
+        
+        <button onclick="navigate()">🗺️ Navigate with Story</button>
+        <button class="voice-button" id="voiceButton" onclick="toggleVoiceRecording()">🎤 Use Voice Command</button>
+        
+        <div id="response"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://roadtrip-mvp-792001900150.us-central1.run.app/api/mvp/voice';
+        let isRecording = false;
+        let recognition = null;
+
+        // Initialize speech recognition if available
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('destination').value = transcript;
+                processVoiceCommand(transcript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                stopRecording();
+                showError('Speech recognition error: ' + event.error);
+            };
+            
+            recognition.onend = function() {
+                stopRecording();
+            };
+        }
+
+        function toggleVoiceRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            if (!recognition) {
+                showError('Speech recognition is not supported in your browser. Try Chrome or Edge.');
+                return;
+            }
+            
+            isRecording = true;
+            const button = document.getElementById('voiceButton');
+            button.classList.add('recording');
+            button.textContent = '⏹️ Stop Recording';
+            
+            recognition.start();
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            const button = document.getElementById('voiceButton');
+            button.classList.remove('recording');
+            button.textContent = '🎤 Use Voice Command';
+            
+            if (recognition) {
+                recognition.stop();
+            }
+        }
+
+        function processVoiceCommand(command) {
+            const location = document.getElementById('location').value || 'your location';
+            sendRequest(command, location);
+        }
+
+        async function navigate() {
+            const destination = document.getElementById('destination').value.trim();
+            const location = document.getElementById('location').value.trim() || 'your location';
+            
+            if (!destination) {
+                showError('Please enter a destination');
+                return;
+            }
+            
+            const command = `Navigate to ${destination}`;
+            sendRequest(command, location);
+        }
+
+        async function sendRequest(command, locationName) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '<div class="loading">🔄 Planning your journey...</div>';
+            
+            // Default to San Francisco coordinates if no specific location
+            const coords = getCoordinatesForLocation(locationName);
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_input: command,
+                        context: {
+                            location: coords,
+                            location_name: locationName
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                displayResponse(data);
+                
+            } catch (error) {
+                showError('Failed to connect to the service: ' + error.message);
+            }
+        }
+
+        function getCoordinatesForLocation(location) {
+            // Simple coordinate lookup for demo
+            const locations = {
+                'san francisco': { lat: 37.7749, lng: -122.4194 },
+                'los angeles': { lat: 34.0522, lng: -118.2437 },
+                'san diego': { lat: 32.7157, lng: -117.1611 },
+                'sacramento': { lat: 38.5816, lng: -121.4944 },
+                'san jose': { lat: 37.3382, lng: -121.8863 }
+            };
+            
+            const key = location.toLowerCase();
+            return locations[key] || locations['san francisco'];
+        }
+
+        function displayResponse(data) {
+            const responseDiv = document.getElementById('response');
+            
+            if (data.response.type === 'error') {
+                showError(data.response.text);
+                return;
+            }
+            
+            let html = '<div class="response">';
+            html += '<h3>🎯 ' + data.response.destination + '</h3>';
+            
+            // Story
+            html += '<div class="story">' + data.response.text + '</div>';
+            
+            // Audio player if available
+            if (data.audio_url) {
+                html += '<audio controls class="audio-player">';
+                html += '<source src="' + data.audio_url + '" type="audio/mpeg">';
+                html += 'Your browser does not support audio playback.';
+                html += '</audio>';
+            }
+            
+            // Route information
+            if (data.route) {
+                html += '<div class="route-info">';
+                html += '<h4>📍 Route Details</h4>';
+                html += '<p><strong>Distance:</strong> ' + data.route.distance + '</p>';
+                html += '<p><strong>Duration:</strong> ' + data.route.duration + '</p>';
+                html += '<p><strong>From:</strong> ' + data.route.start_address + '</p>';
+                html += '<p><strong>To:</strong> ' + data.route.end_address + '</p>';
+                html += '</div>';
+                
+                // Turn-by-turn directions
+                if (data.route.steps && data.route.steps.length > 0) {
+                    html += '<div class="directions">';
+                    html += '<h4>🧭 Turn-by-Turn Directions</h4>';
+                    data.route.steps.forEach((step, index) => {
+                        html += '<div class="direction-step">';
+                        html += '<span class="step-number">' + (index + 1) + '</span>';
+                        html += step.instruction + ' (' + step.distance + ')';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                }
+            }
+            
+            html += '</div>';
+            responseDiv.innerHTML = html;
+        }
+
+        function showError(message) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '<div class="error">❌ ' + message + '</div>';
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('destination').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                navigate();
+            }
+        });
+    </script>
+</body>
+</html>

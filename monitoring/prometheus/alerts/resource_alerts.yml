@@ -1,0 +1,32 @@
+groups:
+- name: resource_alerts
+  rules:
+  - alert: HighCPUUsage
+    annotations:
+      description: CPU usage is {{ $value | humanize }}%
+      summary: High CPU usage
+    expr: 100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 10m
+    labels:
+      severity: warning
+      team: ops
+  - alert: HighMemoryUsage
+    annotations:
+      description: Memory usage is {{ $value | humanize }}%
+      summary: High memory usage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+      > 85
+    for: 10m
+    labels:
+      severity: warning
+      team: ops
+  - alert: DiskSpaceLow
+    annotations:
+      description: Only {{ $value | humanize }}% disk space remaining
+      summary: Low disk space
+    expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})
+      * 100 < 10
+    for: 5m
+    labels:
+      severity: critical
+      team: ops

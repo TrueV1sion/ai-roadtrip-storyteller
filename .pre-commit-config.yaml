@@ -1,0 +1,116 @@
+repos:
+# Detect secrets in commits - CRITICAL SECURITY
+-   repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+    -   id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: .*\.lock$|package-lock\.json$
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+    -   id: check-ast
+    -   id: check-json
+    -   id: check-merge-conflict
+    -   id: detect-private-key
+    -   id: double-quote-string-fixer
+    -   id: debug-statements  # Prevent Python debug statements
+
+-   repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+    -   id: black
+        language_version: python3.11
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+    -   id: isort
+        args: ["--profile", "black"]
+
+-   repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+    -   id: flake8
+        additional_dependencies:
+        -   flake8-docstrings
+        -   flake8-comprehensions
+        -   flake8-bugbear
+        -   flake8-annotations
+        args: ["--max-line-length=79"]
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+    -   id: mypy
+        additional_dependencies:
+        -   types-requests
+        -   types-setuptools
+
+-   repo: https://github.com/PyCQA/bandit
+    rev: 1.7.7
+    hooks:
+    -   id: bandit
+        args: ["-ll", "-r", "src"]
+
+-   repo: https://github.com/PyCQA/pylint
+    rev: v3.0.3
+    hooks:
+    -   id: pylint
+        args:
+        -   --max-line-length=79
+        -   --disable=C0111  # missing-docstring
+        -   --disable=C0103  # invalid-name
+        -   --fail-under=9.0
+
+-   repo: local
+    hooks:
+    -   id: pytest-check
+        name: pytest-check
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        args: ["tests/"]
+
+    -   id: coverage-check
+        name: coverage-check
+        entry: coverage run -m pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        args: ["--cov=src", "--cov-fail-under=80"]
+
+    -   id: security-check
+        name: security-check
+        entry: safety
+        language: system
+        pass_filenames: false
+        always_run: true
+        args: ["check"]
+    
+    -   id: no-console-log
+        name: Check for console.log statements
+        entry: 'console\.(log|debug|warn|error)\('
+        language: pygrep
+        types: [javascript, typescript, tsx, jsx]
+        exclude: '(test_|_test\.|examples/|demo/)'
+    
+    -   id: no-sensitive-logging
+        name: Check for sensitive parameter logging
+        entry: 'logger\.debug.*([Pp]arameters|[Qq]uery.*{|user_id)'
+        language: pygrep
+        types: [python]
+        exclude: '(test_|_test\.py|examples/|demo/)'
+    
+    -   id: no-print-in-prod
+        name: Check for print statements in production code
+        entry: '^\s*print\s*\('
+        language: pygrep
+        types: [python]
+        exclude: '(test_|_test\.py|examples/|demo/|__main__)' 

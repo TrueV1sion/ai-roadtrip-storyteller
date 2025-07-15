@@ -1,0 +1,446 @@
+groups:
+  # Application Performance Alerts
+  - name: roadtrip_performance_alerts
+    interval: 30s
+    rules:
+      # Critical Performance Issues
+      - alert: APIHighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) 
+            / 
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+        annotations:
+          summary: "High API error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+          runbook_url: "https://wiki.roadtrip.ai/runbooks/high-error-rate"
+          
+      - alert: APIVeryHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          ) > 3
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+        annotations:
+          summary: "Very high latency on endpoint {{ $labels.endpoint }}"
+          description: "95th percentile latency is {{ $value }}s (threshold: 3s)"
+          
+      - alert: APIHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, endpoint)
+          ) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High latency on endpoint {{ $labels.endpoint }}"
+          description: "95th percentile latency is {{ $value }}s (threshold: 1.5s)"
+
+  # Database Alerts
+  - name: roadtrip_database_alerts
+    interval: 30s
+    rules:
+      - alert: DatabaseConnectionPoolCritical
+        expr: |
+          (
+            database_pool_connections_used / database_pool_connections_max
+          ) > 0.95
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+        annotations:
+          summary: "Database connection pool critically exhausted"
+          description: "{{ $value | humanizePercentage }} of connections are in use"
+          runbook_url: "https://wiki.roadtrip.ai/runbooks/database-pool-exhausted"
+          
+      - alert: DatabaseConnectionPoolHigh
+        expr: |
+          (
+            database_pool_connections_used / database_pool_connections_max
+          ) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Database connection pool usage high"
+          description: "{{ $value | humanizePercentage }} of connections are in use"
+          
+      - alert: DatabaseDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "Database has been unreachable for more than 1 minute"
+          runbook_url: "https://wiki.roadtrip.ai/runbooks/database-down"
+          
+      - alert: DatabaseSlowQueries
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(database_query_duration_seconds_bucket[5m])) by (query_type, le)
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Query type {{ $labels.query_type }} P95 latency is {{ $value }}s"
+          
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is {{ $value }}s"
+
+  # Redis Alerts
+  - name: roadtrip_redis_alerts
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been unreachable for more than 1 minute"
+          runbook_url: "https://wiki.roadtrip.ai/runbooks/redis-down"
+          
+      - alert: RedisHighMemoryUsage
+        expr: |
+          (
+            redis_memory_used_bytes / redis_memory_max_bytes
+          ) > 0.9
+        for: 10m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+        annotations:
+          summary: "Redis memory usage critically high"
+          description: "Redis is using {{ $value | humanizePercentage }} of available memory"
+          
+      - alert: RedisCacheHitRateLow
+        expr: |
+          (
+            sum(rate(cache_hits_total[10m]))
+            /
+            sum(rate(cache_requests_total[10m]))
+          ) < 0.6
+        for: 15m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Redis cache hit rate is low"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 60%)"
+          
+      - alert: RedisEvictingKeys
+        expr: increase(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Redis is evicting keys"
+          description: "Redis evicted {{ $value }} keys in the last 5 minutes"
+
+  # AI Service Alerts
+  - name: roadtrip_ai_service_alerts
+    interval: 30s
+    rules:
+      - alert: AIServiceFailuresCritical
+        expr: |
+          sum(rate(ai_requests_total{status="error"}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+          service: ai
+        annotations:
+          summary: "Critical AI service failure rate"
+          description: "{{ $value }} failures per second in the last 5 minutes"
+          runbook_url: "https://wiki.roadtrip.ai/runbooks/ai-service-failures"
+          
+      - alert: AIServiceFailuresHigh
+        expr: |
+          sum(rate(ai_requests_total{status="error"}[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+          service: ai
+        annotations:
+          summary: "High AI service failure rate"
+          description: "{{ $value }} failures per second in the last 5 minutes"
+          
+      - alert: AIServiceHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(ai_request_duration_seconds_bucket[5m])) by (le, model)
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+          service: ai
+        annotations:
+          summary: "AI service high latency for model {{ $labels.model }}"
+          description: "P95 latency is {{ $value }}s"
+          
+      - alert: AIServiceCostAlert
+        expr: |
+          sum(increase(ai_api_cost_dollars[1h])) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+          finance: true
+        annotations:
+          summary: "High AI API costs detected"
+          description: "AI API costs in the last hour: ${{ $value }}"
+
+  # Security Alerts
+  - name: roadtrip_security_alerts
+    interval: 30s
+    rules:
+      - alert: SecurityBruteForceAttempt
+        expr: |
+          sum(increase(failed_login_attempts_total[5m])) by (ip_address) > 20
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+          pagerduty: true
+        annotations:
+          summary: "Brute force login attempt detected"
+          description: "IP {{ $labels.ip_address }} has {{ $value }} failed login attempts"
+          runbook_url: "https://wiki.roadtrip.ai/runbooks/brute-force-attack"
+          
+      - alert: SecuritySQLInjectionAttempt
+        expr: |
+          sum(rate(security_events_total{event_type="sql_injection_attempt"}[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+          pagerduty: true
+        annotations:
+          summary: "SQL injection attempt detected"
+          description: "SQL injection attempts detected at {{ $value }} per second"
+          
+      - alert: SecurityAnomalousTraffic
+        expr: |
+          sum(rate(http_requests_total[5m])) by (ip_address) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Anomalous traffic from IP {{ $labels.ip_address }}"
+          description: "IP is making {{ $value }} requests per second"
+          
+      - alert: SecurityUnauthorizedAccess
+        expr: |
+          sum(increase(security_events_total{event_type="unauthorized_access"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Multiple unauthorized access attempts"
+          description: "{{ $value }} unauthorized access attempts in the last 5 minutes"
+
+  # Infrastructure Alerts
+  - name: roadtrip_infrastructure_alerts
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}%"
+          
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            100 - ((node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100)
+          ) > 90
+        for: 10m
+        labels:
+          severity: critical
+          team: devops
+          pagerduty: true
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value }}%"
+          
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"} 
+            / 
+            node_filesystem_size_bytes{mountpoint="/"} 
+            * 100
+          ) < 10
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+          pagerduty: true
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Only {{ $value }}% disk space remaining"
+          
+      - alert: ServiceDown
+        expr: up{job=~"roadtrip.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: devops
+          pagerduty: true
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.instance }} has been down for more than 2 minutes"
+          runbook_url: "https://wiki.roadtrip.ai/runbooks/service-down"
+
+  # Business Metrics Alerts
+  - name: roadtrip_business_alerts
+    interval: 60s
+    rules:
+      - alert: LowUserRegistrationRate
+        expr: |
+          sum(rate(user_registrations_total[1h])) < 0.01
+        for: 2h
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "Low user registration rate"
+          description: "Less than {{ $value }} registrations per second in the last hour"
+          
+      - alert: BookingServiceDown
+        expr: |
+          sum(rate(booking_requests_total[5m])) == 0
+        for: 10m
+        labels:
+          severity: critical
+          team: backend
+          pagerduty: true
+        annotations:
+          summary: "No booking requests received"
+          description: "No booking requests in the last 10 minutes - service may be down"
+          
+      - alert: PaymentProcessingFailures
+        expr: |
+          (
+            sum(rate(payment_failures_total[5m]))
+            /
+            sum(rate(payment_attempts_total[5m]))
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+          finance: true
+          pagerduty: true
+        annotations:
+          summary: "High payment processing failure rate"
+          description: "{{ $value | humanizePercentage }} of payments are failing"
+          
+      - alert: LowStoryGenerationRate
+        expr: |
+          sum(rate(story_generated_total[30m])) < 0.01
+        for: 1h
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: "Low story generation rate"
+          description: "Story generation rate is {{ $value }} per second"
+
+  # SSL Certificate Monitoring
+  - name: roadtrip_ssl_alerts
+    interval: 300s
+    rules:
+      - alert: SSLCertificateExpiringSoon
+        expr: |
+          probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+        for: 1h
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "Certificate expires in {{ $value | humanizeDuration }}"
+          
+      - alert: SSLCertificateExpiryCritical
+        expr: |
+          probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 1h
+        labels:
+          severity: critical
+          team: devops
+          pagerduty: true
+        annotations:
+          summary: "SSL certificate expiring critically soon"
+          description: "Certificate expires in {{ $value | humanizeDuration }}"
+
+  # Capacity Planning Alerts
+  - name: roadtrip_capacity_alerts
+    interval: 300s
+    rules:
+      - alert: PredictedCapacityShortage
+        expr: |
+          predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[1h], 24*3600) < 0
+        for: 30m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Predicted disk space shortage"
+          description: "Disk space on {{ $labels.instance }} predicted to run out in 24 hours"
+          
+      - alert: DatabaseGrowthRate
+        expr: |
+          rate(pg_database_size_bytes[1h]) > 1073741824
+        for: 1h
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Database growing rapidly"
+          description: "Database is growing at {{ $value | humanize }}B per hour"

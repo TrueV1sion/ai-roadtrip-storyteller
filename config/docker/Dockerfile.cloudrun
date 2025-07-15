@@ -1,0 +1,40 @@
+FROM python:3.9-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn
+
+# Copy application code
+COPY backend backend/
+COPY alembic.ini .
+COPY alembic alembic/
+
+# Cloud Run specific settings
+ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+ENV ENVIRONMENT=production
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD python -c "import requests; requests.get('http://localhost:8080/health')"
+
+# Copy Gunicorn configuration
+COPY backend/gunicorn_config.py /app/backend/gunicorn_config.py
+
+# Start the application with production configuration
+CMD exec gunicorn backend.app.main:app -c backend/gunicorn_config.py

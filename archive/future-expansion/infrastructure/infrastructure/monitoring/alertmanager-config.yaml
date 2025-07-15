@@ -1,0 +1,180 @@
+global:
+  # Global settings
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@roadtrip.app'
+  smtp_auth_username: 'alerts@roadtrip.app'
+  smtp_auth_password: '$SMTP_PASSWORD'
+  smtp_require_tls: true
+  
+  # Slack webhook
+  slack_api_url: '$SLACK_WEBHOOK_URL'
+  
+  # Default settings
+  resolve_timeout: 5m
+  http_config:
+    follow_redirects: true
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree definition
+route:
+  # Default receiver
+  receiver: 'default'
+  
+  # Group alerts by these labels
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # Wait time before sending group notification
+  group_wait: 30s
+  
+  # Wait time before sending new alerts for a group
+  group_interval: 5m
+  
+  # Wait time before re-sending notifications
+  repeat_interval: 12h
+  
+  # Child routes for specific routing
+  routes:
+    # Critical alerts go to PagerDuty
+    - match:
+        severity: critical
+      receiver: pagerduty-critical
+      group_wait: 10s
+      repeat_interval: 30m
+      
+    # Security alerts go to security team
+    - match:
+        service: security
+      receiver: security-team
+      group_wait: 10s
+      repeat_interval: 1h
+      
+    # Business/revenue alerts
+    - match:
+        service: business
+      receiver: business-team
+      repeat_interval: 6h
+      
+    # Infrastructure alerts
+    - match:
+        service: infrastructure
+      receiver: devops-team
+      
+    # Database alerts
+    - match:
+        service: database
+      receiver: database-team
+      group_wait: 1m
+      
+    # SSL certificate alerts
+    - match:
+        service: ssl
+      receiver: devops-team
+      repeat_interval: 24h
+
+# Inhibition rules
+inhibit_rules:
+  # Inhibit warning alerts if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
+    
+  # Inhibit all alerts if system is in maintenance
+  - source_match:
+      alertname: 'MaintenanceMode'
+    target_match_re:
+      alertname: '.+'
+
+# Receivers definition
+receivers:
+  # Default receiver (Slack)
+  - name: 'default'
+    slack_configs:
+      - channel: '#roadtrip-alerts'
+        title: 'AI Road Trip Alert'
+        icon_emoji: ':rotating_light:'
+        send_resolved: true
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}{{ end }}'
+        
+  # PagerDuty for critical alerts
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key: '$PAGERDUTY_SERVICE_KEY'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+        details:
+          firing: '{{ .Alerts.Firing | len }}'
+          resolved: '{{ .Alerts.Resolved | len }}'
+          description: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        severity: 'critical'
+        client: 'AI Road Trip Storyteller'
+        client_url: 'https://roadtrip.app/alerts/{{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#roadtrip-critical'
+        title: 'CRITICAL: {{ .GroupLabels.alertname }}'
+        color: 'danger'
+        
+  # Security team
+  - name: 'security-team'
+    email_configs:
+      - to: 'security@roadtrip.app'
+        headers:
+          Subject: 'Security Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Security Alert</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Severity:</strong> {{ .CommonLabels.severity }}</p>
+          {{ range .Alerts }}
+          <hr>
+          <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+          <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+          <p><strong>Time:</strong> {{ .StartsAt.Format "2006-01-02 15:04:05" }}</p>
+          {{ end }}
+    slack_configs:
+      - channel: '#security-alerts'
+        title: 'Security: {{ .GroupLabels.alertname }}'
+        color: 'warning'
+        
+  # Business team
+  - name: 'business-team'
+    slack_configs:
+      - channel: '#business-metrics'
+        title: 'Business Alert: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+        text: |
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Metric Value:* {{ .Labels.value }}
+          {{ end }}
+          
+  # DevOps team
+  - name: 'devops-team'
+    slack_configs:
+      - channel: '#devops'
+        title: 'Infrastructure: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+    webhook_configs:
+      - url: 'http://runbook-automation.internal/webhook'
+        send_resolved: true
+        
+  # Database team
+  - name: 'database-team'
+    email_configs:
+      - to: 'dba@roadtrip.app'
+        headers:
+          Subject: 'Database Alert: {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#database-alerts'
+        title: 'Database: {{ .GroupLabels.alertname }}'
+        color: 'danger'
+        actions:
+          - type: 'button'
+            text: 'View Dashboards'
+            url: 'https://grafana.roadtrip.app/d/postgres-overview'
+          - type: 'button'
+            text: 'Runbook'
+            url: 'https://wiki.roadtrip.app/runbooks/database/{{ .GroupLabels.alertname }}'

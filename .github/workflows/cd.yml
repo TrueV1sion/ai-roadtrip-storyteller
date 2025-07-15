@@ -1,0 +1,97 @@
+name: CD Pipeline
+'on':
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        default: staging
+        type: choice
+        options:
+        - staging
+        - production
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+  REGION: us-central1
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.environment == 'staging'
+    environment: staging
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ env.GCP_SA_KEY }}
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+    - name: Configure Docker for GCR
+      run: gcloud auth configure-docker
+    - name: Build and push Docker image
+      run: 'docker build -t gcr.io/${{ env.GCP_PROJECT_ID }}/roadtrip-backend:${{
+        github.sha }} .
+
+        docker push gcr.io/${{ env.GCP_PROJECT_ID }}/roadtrip-backend:${{ github.sha
+        }}'
+    - name: Deploy to Cloud Run (Staging)
+      run: gcloud run deploy roadtrip-api-staging   --image gcr.io/${{ env.GCP_PROJECT_ID
+        }}/roadtrip-backend:${{ github.sha }}   --region ${{ env.REGION }}   --platform
+        managed   --allow-unauthenticated   --set-env-vars ENVIRONMENT=staging
+    - name: Run smoke tests
+      run: 'pip install requests pytest
+
+        pytest tests/smoke/test_staging.py'
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'production'
+    environment: production
+    needs: deploy-staging
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ env.GCP_SA_KEY }}
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+    - name: Blue-Green Deployment
+      run: '# Deploy to green environment
+
+        gcloud run deploy roadtrip-api-green   --image gcr.io/${{ env.GCP_PROJECT_ID
+        }}/roadtrip-backend:${{ github.sha }}   --region ${{ env.REGION }}   --platform
+        managed   --no-traffic   --set-env-vars ENVIRONMENT=production
+
+
+        # Run production tests
+
+        pytest tests/integration/test_production.py
+
+
+        # Gradually shift traffic
+
+        gcloud run services update-traffic roadtrip-api-production   --to-revisions
+        roadtrip-api-green=10   --region ${{ env.REGION }}
+
+
+        # Monitor for 5 minutes
+
+        sleep 300
+
+
+        # If successful, shift all traffic
+
+        gcloud run services update-traffic roadtrip-api-production   --to-revisions
+        roadtrip-api-green=100   --region ${{ env.REGION }}'
+    - name: Notify deployment
+      uses: actions/github-script@v6
+      with:
+        script: "github.rest.issues.createComment({\n  issue_number: context.issue.number,\n\
+          \  owner: context.repo.owner,\n  repo: context.repo.repo,\n  body: '\u2705\
+          \ Production deployment completed successfully!'\n})"

@@ -1,0 +1,55 @@
+# Staging Dockerfile with minimal setup
+FROM python:3.9-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
+ENV PYTHONPATH=/app/backend
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies
+COPY requirements.prod.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the backend
+COPY backend ./backend
+
+# Create a simple health check endpoint
+RUN echo '#!/usr/bin/env python3\n\
+from fastapi import FastAPI\n\
+import os\n\
+\n\
+app = FastAPI(title="RoadTrip Staging", version="1.0.0")\n\
+\n\
+@app.get("/health")\n\
+def health():\n\
+    return {\n\
+        "status": "healthy",\n\
+        "environment": os.getenv("ENVIRONMENT", "unknown"),\n\
+        "version": "1.0.0"\n\
+    }\n\
+\n\
+@app.get("/")\n\
+def root():\n\
+    return {\n\
+        "message": "AI Road Trip Storyteller - Staging",\n\
+        "status": "running",\n\
+        "docs": "/docs"\n\
+    }\n' > /app/staging_app.py
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8080
+
+# Use simple staging app for now
+CMD exec gunicorn -w 2 -k uvicorn.workers.UvicornWorker staging_app:app --bind 0.0.0.0:${PORT} --timeout 120 --graceful-timeout 30 --keep-alive 5

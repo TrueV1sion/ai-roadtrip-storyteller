@@ -1,0 +1,85 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: roadtrip-prod
+spec:
+  # Run backup daily at 2 AM UTC
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+        spec:
+          serviceAccountName: roadtrip-backup
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: gcr.io/YOUR_PROJECT_ID/roadtrip-backup:latest
+            imagePullPolicy: Always
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: roadtrip-secrets
+                  key: database-url
+            - name: GCS_BACKUP_BUCKET
+              value: "roadtrip-db-backups"
+            - name: GOOGLE_CLOUD_PROJECT_ID
+              value: "YOUR_PROJECT_ID"
+            - name: RETENTION_DAYS
+              value: "30"
+            command:
+            - python
+            - /app/scripts/database_backup.py
+            - backup
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /var/backups/postgres
+          volumes:
+          - name: backup-storage
+            emptyDir: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: roadtrip-backup
+  namespace: roadtrip-prod
+  annotations:
+    iam.gke.io/gcp-service-account: roadtrip-backup@YOUR_PROJECT_ID.iam.gserviceaccount.com
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backup-role
+  namespace: roadtrip-prod
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-rolebinding
+  namespace: roadtrip-prod
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: backup-role
+subjects:
+- kind: ServiceAccount
+  name: roadtrip-backup
+  namespace: roadtrip-prod

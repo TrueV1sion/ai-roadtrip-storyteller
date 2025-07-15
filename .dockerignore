@@ -1,0 +1,57 @@
+# Git files
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Python cache and virtual environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# IDE and editor configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files and coverage reports
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Secrets / Environment files (should not be in image)
+.env
+.env.*
+*.env
+
+# Mobile app directory (assuming it's not needed in backend image)
+mobile/
+
+# Other project specific files not needed in the backend image
+*.md
+alembic.ini
+alembic/
+.pre-commit-config.yaml
+.mypy_cache/
+scripts/
+docs/
+infrastructure/
+src/ # Assuming backend code is solely within backend/app

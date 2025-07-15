@@ -1,0 +1,40 @@
+exporters:
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8888
+processors:
+  batch:
+    send_batch_size: 1024
+    timeout: 1s
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+    spike_limit_mib: 128
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+service:
+  pipelines:
+    metrics:
+      exporters:
+      - prometheus
+      processors:
+      - memory_limiter
+      - batch
+      receivers:
+      - otlp
+    traces:
+      exporters:
+      - jaeger
+      processors:
+      - memory_limiter
+      - batch
+      receivers:
+      - otlp

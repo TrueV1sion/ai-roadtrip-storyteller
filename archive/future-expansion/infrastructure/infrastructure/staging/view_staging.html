@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Road Trip Storyteller - Staging Environment</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        .status-card h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .endpoint {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .endpoint-url {
+            color: #007bff;
+            text-decoration: none;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .endpoint-url:hover {
+            text-decoration: underline;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-live {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #5a67d8;
+        }
+        .response-viewer {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .success {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 AI Road Trip Storyteller</h1>
+        <p class="subtitle">Staging Environment Dashboard</p>
+        
+        <div class="status-card">
+            <h3>🌐 Environment Status</h3>
+            <div class="endpoint">
+                <span>Cloud Run Service</span>
+                <span class="status-badge status-live">LIVE</span>
+            </div>
+            <div class="endpoint">
+                <span>Database (PostgreSQL)</span>
+                <span class="status-badge status-pending">Pending IAM</span>
+            </div>
+            <div class="endpoint">
+                <span>Cache (Redis)</span>
+                <span class="status-badge status-pending">Pending IAM</span>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h3>🔗 API Endpoints</h3>
+            <div class="endpoint">
+                <a href="https://roadtrip-backend-staging-792001900150.us-central1.run.app" 
+                   target="_blank" 
+                   class="endpoint-url">
+                    https://roadtrip-backend-staging-792001900150.us-central1.run.app
+                </a>
+                <button onclick="testEndpoint('/', 'root-response')" class="button">Test</button>
+            </div>
+            <div id="root-response" class="response-viewer" style="display: none;"></div>
+            
+            <div class="endpoint">
+                <a href="https://roadtrip-backend-staging-792001900150.us-central1.run.app/health" 
+                   target="_blank" 
+                   class="endpoint-url">
+                    /health
+                </a>
+                <button onclick="testEndpoint('/health', 'health-response')" class="button">Test</button>
+            </div>
+            <div id="health-response" class="response-viewer" style="display: none;"></div>
+        </div>
+
+        <div class="status-card">
+            <h3>📊 Service Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;"><strong>Project ID</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">roadtrip-460720</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;"><strong>Region</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">us-central1</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;"><strong>Service Account</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6; font-size: 12px;">roadtrip-staging-e6a9121e@roadtrip-460720.iam.gserviceaccount.com</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;"><strong>CPU / Memory</strong></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #dee2e6;">1 vCPU / 1 GB</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px;"><strong>Auto-scaling</strong></td>
+                    <td style="padding: 10px;">1 - 20 instances</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="status-card">
+            <h3>🚀 Next Steps</h3>
+            <ol>
+                <li>Deploy your application code to replace the placeholder</li>
+                <li>Grant IAM permissions for database and cache access</li>
+                <li>Configure VPC connector for private networking</li>
+                <li>Run the full validation test suite</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        async function testEndpoint(path, responseId) {
+            const responseDiv = document.getElementById(responseId);
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '<span class="loading">Testing endpoint...</span>';
+            
+            try {
+                const response = await fetch(`https://roadtrip-backend-staging-792001900150.us-central1.run.app${path}`);
+                const data = await response.json();
+                responseDiv.innerHTML = `<span class="success">Response (${response.status}):</span>\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                responseDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            }
+        }
+
+        // Auto-test health endpoint on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testEndpoint('/health', 'health-response');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

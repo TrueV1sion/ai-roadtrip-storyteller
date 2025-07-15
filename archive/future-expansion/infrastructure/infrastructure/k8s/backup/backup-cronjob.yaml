@@ -1,0 +1,132 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: roadtrip
+spec:
+  # Run daily at 2 AM UTC
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: backup-job
+        spec:
+          serviceAccountName: backup-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: backup
+            image: gcr.io/${PROJECT_ID}/roadtrip-backup:latest
+            env:
+            - name: PROJECT_ID
+              value: "${PROJECT_ID}"
+            - name: BUCKET_NAME
+              value: "roadtrip-backups"
+            - name: ENVIRONMENT
+              value: "production"
+            - name: DB_HOST
+              value: "postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: database-credentials
+                  key: database-name
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: database-credentials
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-credentials
+                  key: password
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: password
+            - name: MONITORING_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-config
+                  key: webhook-url
+                  optional: true
+            - name: BACKUP_RETENTION_DAYS
+              value: "30"
+            command: ["/app/scripts/backup/automated_backup.sh"]
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "250m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-sa
+  namespace: roadtrip
+  annotations:
+    iam.gke.io/gcp-service-account: roadtrip-backup@${PROJECT_ID}.iam.gserviceaccount.com
+---
+# Backup verification job - runs 1 hour after backup
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-verification
+  namespace: roadtrip
+spec:
+  # Run daily at 3 AM UTC (1 hour after backup)
+  schedule: "0 3 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app: backup-verification
+        spec:
+          serviceAccountName: backup-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: verify
+            image: gcr.io/${PROJECT_ID}/roadtrip-backup:latest
+            env:
+            - name: PROJECT_ID
+              value: "${PROJECT_ID}"
+            - name: BUCKET_NAME
+              value: "roadtrip-backups"
+            command:
+              - python3
+              - /app/scripts/backup/verify_backups.py
+              - --project-id
+              - "${PROJECT_ID}"
+              - --bucket-name
+              - roadtrip-backups
+              - --backup-type
+              - all
+              - --days
+              - "1"
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "100m"
+              limits:
+                memory: "512Mi"
+                cpu: "250m"

@@ -1,0 +1,147 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    tenant_id: roadtrip
+
+scrape_configs:
+  # Docker container logs
+  - job_name: containers
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: containerlogs
+          __path__: /var/lib/docker/containers/*/*log
+    
+    pipeline_stages:
+      # Extract container name from filename
+      - json:
+          expressions:
+            output: log
+            stream: stream
+            attrs:
+      
+      - regex:
+          expression: '(?P<container_name>(?:[^|]*))\.'
+          source: filename
+      
+      - labels:
+          container_name:
+      
+      # Parse different log formats
+      - match:
+          selector: '{container_name=~"roadtrip-api.*"}'
+          stages:
+            - json:
+                expressions:
+                  level: level
+                  timestamp: timestamp
+                  logger: logger
+                  message: message
+                  request_id: request_id
+                  worker_id: worker_id
+            - labels:
+                level:
+                logger:
+                request_id:
+                worker_id:
+            - timestamp:
+                source: timestamp
+                format: RFC3339
+      
+      # Parse Gunicorn access logs
+      - match:
+          selector: '{container_name=~"roadtrip-api.*",stream="stdout"}'
+          stages:
+            - regex:
+                expression: '^(?P<timestamp>\S+) (?P<remote_addr>\S+) "(?P<method>\S+) (?P<path>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<size>\d+) "(?P<referer>[^"]*)" "(?P<user_agent>[^"]*)" request_id=(?P<request_id>\S+) response_time=(?P<response_time>\d+)ms'
+            - labels:
+                method:
+                status:
+                request_id:
+            - metrics:
+                response_time:
+                  type: Histogram
+                  description: "Response time in milliseconds"
+                  source: response_time
+                  config:
+                    buckets: [10, 50, 100, 200, 500, 1000, 2000, 5000]
+      
+      # Parse Redis logs
+      - match:
+          selector: '{container_name="roadtrip-redis"}'
+          stages:
+            - regex:
+                expression: '^(?P<pid>\d+):(?P<role>\S) (?P<timestamp>\S+ \S+) (?P<level>\*|#|-|\.) (?P<message>.*)$'
+            - labels:
+                role:
+                level:
+      
+      # Parse PostgreSQL logs
+      - match:
+          selector: '{container_name="roadtrip-postgres"}'
+          stages:
+            - regex:
+                expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \w+) \[(?P<pid>\d+)\] (?P<level>\w+):  (?P<message>.*)$'
+            - labels:
+                level:
+            - timestamp:
+                source: timestamp
+                format: "2006-01-02 15:04:05.000 MST"
+      
+      # Parse Celery worker logs
+      - match:
+          selector: '{container_name=~"roadtrip-worker.*"}'
+          stages:
+            - json:
+                expressions:
+                  level: levelname
+                  timestamp: asctime
+                  task: task
+                  task_id: task_id
+                  message: message
+            - labels:
+                level:
+                task:
+                task_id:
+  
+  # System logs
+  - job_name: syslog
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: syslog
+          __path__: /var/log/syslog
+  
+  # Application-specific log files
+  - job_name: roadtrip_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: roadtrip
+          app: backend
+          __path__: /app/logs/*.log
+    
+    pipeline_stages:
+      - multiline:
+          firstline: '^\d{4}-\d{2}-\d{2}'
+          max_wait_time: 3s
+      
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - (?P<logger>\S+) - (?P<level>\w+) - (?P<message>.*)$'
+      
+      - labels:
+          logger:
+          level:
+      
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02 15:04:05,000"

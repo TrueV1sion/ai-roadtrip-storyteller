@@ -1,0 +1,139 @@
+# Core dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+gunicorn==21.2.0
+pydantic==2.5.2
+pydantic-settings==2.1.0
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+python-jose==3.3.0
+passlib==1.7.4
+python-multipart==0.0.6
+python-dotenv==1.0.0
+httpx==0.25.2
+requests==2.31.0
+itsdangerous==2.1.2
+polyline==1.4.0
+
+# Google Cloud Services
+google-cloud-aiplatform==1.36.4
+vertexai==0.0.1
+google-cloud-language==2.13.0
+google-maps-services-python==0.1.0
+google-cloud-texttospeech==2.14.1
+google-cloud-storage==2.14.0
+google-cloud-speech==2.20.0
+google-cloud-secret-manager==2.16.2
+google-cloud-logging==3.5.0
+google-cloud-translate==3.11.2
+
+# AI and ML
+langchain==0.1.0
+langchain-google-vertexai==0.0.1
+numpy==1.24.3
+pandas==2.0.3
+scikit-learn==1.3.2
+
+# Spotify integration
+spotipy==2.23.0
+
+# Caching and performance
+redis==5.0.1
+aioredis==2.0.1
+slowapi==0.1.9
+python-limiter==1.2.1
+
+# Third-party integrations
+stripe==7.5.0
+twilio==8.10.1
+sendgrid==6.11.0
+
+# Async support
+aiofiles==23.2.1
+aiohttp==3.9.1
+
+# Security
+cryptography==41.0.7
+python-owasp==2.0.0
+
+# Monitoring - Enhanced
+prometheus-client==0.19.0
+prometheus-fastapi-instrumentator==6.1.0
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-instrumentation-redis==0.42b0
+opentelemetry-instrumentation-celery==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-exporter-otlp-proto-grpc==1.21.0
+opentelemetry-propagator-b3==1.21.0
+
+# Database migrations
+alembic==1.13.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+black==23.11.0
+isort==5.12.0
+mypy==1.7.1
+ruff==0.1.6
+types-requests==2.28.11.8
+
+# NEW: Event-driven architecture
+celery==5.3.4
+kombu==5.3.4
+flower==2.0.1  # Celery monitoring UI
+celery-redbeat==2.1.1  # Redis-based Celery beat scheduler
+
+# NEW: GraphQL API
+strawberry-graphql==0.217.1
+strawberry-graphql[fastapi]==0.217.1
+strawberry-graphql[subscriptions]==0.217.1
+
+# NEW: Correlation and context
+contextvars==2.4  # Built-in, but explicit for clarity
+
+# NEW: Event sourcing
+sqlalchemy-utils==0.41.1  # Additional SQLAlchemy utilities
+
+# NEW: Database read replicas and connection pooling
+pgbouncer==1.21.0  # Connection pooler (system package)
+sqlalchemy[asyncio]==2.0.23  # Async support
+
+# NEW: Data warehouse and analytics
+dbt-core==1.7.3  # Data transformation
+dbt-postgres==1.7.3
+apache-airflow==2.8.0  # ETL orchestration (optional, can use Celery)
+
+# NEW: Additional monitoring and observability
+jaeger-client==4.8.0  # Distributed tracing UI
+elastic-apm==6.19.0  # Application Performance Monitoring
+sentry-sdk[fastapi]==1.39.1  # Error tracking
+
+# NEW: Performance optimization
+orjson==3.9.10  # Fast JSON parsing
+uvloop==0.19.0  # Fast event loop
+aiocache==0.12.2  # Async caching
+msgpack==1.0.7  # Efficient serialization
+
+# NEW: API documentation
+pydantic-to-typescript==1.0.10  # Generate TypeScript types
+datamodel-code-generator==0.25.1  # Generate models from OpenAPI
+
+# NEW: Load testing (dev only)
+locust==2.17.0  # Load testing framework
+
+# NEW: Message queue alternatives (optional)
+# pika==1.3.2  # RabbitMQ client
+# aiokafka==0.10.0  # Kafka client
+
+# NEW: Additional database tools
+pgcli==4.0.1  # Enhanced PostgreSQL CLI
+sqlalchemy-migrate==0.13.0  # Database migration tools
+
+# NEW: GraphQL development tools
+graphql-core==3.2.3
+ariadne-codegen==0.11.0  # Generate GraphQL client code

@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  backend-staging:
+    build:
+      context: ../..
+      dockerfile: infrastructure/staging/Dockerfile.staging
+    image: gcr.io/roadtrip-460720/roadtrip-backend-staging:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=staging
+      - PORT=8080
+      - LOG_LEVEL=INFO
+      - TEST_MODE=mock
+      - ALLOW_MOCK_MODE=true
+      - REDIS_OPTIONAL=true
+      - TTS_OPTIONAL=true
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/roadtrip_staging
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET_KEY=staging-jwt-secret
+      - SECRET_KEY=staging-secret-key
+      - CSRF_SECRET_KEY=staging-csrf-key
+    healthcheck:
+      test: ["CMD", "./healthcheck.sh"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - db
+      - redis
+    networks:
+      - staging-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=roadtrip_staging
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - staging-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data_staging:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - staging-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.staging.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend-staging
+    networks:
+      - staging-network
+
+volumes:
+  postgres_data_staging:
+  redis_data_staging:
+
+networks:
+  staging-network:
+    driver: bridge

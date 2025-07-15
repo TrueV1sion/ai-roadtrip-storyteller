@@ -1,0 +1,226 @@
+groups:
+  - name: roadtrip_api_alerts
+    interval: 30s
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+          
+      # High Response Time
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }}s"
+          
+      # Database Connection Pool Exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (db_connection_pool_used / db_connection_pool_size) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Connection pool is {{ $value | humanizePercentage }} full"
+          
+      # Redis Down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute"
+          
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            process_resident_memory_bytes
+            /
+            node_memory_MemTotal_bytes
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High memory usage"
+          description: "Process is using {{ $value | humanizePercentage }} of available memory"
+          
+      # SSL Certificate Expiry
+      - alert: SSLCertificateExpiringSoon
+        expr: ssl_cert_expiry_days < 30
+        for: 1h
+        labels:
+          severity: warning
+          service: ssl
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.domain }} expires in {{ $value }} days"
+          
+      - alert: SSLCertificateExpiryCritical
+        expr: ssl_cert_expiry_days < 7
+        for: 1h
+        labels:
+          severity: critical
+          service: ssl
+        annotations:
+          summary: "SSL certificate expiring critically soon"
+          description: "SSL certificate for {{ $labels.domain }} expires in {{ $value }} days!"
+
+  - name: roadtrip_business_alerts
+    interval: 60s
+    rules:
+      # Low Booking Conversion
+      - alert: LowBookingConversion
+        expr: |
+          (
+            sum(rate(booking_completed_total[1h]))
+            /
+            sum(rate(booking_initiated_total[1h]))
+          ) < 0.05
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Low booking conversion rate"
+          description: "Booking conversion rate is {{ $value | humanizePercentage }} in the last hour"
+          
+      # AI Service Failure
+      - alert: AIServiceFailureRate
+        expr: |
+          (
+            sum(rate(ai_request_errors_total[5m]))
+            /
+            sum(rate(ai_request_total[5m]))
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: ai
+        annotations:
+          summary: "High AI service failure rate"
+          description: "AI service error rate is {{ $value | humanizePercentage }}"
+          
+      # Cache Hit Rate Low
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            redis_cache_hits_total
+            /
+            (redis_cache_hits_total + redis_cache_misses_total)
+          ) < 0.7
+        for: 15m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+  - name: roadtrip_security_alerts
+    interval: 30s
+    rules:
+      # High Failed Login Rate
+      - alert: HighFailedLoginRate
+        expr: |
+          sum(rate(auth_login_failed_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "High failed login rate detected"
+          description: "{{ $value }} failed logins per second"
+          
+      # Suspicious Activity
+      - alert: SuspiciousActivity
+        expr: |
+          sum(rate(security_suspicious_activity_total[5m])) by (type) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "{{ $value }} suspicious {{ $labels.type }} activities per second"
+          
+      # 2FA Bypass Attempts
+      - alert: TwoFactorBypassAttempts
+        expr: |
+          sum(rate(auth_2fa_failed_total[5m])) > 20
+        for: 5m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "High 2FA failure rate"
+          description: "{{ $value }} 2FA failures per second - possible bypass attempt"
+
+  - name: roadtrip_infrastructure_alerts
+    interval: 60s
+    rules:
+      # Disk Space Low
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"}
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "Low disk space"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"
+          
+      # Database Backup Failed
+      - alert: DatabaseBackupFailed
+        expr: |
+          time() - db_backup_last_success_timestamp > 86400
+        for: 1h
+        labels:
+          severity: critical
+          service: backup
+        annotations:
+          summary: "Database backup failed"
+          description: "No successful backup in the last 24 hours"
+          
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: |
+          avg(rate(process_cpu_seconds_total[5m])) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }}"

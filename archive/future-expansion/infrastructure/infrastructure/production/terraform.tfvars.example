@@ -1,0 +1,103 @@
+# Google Cloud Platform Production Configuration
+# Copy this file to terraform.tfvars and fill in your values
+
+# Project Configuration
+project_id = "roadtrip-prod-XXXXX"
+region     = "us-central1"
+zone       = "us-central1-a"
+
+# Environment
+environment = "production"
+app_name    = "ai-roadtrip-storyteller"
+
+# Networking
+vpc_cidr = "10.0.0.0/16"
+subnet_cidrs = {
+  public  = "10.0.1.0/24"
+  private = "10.0.2.0/24"
+  database = "10.0.3.0/24"
+}
+
+# Cloud SQL Configuration
+db_instance_name = "roadtrip-prod-db"
+db_tier         = "db-n1-standard-4"  # 4 vCPU, 15 GB RAM
+db_disk_size    = 100                  # GB
+db_disk_type    = "PD_SSD"
+db_backup_enabled = true
+db_backup_start_time = "03:00"
+db_high_availability = true
+db_database_name = "roadtrip"
+db_user         = "roadtrip_app"
+
+# Redis Configuration
+redis_instance_name = "roadtrip-prod-cache"
+redis_tier         = "STANDARD_HA"  # High availability
+redis_memory_size  = 5              # GB
+redis_version      = "7.0"
+
+# Cloud Storage
+storage_bucket_name = "roadtrip-prod-media"
+storage_location   = "US"
+storage_class      = "STANDARD"
+
+# Cloud Run Configuration
+cloud_run_cpu     = "4"
+cloud_run_memory  = "8Gi"
+cloud_run_min_instances = 3
+cloud_run_max_instances = 100
+cloud_run_concurrency = 1000
+
+# Kubernetes Engine (if using GKE instead of Cloud Run)
+gke_cluster_name = "roadtrip-prod-cluster"
+gke_node_count   = 3
+gke_min_nodes    = 3
+gke_max_nodes    = 10
+gke_machine_type = "n2-standard-4"
+gke_disk_size    = 100
+
+# Security
+enable_private_ip = true
+authorized_networks = [
+  {
+    name  = "office"
+    value = "YOUR_OFFICE_IP/32"
+  }
+]
+
+# Monitoring
+enable_monitoring = true
+enable_logging   = true
+log_retention_days = 30
+
+# Backup Configuration
+backup_retention_days = 30
+backup_location      = "us"
+
+# Load Balancer
+enable_cdn = true
+ssl_certificates = ["roadtrip-prod-cert"]
+
+# API Management
+api_gateway_name = "roadtrip-api-gateway"
+api_rate_limits = {
+  anonymous = 100    # requests per minute
+  authenticated = 1000
+  premium = 5000
+}
+
+# Alerting
+notification_channels = [
+  "projects/roadtrip-prod/notificationChannels/XXXXX"
+]
+
+# Cost Controls
+billing_budget_amount = 5000  # USD per month
+billing_alert_thresholds = [0.5, 0.8, 0.9, 1.0]
+
+# Tags
+common_tags = {
+  Environment = "production"
+  Application = "ai-roadtrip-storyteller"
+  ManagedBy   = "terraform"
+  CostCenter  = "engineering"
+}

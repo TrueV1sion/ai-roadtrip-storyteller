@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Redis backup service using redis-dump-go
+  redis-backup:
+    image: roadtrip/redis-backup:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      # Redis connection
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      
+      # GCS configuration
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials.json
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME}
+      GOOGLE_AI_PROJECT_ID: ${GOOGLE_AI_PROJECT_ID}
+      
+      # Backup settings
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 3 * * *}  # Daily at 3 AM
+      RETENTION_DAYS: ${RETENTION_DAYS:-30}
+      
+    volumes:
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-./credentials.json}:/app/credentials.json:ro
+      - backup-cache:/tmp/backups
+      
+    depends_on:
+      - redis
+      
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "crond"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis with persistence enabled
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis-data:/data
+      - redis-backup:/backup
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis-data:
+  redis-backup:
+  backup-cache:

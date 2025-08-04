@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -73,7 +74,7 @@ export const BookingScreen: React.FC = () => {
       const response = await apiClient.get(`/api/booking/recommendations/${bookingType}`);
       setBookingItems(response.data.items);
     } catch (error) {
-      console.error('Failed to load recommendations:', error);
+      logger.error('Failed to load recommendations:', error);
     } finally {
       setLoading(false);
     }

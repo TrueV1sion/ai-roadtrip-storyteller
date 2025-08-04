@@ -3,6 +3,7 @@ import { Route, Location } from '../types/location';
 import { NavigationPreferences } from '../types/navigation';
 import { useNavigationPreferences } from './useNavigationPreferences';
 
+import { logger } from '@/services/logger';
 interface AlternativeRoute extends Route {
   type: 'fastest' | 'scenic' | 'eco' | 'balanced';
   metrics: {
@@ -66,7 +67,7 @@ export const useRouteAlternatives = () => {
 
       setAlternatives(filteredRoutes.filter((r): r is AlternativeRoute => r !== null));
     } catch (error) {
-      console.error('Error fetching route alternatives:', error);
+      logger.error('Error fetching route alternatives:', error);
     } finally {
       setLoading(false);
     }

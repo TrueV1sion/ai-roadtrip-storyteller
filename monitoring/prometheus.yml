@@ -1,0 +1,103 @@
+# Prometheus configuration for RoadTrip monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'production'
+    app: 'roadtrip'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load rules
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Backend API metrics
+  - job_name: 'roadtrip-backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'backend'
+
+  # Knowledge Graph metrics
+  - job_name: 'roadtrip-knowledge-graph'
+    static_configs:
+      - targets: ['knowledge-graph:8000']
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'knowledge-graph'
+
+  # PostgreSQL exporter
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'postgres'
+
+  # Redis exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'redis'
+
+  # Node exporter for system metrics
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'system'
+
+  # Cadvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'containers'
+
+  # Custom metrics for new features
+  - job_name: 'journey-tracking'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/api/journey-tracking/metrics'
+    scrape_interval: 30s
+    params:
+      module: ['journey']
+
+  - job_name: 'story-timing'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/api/story-timing/metrics'
+    scrape_interval: 30s
+    params:
+      module: ['story']
+
+  - job_name: 'spatial-audio'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/api/spatial-audio/metrics'
+    scrape_interval: 60s
+    params:
+      module: ['audio']

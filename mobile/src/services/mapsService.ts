@@ -4,6 +4,7 @@
  */
 import { apiService } from './apiService';
 
+import { logger } from '@/services/logger';
 export interface DirectionsOptions {
   origin: string;
   destination: string;
@@ -44,7 +45,7 @@ class MapsService {
       const response = await apiService.get(`/maps/directions?${params}`);
       return response.data;
     } catch (error) {
-      console.error('Error getting directions:', error);
+      logger.error('Error getting directions:', error);
       throw error;
     }
   }
@@ -58,7 +59,7 @@ class MapsService {
       const response = await apiService.get(`/maps/geocode?${params}`);
       return response.data;
     } catch (error) {
-      console.error('Error geocoding address:', error);
+      logger.error('Error geocoding address:', error);
       throw error;
     }
   }
@@ -84,7 +85,7 @@ class MapsService {
       const response = await apiService.get(`/maps/places/nearby?${params}`);
       return response.data;
     } catch (error) {
-      console.error('Error searching places:', error);
+      logger.error('Error searching places:', error);
       throw error;
     }
   }
@@ -102,7 +103,7 @@ class MapsService {
       const response = await apiService.get(`/maps/places/details/${placeId}?${params}`);
       return response.data;
     } catch (error) {
-      console.error('Error getting place details:', error);
+      logger.error('Error getting place details:', error);
       throw error;
     }
   }
@@ -138,7 +139,7 @@ class MapsService {
       const response = await apiService.get(`/maps/staticmap?${params}`);
       return response.data.url;
     } catch (error) {
-      console.error('Error getting static map:', error);
+      logger.error('Error getting static map:', error);
       throw error;
     }
   }

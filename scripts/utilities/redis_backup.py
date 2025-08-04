@@ -327,7 +327,7 @@ class RedisBackupManager:
         try:
             info = self.redis_client.info()
             return info.get('redis_version', 'unknown')
-        except:
+        except Exception as e:
             return 'unknown'
             
     def _send_backup_metric(self, success: bool, size_bytes: int = 0):

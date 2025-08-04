@@ -19,10 +19,11 @@ from tenacity import (
     before_sleep_log
 )
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.config import settings
-from backend.app.core.circuit_breaker import get_weather_circuit_breaker, CircuitOpenError
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.config import settings
+from app.core.circuit_breaker import get_weather_circuit_breaker, CircuitOpenError
+from app.core.http_client import AioHTTPClient, TimeoutProfile, TimeoutError
 
 
 class WeatherClient:
@@ -32,7 +33,8 @@ class WeatherClient:
         """Initialize weather client with configuration."""
         self.api_key = settings.OPENWEATHERMAP_API_KEY
         self.base_url = "https://api.openweathermap.org/data/2.5"
-        self.timeout = aiohttp.ClientTimeout(total=10)
+        # Use standard timeout for weather API (10s connect, 30s read)
+        self.client = AioHTTPClient(timeout_profile=TimeoutProfile.STANDARD)
         
         # Rate limiting
         self.rate_limit_delay = 0.1  # 100ms between requests
@@ -85,50 +87,60 @@ class WeatherClient:
         logger.info(f"Fetching weather data from {endpoint}")
         
         try:
-            # Create session with UTF-8 encoding support
-            connector = aiohttp.TCPConnector(force_close=True)
-            async with aiohttp.ClientSession(
-                timeout=self.timeout,
-                connector=connector,
+            # Ensure client is started
+            await self.client.start()
+            
+            # Make request with our centralized client
+            response = await self.client.get(
+                url,
+                params=params,
                 headers={"Accept": "application/json; charset=utf-8"}
-            ) as session:
-                async with session.get(url, params=params) as response:
-                    # Force UTF-8 encoding on response
-                    response_text = await response.text(encoding='utf-8')
-                    
-                    if response.status == 200:
-                        # Parse JSON with UTF-8 support
-                        data = json.loads(response_text)
+            )
+            
+            # Get response text with UTF-8 encoding
+            response_text = await response.text(encoding='utf-8')
+            
+            if response.status == 200:
+                # Parse JSON with UTF-8 support
+                data = json.loads(response_text)
+                
+                # Cache for 10 minutes
+                await cache_manager.setex(
+                    cache_key,
+                    600,
+                    json.dumps(data, ensure_ascii=False)
+                )
+                
+                return data
+            
+            elif response.status == 401:
+                logger.error("OpenWeatherMap API: Invalid API key")
+                raise ClientResponseError(
+                    request_info=response.request_info,
+                    history=response.history,
+                    status=response.status,
+                    message="Invalid API key"
+                )
+            
+            elif response.status == 404:
+                # Location not found
+                logger.warning(f"Location not found for params: {params}")
+                return None
+            
+            else:
+                logger.error(f"OpenWeatherMap API error {response.status}: {response_text}")
+                raise ClientResponseError(
+                    request_info=response.request_info,
+                    history=response.history,
+                    status=response.status,
+                    message=f"API error: {response_text}"
+                )
                         
-                        # Cache for 10 minutes
-                        await cache_manager.setex(
-                            cache_key,
-                            600,
-                            json.dumps(data, ensure_ascii=False)
-                        )
-                        
-                        return data
-                    
-                    elif response.status == 401:
-                        raise ClientResponseError(
-                            request_info=response.request_info,
-                            history=response.history,
-                            status=response.status,
-                            message="Invalid API key"
-                        )
-                    
-                    elif response.status == 404:
-                        # Location not found
-                        return None
-                    
-                    else:
-                        raise ClientResponseError(
-                            request_info=response.request_info,
-                            history=response.history,
-                            status=response.status,
-                            message=f"API error: {response_text}"
-                        )
-                        
+        except TimeoutError as e:
+            logger.error(f"OpenWeatherMap API timeout: {e}")
+            # Return fallback data on timeout
+            return self._get_fallback_weather_data()
+            
         except UnicodeDecodeError as e:
             logger.error(f"Unicode decode error in weather API: {e}")
             # Return a safe fallback
@@ -137,6 +149,10 @@ class WeatherClient:
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error in weather API: {e}")
             return self._get_fallback_weather_data()
+            
+        except ClientResponseError as e:
+            # Re-raise client errors (like 401) for circuit breaker
+            raise
             
         except Exception as e:
             logger.error(f"Weather API error: {e}")
@@ -416,6 +432,11 @@ class WeatherClient:
             summary += f", {current['snow_1h']}mm snow in last hour"
         
         return summary
+
+
+    async def close(self):
+        """Close the HTTP client."""
+        await self.client.close()
 
 
 # Global instance

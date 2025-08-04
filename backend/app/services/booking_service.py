@@ -7,11 +7,12 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from backend.app.models.booking import Booking, BookingStatus
-from backend.app.models.partner import Partner
-from backend.app.schemas.booking import BookingCreate, BookingUpdate
-from backend.app.services.commission_calculator import CommissionCalculator
-from backend.app.core.logger import logger
+from app.models.booking import Booking, BookingStatus
+from app.models.partner import Partner
+from app.schemas.booking import BookingCreate, BookingUpdate
+from app.services.commission_calculator import CommissionCalculator
+from app.core.logger import logger
+from app.core.transaction_manager import transactional, TransactionValidator
 
 
 class BookingService:
@@ -21,12 +22,17 @@ class BookingService:
         self.db = db
         self.commission_calculator = CommissionCalculator(db)
     
+    @transactional(isolation_level="READ COMMITTED")
     def create_booking(
         self,
         user_id: int,
         booking_data: BookingCreate
     ) -> Booking:
-        """Create a new booking with commission calculation."""
+        """Create a new booking with commission calculation.
+        
+        This method runs in a transaction to ensure that both the booking
+        and commission records are created atomically.
+        """
         # Verify partner exists and is active
         partner = self.db.query(Partner).filter(
             and_(
@@ -71,17 +77,22 @@ class BookingService:
             metadata=booking_data.metadata
         )
         
-        self.db.add(booking)
-        self.db.commit()
-        self.db.refresh(booking)
+        # Validate foreign keys before saving
+        validator = TransactionValidator()
+        if not validator.validate_foreign_keys(self.db, booking):
+            raise ValueError("Foreign key validation failed for booking")
         
-        # Create commission record
+        self.db.add(booking)
+        self.db.flush()  # Get booking ID without committing
+        
+        # Create commission record (will be part of same transaction)
         self.commission_calculator.create_commission_record(
             booking,
             commission_amount,
             commission_rate
         )
         
+        # Transaction will commit here automatically
         logger.info(
             f"Created booking {booking.booking_reference} for user {user_id} "
             f"with commission {commission_amount} ({commission_rate * 100}%)"
@@ -89,13 +100,14 @@ class BookingService:
         
         return booking
     
+    @transactional()
     def update_booking_status(
         self,
         booking_id: int,
         new_status: BookingStatus,
         user_id: Optional[int] = None
     ) -> Booking:
-        """Update booking status."""
+        """Update booking status with proper transaction handling."""
         query = self.db.query(Booking).filter(Booking.id == booking_id)
         
         if user_id:
@@ -121,16 +133,17 @@ class BookingService:
             )
         
         booking.booking_status = new_status
-        self.db.commit()
-        self.db.refresh(booking)
         
         # Update commission status if booking is completed
+        # This will be part of the same transaction
         if new_status == BookingStatus.COMPLETED and booking.commission:
-            from backend.app.models.commission import CommissionStatus
+            from app.models.commission import CommissionStatus
             self.commission_calculator.update_commission_status(
                 booking.commission.id,
                 CommissionStatus.APPROVED
             )
+        
+        self.db.flush()  # Ensure changes are applied in transaction
         
         logger.info(f"Updated booking {booking.booking_reference} status to {new_status}")
         
@@ -170,33 +183,57 @@ class BookingService:
         
         return query.first()
     
+    @transactional()
     def cancel_booking(
         self,
         booking_id: int,
         user_id: int,
         reason: Optional[str] = None
     ) -> Booking:
-        """Cancel a booking."""
-        booking = self.update_booking_status(
-            booking_id,
-            BookingStatus.CANCELLED,
-            user_id
-        )
+        """Cancel a booking with proper transaction handling.
         
-        if reason and booking.metadata:
-            booking.metadata["cancellation_reason"] = reason
-        elif reason:
-            booking.metadata = {"cancellation_reason": reason}
+        This ensures that both the booking status update and commission
+        status update happen atomically.
+        """
+        # First get the booking to ensure it exists and belongs to user
+        booking = self.db.query(Booking).filter(
+            and_(
+                Booking.id == booking_id,
+                Booking.user_id == user_id
+            )
+        ).first()
         
-        self.db.commit()
+        if not booking:
+            raise ValueError(f"Booking {booking_id} not found for user {user_id}")
         
-        # Update commission status
+        # Check if booking can be cancelled
+        if booking.booking_status not in [BookingStatus.PENDING, BookingStatus.CONFIRMED]:
+            raise ValueError(
+                f"Cannot cancel booking in {booking.booking_status} status"
+            )
+        
+        # Update booking status
+        booking.booking_status = BookingStatus.CANCELLED
+        
+        # Add cancellation reason to metadata
+        if reason:
+            if booking.metadata:
+                booking.metadata["cancellation_reason"] = reason
+            else:
+                booking.metadata = {"cancellation_reason": reason}
+            booking.metadata["cancelled_at"] = datetime.utcnow().isoformat()
+        
+        # Update commission status if exists
         if booking.commission:
-            from backend.app.models.commission import CommissionStatus
+            from app.models.commission import CommissionStatus
             self.commission_calculator.update_commission_status(
                 booking.commission.id,
                 CommissionStatus.DISPUTED,
-                notes=f"Booking cancelled: {reason}"
+                notes=f"Booking cancelled: {reason or 'No reason provided'}"
             )
+        
+        self.db.flush()  # Ensure changes are applied
+        
+        logger.info(f"Cancelled booking {booking.booking_reference} for user {user_id}")
         
         return booking

@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from typing import Dict, List, Any
 import json
 
-from backend.app.services.weather_service import (
+from app.services.weather_service import (
     WeatherService,
     WeatherData,
     WeatherForecast,
@@ -19,7 +19,7 @@ from backend.app.services.weather_service import (
     WeatherNarrative,
     RoadCondition
 )
-from backend.app.integrations.weather_client import WeatherClient
+from app.integrations.weather_client import WeatherClient
 
 
 @pytest.fixture

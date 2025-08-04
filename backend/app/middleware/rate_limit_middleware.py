@@ -18,8 +18,9 @@ import hashlib
 
 from app.core.cache import redis_client
 from app.core.config import settings
+from app.core.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class RateLimitConfig:
@@ -343,7 +344,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                         "reset": int(time.time() + config.window_seconds),
                         "type": limit_type
                     }
-            except:
+            except Exception as e:
                 pass
         
         if most_restrictive:
@@ -443,7 +444,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         try:
             redis_client.client.lpush(violation_key, json.dumps(violation_data))
             redis_client.client.expire(violation_key, 86400)  # Keep for 24 hours
-        except:
+        except Exception as e:
             pass
         
         # Log warning for monitoring
@@ -538,7 +539,7 @@ async def get_rate_limit_violations(
                             violation = json.loads(item)
                             if start_time <= violation["timestamp"] <= end_time:
                                 violations.append(violation)
-                        except:
+                        except Exception as e:
                             pass
             
             if cursor == 0:

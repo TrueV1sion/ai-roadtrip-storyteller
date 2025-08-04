@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from typing import Dict, List, Any
 
-from backend.app.services.directions_service import (
+from app.services.directions_service import (
     DirectionsService,
     Route,
     RouteSegment,
@@ -19,7 +19,7 @@ from backend.app.services.directions_service import (
     NavigationState,
     RouteOptimizer
 )
-from backend.app.models.user import User
+from app.models.user import User
 
 
 @pytest.fixture

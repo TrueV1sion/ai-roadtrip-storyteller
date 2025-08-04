@@ -13,9 +13,9 @@ import httpx
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from backend.app.core.cache import get_cache
-from backend.app.core.config import get_settings
-from backend.app.core.logger import get_logger
+from app.core.cache import get_cache
+from app.core.config import get_settings
+from app.core.logger import get_logger
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -438,7 +438,7 @@ class SpotifyService:
         """Get current playback state."""
         try:
             return await self._make_request("GET", "me/player", access_token)
-        except:
+        except Exception as e:
             return None
 
     async def control_playback(

@@ -18,15 +18,16 @@ import smtplib
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.models.user import User
-from backend.app.services.reservation_agent import (
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.models.user import User
+from app.services.reservation_agent import (
     Reservation, ReservationStatus, ReservationType
 )
-from backend.app.integrations.open_table_client import OpenTableClient
-from backend.app.integrations.recreation_gov_client import RecreationGovClient
-from backend.app.integrations.shell_recharge_client import ShellRechargeClient
+from app.integrations.open_table_client import OpenTableClient
+from app.integrations.recreation_gov_client import RecreationGovClient
+from app.integrations.shell_recharge_client import ShellRechargeClient
+from app.core.transaction_manager import transactional
 
 
 class BookingProvider(str, Enum):

@@ -4,6 +4,7 @@ import * as SQLite from 'expo-sqlite';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Route, Location, Region } from '../../types/location';
 
+import { logger } from '@/services/logger';
 // Cache configuration
 interface CacheConfig {
   maxMemoryTiles: number;
@@ -221,7 +222,7 @@ class DiskCache {
             }
           },
           (_, error) => {
-            console.error('Error getting tile size:', error);
+            logger.error('Error getting tile size:', error);
             resolve(0);
             return false;
           }
@@ -250,7 +251,7 @@ class DiskCache {
               try {
                 await FileSystem.deleteAsync(filePath, { idempotent: true });
               } catch (error) {
-                console.error('Error deleting tile file:', error);
+                logger.error('Error deleting tile file:', error);
               }
               
               // Remove from database
@@ -259,7 +260,7 @@ class DiskCache {
                 [tileKey],
                 () => resolve(),
                 (_, error) => {
-                  console.error('Error removing tile from cache:', error);
+                  logger.error('Error removing tile from cache:', error);
                   resolve();
                   return false;
                 }
@@ -288,7 +289,7 @@ class DiskCache {
             resolve(result.rows.item(0).total || 0);
           },
           (_, error) => {
-            console.error('Error getting total cache size:', error);
+            logger.error('Error getting total cache size:', error);
             resolve(0);
             return false;
           }
@@ -324,7 +325,7 @@ class DiskCache {
             resolve(tiles);
           },
           (_, error) => {
-            console.error('Error getting all tiles:', error);
+            logger.error('Error getting all tiles:', error);
             resolve([]);
             return false;
           }
@@ -377,7 +378,7 @@ export class MapCacheManager {
         this.config = { ...this.config, ...JSON.parse(savedConfig) };
       }
     } catch (error) {
-      console.error('Error loading cache config:', error);
+      logger.error('Error loading cache config:', error);
     }
   }
   
@@ -385,7 +386,7 @@ export class MapCacheManager {
     try {
       await AsyncStorage.setItem('map_cache_config', JSON.stringify(this.config));
     } catch (error) {
-      console.error('Error saving cache config:', error);
+      logger.error('Error saving cache config:', error);
     }
   }
   
@@ -564,7 +565,7 @@ export class MapCacheManager {
    */
   private onMemoryEvict(tile: CachedTile, key: string): void {
     // Could save to disk cache here if needed
-    console.log(`Evicted tile ${key} from memory cache`);
+    logger.debug(`Evicted tile ${key} from memory cache`);
   }
   
   /**

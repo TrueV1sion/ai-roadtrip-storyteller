@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -69,7 +70,7 @@ export const PlaylistManager: React.FC<PlaylistManagerProps> = ({
       // This would fetch user's journey playlists from the backend
       setPlaylists([]);
     } catch (error) {
-      console.error('Failed to load playlists:', error);
+      logger.error('Failed to load playlists:', error);
     } finally {
       setIsRefreshing(false);
     }
@@ -108,7 +109,7 @@ export const PlaylistManager: React.FC<PlaylistManagerProps> = ({
         onPlaylistCreated(newPlaylist);
       }
     } catch (error) {
-      console.error('Failed to create playlist:', error);
+      logger.error('Failed to create playlist:', error);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +146,7 @@ export const PlaylistManager: React.FC<PlaylistManagerProps> = ({
 
       setPlaylists([locationPlaylist, ...playlists]);
     } catch (error) {
-      console.error('Failed to create location playlist:', error);
+      logger.error('Failed to create location playlist:', error);
     } finally {
       setIsLoading(false);
     }

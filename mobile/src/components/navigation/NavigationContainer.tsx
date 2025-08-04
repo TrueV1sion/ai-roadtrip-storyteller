@@ -13,6 +13,7 @@ import OfflineNotice from './OfflineNotice';
 import { COLORS } from '../../theme';
 import OfflineManager from '../../services/OfflineManager';
 
+import { logger } from '@/services/logger';
 interface NavigationContainerProps {
   route: any; // From route params
   onExit: () => void;
@@ -56,14 +57,14 @@ const NavigationContainer: React.FC<NavigationContainerProps> = ({ route, onExit
                 destinationName: routeData.destination.name,
                 routeData: routeData
               });
-              console.log('Route saved for offline use');
+              logger.debug('Route saved for offline use');
             } catch (err) {
-              console.error('Failed to save route for offline use:', err);
+              logger.error('Failed to save route for offline use:', err);
             }
           }
         }
       } catch (error) {
-        console.error('Error initializing navigation:', error);
+        logger.error('Error initializing navigation:', error);
       } finally {
         setIsLoading(false);
       }
@@ -95,13 +96,13 @@ const NavigationContainer: React.FC<NavigationContainerProps> = ({ route, onExit
       if (offlineRouteData) {
         setOfflineRoute(offlineRouteData);
         setNavigationData(offlineRouteData.routeData);
-        console.log('Using offline route data');
+        logger.debug('Using offline route data');
       } else {
-        console.log('No offline route data available');
+        logger.debug('No offline route data available');
         // Show error or fallback UI since we're offline with no cached data
       }
     } catch (error) {
-      console.error('Error loading offline route:', error);
+      logger.error('Error loading offline route:', error);
     }
   };
   

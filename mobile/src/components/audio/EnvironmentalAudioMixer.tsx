@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -227,7 +228,7 @@ export const EnvironmentalAudioMixer: React.FC<EnvironmentalAudioMixerProps> = (
         onMixUpdate?.(response.environmental_audio);
       }
     } catch (error) {
-      console.error('Error generating environmental mix:', error);
+      logger.error('Error generating environmental mix:', error);
     } finally {
       setLoading(false);
     }

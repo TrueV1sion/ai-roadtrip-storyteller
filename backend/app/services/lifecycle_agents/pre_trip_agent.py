@@ -14,14 +14,14 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
-from backend.app.services.lifecycle_agents.base_lifecycle_agent import (
+from app.core.unified_ai_client import UnifiedAIClient
+from app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
+from app.services.lifecycle_agents.base_lifecycle_agent import (
     BaseLifecycleAgent, LifecycleContext, LifecycleResponse, LifecycleState
 )
-from backend.app.services.booking_agent import BookingAgent
-from backend.app.services.location_service import LocationService
-from backend.app.services.weather_service import WeatherService
+from app.services.booking_agent import BookingAgent
+from app.services.location_service import LocationService
+from app.services.weather_service import WeatherService
 
 logger = logging.getLogger(__name__)
 

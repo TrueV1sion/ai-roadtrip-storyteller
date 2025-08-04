@@ -24,8 +24,11 @@ const getEnvVars = (env = Constants.expoConfig?.extra?.ENVIRONMENT ?? 'dev') => 
 export default getEnvVars();
 
 // Environment variables configuration
+// NOTE: All API keys should be handled by the backend proxy
+// Never expose API keys in the mobile app
 const extra = Constants.expoConfig?.extra || {};
 
-export const AZURE_TTS_KEY = extra.AZURE_TTS_KEY as string || '';
-export const AWS_POLLY_KEY = extra.AWS_POLLY_KEY as string || '';
-export const GOOGLE_TTS_KEY = extra.GOOGLE_TTS_KEY as string || ''; 
+// These should be empty - all TTS calls go through backend proxy
+export const AZURE_TTS_KEY = ''; // Use backend proxy
+export const AWS_POLLY_KEY = ''; // Use backend proxy 
+export const GOOGLE_TTS_KEY = ''; // Use backend proxy 

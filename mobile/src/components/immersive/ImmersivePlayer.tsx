@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -223,7 +224,7 @@ export const ImmersivePlayer: React.FC<ImmersivePlayerProps> = ({
         }
       );
     } catch (error) {
-      console.error('Error downloading content:', error);
+      logger.error('Error downloading content:', error);
     } finally {
       setDownloadProgress(null);
     }
@@ -279,7 +280,7 @@ export const ImmersivePlayer: React.FC<ImmersivePlayerProps> = ({
         await musicPlayerRef.current?.playAsync();
       }
     } catch (error) {
-      console.error('Error toggling playback:', error);
+      logger.error('Error toggling playback:', error);
     }
   };
 
@@ -287,7 +288,7 @@ export const ImmersivePlayer: React.FC<ImmersivePlayerProps> = ({
     try {
       await storyPlayerRef.current?.setPositionAsync(position);
     } catch (error) {
-      console.error('Error seeking:', error);
+      logger.error('Error seeking:', error);
     }
   };
 
@@ -315,7 +316,7 @@ export const ImmersivePlayer: React.FC<ImmersivePlayerProps> = ({
       await musicPlayerRef.current?.unloadAsync();
       stopSpeech();
     } catch (error) {
-      console.error('Error cleaning up:', error);
+      logger.error('Error cleaning up:', error);
     }
   };
 

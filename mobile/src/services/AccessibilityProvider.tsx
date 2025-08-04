@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccessibilityInfo, Platform } from 'react-native';
 
+import { logger } from '@/services/logger';
 export interface AccessibilityPreferences {
   highContrast: boolean;
   largeText: boolean;
@@ -53,7 +54,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
           setPreferences(JSON.parse(storedPrefs));
         }
       } catch (error) {
-        console.error('Failed to load accessibility preferences:', error);
+        logger.error('Failed to load accessibility preferences:', error);
       }
     };
     
@@ -93,7 +94,7 @@ export const AccessibilityProvider: React.FC<AccessibilityProviderProps> = ({ ch
       setPreferences(updatedPreferences);
       await AsyncStorage.setItem('accessibility_preferences', JSON.stringify(updatedPreferences));
     } catch (error) {
-      console.error('Failed to save accessibility preferences:', error);
+      logger.error('Failed to save accessibility preferences:', error);
     }
   };
   

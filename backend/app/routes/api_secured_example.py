@@ -72,7 +72,7 @@ async def signed_endpoint(
     key_data, version = api_data
     
     if not key_data:
-        raise HTTPException(status_code=401, detail="API key required")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required")
     
     return {
         "message": "Request signature verified",

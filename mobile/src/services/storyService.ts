@@ -6,6 +6,7 @@ import { LRUCache, memoizeAsync } from '@utils/cache';
 import { withRetry } from '@utils/async';
 import { factVerificationService } from './factVerificationService';
 
+import { logger } from '@/services/logger';
 export interface StoryContext {
   time_of_day?: string;
   weather?: string;
@@ -135,7 +136,7 @@ class StoryService {
         },
       };
     } catch (error) {
-      console.error('Error enriching context:', error);
+      logger.error('Error enriching context:', error);
       return context || {};
     }
   }
@@ -156,7 +157,7 @@ class StoryService {
         source: result.source,
       }));
     } catch (error) {
-      console.error('Error verifying facts:', error);
+      logger.error('Error verifying facts:', error);
       return [];
     }
   }

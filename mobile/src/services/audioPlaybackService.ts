@@ -7,6 +7,7 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 import { Platform } from 'react-native';
 import spatialAudioService from './spatialAudioService';
 
+import { logger } from '@/services/logger';
 interface AudioQueueItem {
   id: string;
   uri: string;
@@ -62,7 +63,7 @@ class AudioPlaybackService {
         interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
       });
     } catch (error) {
-      console.error('Failed to initialize audio:', error);
+      logger.error('Failed to initialize audio:', error);
     }
   }
 
@@ -137,7 +138,7 @@ class AudioPlaybackService {
 
       this.notifyStateChange();
     } catch (error) {
-      console.error('Playback error:', error);
+      logger.error('Playback error:', error);
       item.onError?.(error as Error);
       
       // Try next item in queue
@@ -234,7 +235,7 @@ class AudioPlaybackService {
 
       this.backgroundMusic = sound;
     } catch (error) {
-      console.error('Failed to play background music:', error);
+      logger.error('Failed to play background music:', error);
     }
   }
 
@@ -368,7 +369,7 @@ class AudioPlaybackService {
       // Immediately unload - this just validates the file exists and can be loaded
       await sound.unloadAsync();
     } catch (error) {
-      console.error('Failed to preload audio:', error);
+      logger.error('Failed to preload audio:', error);
     }
   }
 
@@ -384,7 +385,7 @@ class AudioPlaybackService {
       
       return duration;
     } catch (error) {
-      console.error('Failed to get audio duration:', error);
+      logger.error('Failed to get audio duration:', error);
       return 0;
     }
   }
@@ -530,7 +531,7 @@ class AudioPlaybackService {
         }
       });
     } catch (error) {
-      console.error('Failed to play navigation audio:', error);
+      logger.error('Failed to play navigation audio:', error);
     }
   }
 
@@ -647,10 +648,10 @@ class AudioPlaybackService {
       );
 
       if (soundscape) {
-        console.log(`Spatial audio configured: ${soundscape.environment} environment with ${soundscape.sources.length} sources`);
+        logger.debug(`Spatial audio configured: ${soundscape.environment} environment with ${soundscape.sources.length} sources`);
       }
     } catch (error) {
-      console.error('Failed to setup spatial audio:', error);
+      logger.error('Failed to setup spatial audio:', error);
       // Continue playback without spatial audio
     }
   }

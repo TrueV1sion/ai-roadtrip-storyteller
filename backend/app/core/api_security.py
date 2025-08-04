@@ -14,16 +14,15 @@ from enum import Enum
 import secrets
 from urllib.parse import parse_qs, urlencode
 
-from fastapi import Request, HTTPException, Header
+from fastapi import Request, HTTPException, Header, Depends
 from fastapi.security import APIKeyHeader, HTTPBearer
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from app.core.logger import get_logger
 from app.core.cache import cache_manager
 from app.core.config import settings
-from app.models.base import Base
+from app.database import Base, get_db
 from sqlalchemy import Column, String, DateTime, Boolean, Integer, JSON
-from app.database import get_db
 
 logger = get_logger(__name__)
 
@@ -63,7 +62,7 @@ class APIKeyModel(Base):
     expires_at = Column(DateTime, nullable=True)
     last_used_at = Column(DateTime, nullable=True)
     usage_count = Column(Integer, default=0)
-    metadata = Column(JSON, default=dict)
+    key_metadata = Column(JSON, default=dict)
 
 
 class APISecurityManager:
@@ -285,7 +284,8 @@ class APISecurityManager:
                 return False
             
             return True
-        except:
+        except ValueError as e:
+            logger.error(f"Failed to validate timestamp: {e}")
             return False
     
     async def _validate_nonce(self, nonce: str) -> bool:

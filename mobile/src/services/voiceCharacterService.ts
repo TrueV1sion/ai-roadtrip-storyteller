@@ -1,4 +1,5 @@
 import { ApiClient } from './api/ApiClient';
+import { logger } from '@/services/logger';
 import {
   VoiceCharacterType,
   VoiceCharacterBase,
@@ -21,7 +22,7 @@ class VoiceCharacterService {
     try {
       return await ApiClient.get<VoiceCharacterType[]>('/voice-character');
     } catch (error) {
-      console.error('Error getting voice characters:', error);
+      logger.error('Error getting voice characters:', error);
       throw error;
     }
   }
@@ -33,7 +34,7 @@ class VoiceCharacterService {
     try {
       return await ApiClient.get<VoiceCharacterType>(`/voice-character/${characterId}`);
     } catch (error) {
-      console.error(`Error getting voice character ${characterId}:`, error);
+      logger.error(`Error getting voice character ${characterId}:`, error);
       throw error;
     }
   }
@@ -45,7 +46,7 @@ class VoiceCharacterService {
     try {
       return await ApiClient.post<VoiceCharacterType>('/voice-character', character);
     } catch (error) {
-      console.error('Error creating voice character:', error);
+      logger.error('Error creating voice character:', error);
       throw error;
     }
   }
@@ -60,7 +61,7 @@ class VoiceCharacterService {
     try {
       return await ApiClient.patch<VoiceCharacterType>(`/voice-character/${characterId}`, updates);
     } catch (error) {
-      console.error(`Error updating voice character ${characterId}:`, error);
+      logger.error(`Error updating voice character ${characterId}:`, error);
       throw error;
     }
   }
@@ -72,7 +73,7 @@ class VoiceCharacterService {
     try {
       return await ApiClient.delete<{ message: string }>(`/voice-character/${characterId}`);
     } catch (error) {
-      console.error(`Error deleting voice character ${characterId}:`, error);
+      logger.error(`Error deleting voice character ${characterId}:`, error);
       throw error;
     }
   }
@@ -85,7 +86,7 @@ class VoiceCharacterService {
       const request: ThemeRequestType = { theme };
       return await ApiClient.post<VoiceCharacterType[]>('/voice-character/theme', request);
     } catch (error) {
-      console.error(`Error getting voice characters by theme ${theme}:`, error);
+      logger.error(`Error getting voice characters by theme ${theme}:`, error);
       throw error;
     }
   }
@@ -101,7 +102,7 @@ class VoiceCharacterService {
       const request: ContextualCharacterRequestType = { theme, context };
       return await ApiClient.post<VoiceCharacterType>('/voice-character/contextual', request);
     } catch (error) {
-      console.error(`Error getting contextual voice character:`, error);
+      logger.error(`Error getting contextual voice character:`, error);
       throw error;
     }
   }
@@ -116,7 +117,7 @@ class VoiceCharacterService {
         prompt
       );
     } catch (error) {
-      console.error('Error transforming text:', error);
+      logger.error('Error transforming text:', error);
       throw error;
     }
   }
@@ -128,7 +129,7 @@ class VoiceCharacterService {
     try {
       return await ApiClient.post<SpeechResultType>('/voice-character/speech', prompt);
     } catch (error) {
-      console.error('Error generating speech:', error);
+      logger.error('Error generating speech:', error);
       throw error;
     }
   }
@@ -170,7 +171,7 @@ class VoiceCharacterService {
         }
       });
     } catch (error) {
-      console.error('Error playing speech:', error);
+      logger.error('Error playing speech:', error);
       throw error;
     }
   }
@@ -186,7 +187,7 @@ class VoiceCharacterService {
           await this.sound.pauseAsync();
         }
       } catch (error) {
-        console.error('Error pausing speech:', error);
+        logger.error('Error pausing speech:', error);
       }
     }
   }
@@ -203,7 +204,7 @@ class VoiceCharacterService {
           await this.unloadSpeech();
         }
       } catch (error) {
-        console.error('Error stopping speech:', error);
+        logger.error('Error stopping speech:', error);
       }
     }
   }
@@ -218,7 +219,7 @@ class VoiceCharacterService {
         this.sound = null;
         this.currentAudioUrl = null;
       } catch (error) {
-        console.error('Error unloading speech:', error);
+        logger.error('Error unloading speech:', error);
       }
     }
   }
@@ -231,7 +232,7 @@ class VoiceCharacterService {
       try {
         return await this.sound.getStatusAsync();
       } catch (error) {
-        console.error('Error getting playback status:', error);
+        logger.error('Error getting playback status:', error);
         return null;
       }
     }
@@ -249,7 +250,7 @@ class VoiceCharacterService {
           await this.sound.setPositionAsync(positionMillis);
         }
       } catch (error) {
-        console.error('Error seeking to position:', error);
+        logger.error('Error seeking to position:', error);
       }
     }
   }
@@ -275,7 +276,7 @@ class VoiceCharacterService {
       await this.playSpeech(result.audio_url);
       return result;
     } catch (error) {
-      console.error('Error speaking with character:', error);
+      logger.error('Error speaking with character:', error);
       throw error;
     }
   }

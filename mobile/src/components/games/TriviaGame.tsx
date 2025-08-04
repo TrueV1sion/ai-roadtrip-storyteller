@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -71,7 +72,7 @@ const TriviaGameComponent: React.FC<TriviaGameProps> = ({
           
           setCurrentLocation(gameLocation);
         } catch (error) {
-          console.error('Error getting location:', error);
+          logger.error('Error getting location:', error);
           gameLocation = locationService.getSimulatedLocation();
           setCurrentLocation(gameLocation);
         }

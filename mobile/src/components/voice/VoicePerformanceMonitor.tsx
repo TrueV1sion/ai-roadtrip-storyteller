@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -68,7 +69,7 @@ const VoicePerformanceMonitor: React.FC = () => {
       setMetrics(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to load metrics:', error);
+      logger.error('Failed to load metrics:', error);
       setLoading(false);
     }
   };

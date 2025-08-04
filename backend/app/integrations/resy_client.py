@@ -11,10 +11,11 @@ from decimal import Decimal
 import jwt
 from urllib.parse import urlencode
 
-from backend.app.core.config import settings
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import logger
-from backend.app.core.resilience import CircuitBreaker, circuit_breaker_factory
+from app.core.config import settings
+from app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.resilience import CircuitBreaker, circuit_breaker_factory
+from app.core.http_client import AsyncHTTPClient, TimeoutProfile, TimeoutError
 
 
 class ResyClient:
@@ -28,14 +29,13 @@ class ResyClient:
         self.client_secret = settings.RESY_CLIENT_SECRET
         self.api_key = settings.RESY_API_KEY
         
-        self.client = httpx.AsyncClient(
-            timeout=30.0,
-            headers={
-                "Authorization": f"ResyAPI api_key={self.api_key}",
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            }
-        )
+        # Use standard timeout profile for Resy API
+        self.client = AsyncHTTPClient(timeout_profile=TimeoutProfile.STANDARD)
+        self.default_headers = {
+            "Authorization": f"ResyAPI api_key={self.api_key}",
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
         
         # Circuit breaker for fault tolerance
         self.circuit_breaker = circuit_breaker_factory.create("resy_api")
@@ -421,7 +421,8 @@ class ResyClient:
             
             response = await self.client.post(
                 f"{self.AUTH_URL}/oauth/token",
-                json=auth_data
+                json=auth_data,
+                headers=self.default_headers
             )
             
             if response.status_code == 200:
@@ -432,8 +433,8 @@ class ResyClient:
                 expires_in = token_data.get("expires_in", 3600)
                 self._token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in - 60)
                 
-                # Update client headers
-                self.client.headers["Authorization"] = f"Bearer {self._access_token}"
+                # Update default headers with new token
+                self.default_headers["Authorization"] = f"Bearer {self._access_token}"
                 
                 logger.info("Resy authentication successful")
             else:
@@ -450,21 +451,35 @@ class ResyClient:
         endpoint: str,
         **kwargs
     ) -> httpx.Response:
-        """Make HTTP request to Resy API."""
+        """Make HTTP request to Resy API with proper timeout handling."""
         url = f"{self.BASE_URL}{endpoint}"
         
-        response = await self.client.request(
-            method,
-            url,
-            **kwargs
-        )
+        # Merge default headers with any provided headers
+        headers = kwargs.get('headers', {})
+        headers.update(self.default_headers)
+        kwargs['headers'] = headers
         
-        return response
+        try:
+            response = await self.client.request(
+                method,
+                url,
+                **kwargs
+            )
+            return response
+            
+        except TimeoutError as e:
+            logger.error(f"Resy API timeout for {method} {endpoint}: {e}")
+            raise
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Resy API HTTP error {e.response.status_code} for {method} {endpoint}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Resy API error for {method} {endpoint}: {e}")
+            raise
     
-    def __del__(self):
-        """Cleanup when client is destroyed."""
-        if hasattr(self, 'client'):
-            asyncio.create_task(self.client.aclose())
+    async def close(self):
+        """Close the HTTP client."""
+        await self.client.close()
 
 
 # Singleton instance

@@ -1,0 +1,209 @@
+# Alert rules for RoadTrip production monitoring
+groups:
+  - name: api_alerts
+    interval: 30s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "High error rate on {{ $labels.instance }}"
+          description: "Error rate is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      # Slow response time
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Slow response time on {{ $labels.instance }}"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage in {{ $labels.container_name }}"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+  - name: journey_tracking_alerts
+    interval: 30s
+    rules:
+      # Story queue backlog
+      - alert: StoryQueueBacklog
+        expr: story_queue_depth > 100
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Story queue backlog detected"
+          description: "{{ $value }} stories pending in queue"
+
+      # Low engagement score
+      - alert: LowEngagementScore
+        expr: avg(journey_engagement_score) < 0.3
+        for: 15m
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: "Low passenger engagement detected"
+          description: "Average engagement score is {{ $value }}"
+
+      # Journey tracking failure
+      - alert: JourneyTrackingFailure
+        expr: rate(journey_tracking_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Journey tracking failures detected"
+          description: "Error rate is {{ $value }} per second"
+
+  - name: ai_service_alerts
+    interval: 30s
+    rules:
+      # High AI API cost
+      - alert: HighAICost
+        expr: rate(ai_api_cost_dollars[1h]) > 100
+        for: 30m
+        labels:
+          severity: warning
+          team: finance
+        annotations:
+          summary: "High AI API costs detected"
+          description: "Current rate: ${{ $value }}/hour"
+
+      # AI service latency
+      - alert: AIServiceLatency
+        expr: histogram_quantile(0.95, rate(ai_request_duration_seconds_bucket[5m])) > 10
+        for: 10m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High AI service latency"
+          description: "95th percentile latency is {{ $value }}s"
+
+      # Cache hit rate low
+      - alert: LowCacheHitRate
+        expr: rate(cache_hits_total[5m]) / rate(cache_requests_total[5m]) < 0.5
+        for: 15m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}"
+
+  - name: audio_ar_alerts
+    interval: 60s
+    rules:
+      # Audio processing failure
+      - alert: AudioProcessingFailure
+        expr: rate(spatial_audio_processing_errors_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Spatial audio processing failures"
+          description: "Error rate is {{ $value }} per second"
+
+      # AR render time high
+      - alert: ARRenderTimeHigh
+        expr: ar_render_time_ms > 500
+        for: 10m
+        labels:
+          severity: warning
+          team: mobile
+        annotations:
+          summary: "AR render time exceeding threshold"
+          description: "Current render time: {{ $value }}ms"
+
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # Database connection pool exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "{{ $value | humanizePercentage }} of connections in use"
+
+      # Database replication lag
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag_seconds > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is {{ $value }}s"
+
+  - name: security_alerts
+    interval: 30s
+    rules:
+      # Failed authentication spike
+      - alert: FailedAuthenticationSpike
+        expr: rate(auth_failed_attempts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Authentication failure spike detected"
+          description: "{{ $value }} failed attempts per second"
+
+      # 2FA adoption low
+      - alert: TwoFactorAdoptionLow
+        expr: two_factor_enabled_users / total_users < 0.5
+        for: 24h
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "Two-factor authentication adoption below target"
+          description: "Only {{ $value | humanizePercentage }} of users have 2FA enabled"
+
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # Service down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.instance }} has been down for more than 2 minutes"
+
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"

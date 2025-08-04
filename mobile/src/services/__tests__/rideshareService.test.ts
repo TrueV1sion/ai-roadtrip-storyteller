@@ -3,6 +3,7 @@ import { apiManager } from '../api/apiManager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
+import { logger } from '@/services/logger';
 // Mock dependencies
 jest.mock('../api/apiManager');
 jest.mock('@react-native-async-storage/async-storage');
@@ -332,7 +333,7 @@ describe('RideshareService', () => {
       );
 
       await rideshareService.startLocationTracking((location) => {
-        console.log('Location updated:', location);
+        logger.debug('Location updated:', location);
       });
 
       expect(Location.requestForegroundPermissionsAsync).toHaveBeenCalled();

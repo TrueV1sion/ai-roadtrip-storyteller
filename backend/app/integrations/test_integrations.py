@@ -4,10 +4,10 @@ import asyncio
 import os
 from datetime import datetime, timedelta
 
-from backend.app.integrations.open_table_client import OpenTableClient
-from backend.app.integrations.recreation_gov_client import RecreationGovClient
-from backend.app.integrations.shell_recharge_client import ShellRechargeClient
-from backend.app.core.logger import logger
+from app.integrations.open_table_client import OpenTableClient
+from app.integrations.recreation_gov_client import RecreationGovClient
+from app.integrations.shell_recharge_client import ShellRechargeClient
+from app.core.logger import logger
 
 
 async def test_opentable_client():

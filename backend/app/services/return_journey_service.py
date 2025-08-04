@@ -5,12 +5,12 @@ from typing import Optional, Dict, List
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from backend.app.models.parking_reservation import ParkingReservation
-from backend.app.models.user import User
-from backend.app.services.directions_service import DirectionsService
-from backend.app.services.master_orchestration_agent import MasterOrchestrationAgent
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
+from app.models.parking_reservation import ParkingReservation
+from app.models.user import User
+from app.services.directions_service import DirectionsService
+from app.services.master_orchestration_agent import MasterOrchestrationAgent
+from app.core.logger import logger
+from app.core.cache import cache_manager
 
 
 class ReturnJourneyService:

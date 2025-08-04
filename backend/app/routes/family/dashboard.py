@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException
 from typing import Dict, Optional, List
 from datetime import datetime, timedelta
 
-from backend.app.services.family_facilities import family_facilities
-from backend.app.services.family_gamification import family_gamification
-from backend.app.services.family_experience import family_experience
+from app.services.family_facilities import family_facilities
+from app.services.family_gamification import family_gamification
+from app.services.family_experience import family_experience
 
 router = APIRouter()
 

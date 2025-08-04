@@ -10,6 +10,7 @@ import * as Crypto from 'expo-crypto';
 import CryptoJS from 'crypto-js';
 import { Platform } from 'react-native';
 
+import { logger } from '@/services/logger';
 interface SecureStorageOptions {
   requireAuthentication?: boolean;
   authenticationPrompt?: string;
@@ -52,7 +53,7 @@ class SecureStorageService {
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
       if (!hasHardware || !isEnrolled) {
-        console.warn('Biometric authentication not available, using PIN/password fallback');
+        logger.warn('Biometric authentication not available, using PIN/password fallback');
       }
 
       // Generate or retrieve master encryption key
@@ -261,7 +262,7 @@ class SecureStorageService {
 
       return result.success;
     } catch (error) {
-      console.error('Authentication error:', error);
+      logger.error('Authentication error:', error);
       return false;
     }
   }
@@ -309,7 +310,7 @@ class SecureStorageService {
           await AsyncStorage.removeItem(key);
         }
       } catch (error) {
-        console.error(`Failed to migrate key ${key}:`, error);
+        logger.error(`Failed to migrate key ${key}:`, error);
       }
     }
   }

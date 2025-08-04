@@ -5,6 +5,7 @@ import { voiceService } from '../../services/voice/voiceService';
 import { navigationService } from '../../services/navigation/navigationService';
 import { api } from '../../services/api/ApiClient';
 
+import { logger } from '@/services/logger';
 interface Command {
   type: 'navigation' | 'booking' | 'story' | 'settings' | 'query' | 'control';
   action: string;
@@ -64,7 +65,7 @@ export const VoiceCommandProcessor: React.FC<VoiceCommandProcessorProps> = ({
     try {
       await Voice.start('en-US');
     } catch (error) {
-      console.error('Error starting continuous listening:', error);
+      logger.error('Error starting continuous listening:', error);
     }
   };
   
@@ -89,7 +90,7 @@ export const VoiceCommandProcessor: React.FC<VoiceCommandProcessorProps> = ({
   };
   
   const handleSpeechError = (e: any) => {
-    console.error('Speech recognition error:', e);
+    logger.error('Speech recognition error:', e);
     if (onError) {
       onError(new Error(e.error?.message || 'Speech recognition failed'));
     }
@@ -122,7 +123,7 @@ export const VoiceCommandProcessor: React.FC<VoiceCommandProcessorProps> = ({
         await voiceService.speak('I\'m not sure I understood. Could you please repeat that?');
       }
     } catch (error) {
-      console.error('Error processing command:', error);
+      logger.error('Error processing command:', error);
       if (onError) {
         onError(error as Error);
       }

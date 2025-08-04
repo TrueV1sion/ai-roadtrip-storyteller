@@ -144,7 +144,7 @@ class PersonalityIntegrationService:
                     location.get("city"), 
                     location.get("state")
                 )
-            except:
+            except Exception as e:
                 pass
         
         # Extract event metadata if present

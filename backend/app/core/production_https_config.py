@@ -6,8 +6,10 @@ Enforces HTTPS and implements security best practices.
 from typing import Dict, Any, Optional
 import os
 
-from backend.app.core.config import settings
-from backend.app.core.logger import logger
+from app.core.config import settings
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ProductionSecurityConfig:

@@ -220,7 +220,7 @@ async def security_test():
                 print("✓ Security headers present")
             else:
                 print("✗ Security headers missing")
-        except:
+        except Exception as e:
             print("✗ Security headers test failed")
         
         # Test 2: Check that sensitive endpoints require auth
@@ -231,7 +231,7 @@ async def security_test():
                 print("✓ Protected endpoints require authentication")
             else:
                 print("✗ Protected endpoints accessible without auth")
-        except:
+        except Exception as e:
             print("✗ Auth test failed")
         
         # Test 3: Check for CORS headers
@@ -242,7 +242,7 @@ async def security_test():
                 print("✓ CORS configured")
             else:
                 print("✗ CORS not configured")
-        except:
+        except Exception as e:
             print("✗ CORS test failed")
         
         print(f"Security tests: {tests_passed}/{total_tests} passed")

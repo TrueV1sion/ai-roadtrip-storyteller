@@ -2,8 +2,8 @@ import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/types/user';
 import { API_URL } from '@/config';
-import * as SecureStore from 'expo-secure-store';
-
+import secureStorageService from '@/services/secureStorageService';
+import { logger } from '@/services/logger';
 // Auth storage keys
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
@@ -29,7 +29,7 @@ const api = axios.create({
   baseURL: API_AUTH_URL,
 });
 
-// Store tokens securely
+// Store tokens securely with biometric protection
 const storeTokens = async (
   accessToken: string,
   refreshToken: string,
@@ -38,25 +38,34 @@ const storeTokens = async (
   const expiryTime = Date.now() + expiresIn * 1000;
   
   try {
-    // Use SecureStore for sensitive data
-    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
-    await SecureStore.setItemAsync(TOKEN_EXPIRY_KEY, expiryTime.toString());
+    // Initialize secure storage if needed
+    await secureStorageService.initialize();
+    
+    // Store tokens with encryption and biometric protection for refresh token
+    await secureStorageService.setItem(ACCESS_TOKEN_KEY, accessToken);
+    await secureStorageService.setItem(REFRESH_TOKEN_KEY, refreshToken, {
+      requireAuthentication: true,
+      authenticationPrompt: 'Authenticate to store refresh token',
+    });
+    await secureStorageService.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString());
   } catch (error) {
-    console.error('Error storing tokens securely:', error);
+    logger.error('Error storing tokens securely:', error);
     // SECURITY: Never fallback to AsyncStorage for sensitive tokens
     // If secure storage fails, the operation must fail
     throw new Error('Failed to store authentication tokens securely. Please try again.');
   }
 };
 
-// Get tokens
+// Get tokens with secure decryption
 const getTokens = async () => {
   try {
-    // Try SecureStore first
-    let accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-    let refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-    let expiryTimeStr = await SecureStore.getItemAsync(TOKEN_EXPIRY_KEY);
+    // Initialize secure storage if needed
+    await secureStorageService.initialize();
+    
+    // Get tokens from secure encrypted storage
+    const accessToken = await secureStorageService.getItem(ACCESS_TOKEN_KEY);
+    const refreshToken = await secureStorageService.getItem(REFRESH_TOKEN_KEY);
+    const expiryTimeStr = await secureStorageService.getItem(TOKEN_EXPIRY_KEY);
     
     // SECURITY: No fallback to AsyncStorage - tokens must be in SecureStore only
     // If tokens are not in SecureStore, user must re-authenticate
@@ -69,7 +78,7 @@ const getTokens = async () => {
       expiryTime
     };
   } catch (error) {
-    console.error('Error getting tokens:', error);
+    logger.error('Error getting tokens:', error);
     return {
       accessToken: null,
       refreshToken: null,
@@ -78,20 +87,20 @@ const getTokens = async () => {
   }
 };
 
-// Clear tokens
+// Clear tokens from secure storage
 const clearTokens = async () => {
   try {
-    // Clear from SecureStore
-    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(TOKEN_EXPIRY_KEY);
+    // Clear from secure encrypted storage
+    await secureStorageService.removeItem(ACCESS_TOKEN_KEY);
+    await secureStorageService.removeItem(REFRESH_TOKEN_KEY);
+    await secureStorageService.removeItem(TOKEN_EXPIRY_KEY);
     
-    // Clear from AsyncStorage as well
+    // Clear from AsyncStorage as well (in case of legacy data)
     await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
     await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
     await AsyncStorage.removeItem(TOKEN_EXPIRY_KEY);
   } catch (error) {
-    console.error('Error clearing tokens:', error);
+    logger.error('Error clearing tokens:', error);
   }
 };
 
@@ -122,7 +131,7 @@ const refreshTokens = async (): Promise<boolean> => {
     
     return true;
   } catch (error) {
-    console.error('Token refresh failed:', error);
+    logger.error('Token refresh failed:', error);
     return false;
   }
 };
@@ -171,7 +180,7 @@ api.interceptors.response.use(
           }
         }
       } catch (refreshError) {
-        console.error('Token refresh failed in error interceptor:', refreshError);
+        logger.error('Token refresh failed in error interceptor:', refreshError);
       }
     }
     
@@ -206,7 +215,7 @@ export const authService = {
       
       return userResponse.data;
     } catch (error) {
-      console.error('Login failed:', error);
+      logger.error('Login failed:', error);
       throw error;
     }
   },
@@ -224,7 +233,7 @@ export const authService = {
       // After registration, login to get tokens
       return await this.login(userData.email, userData.password);
     } catch (error) {
-      console.error('Registration failed:', error);
+      logger.error('Registration failed:', error);
       throw error;
     }
   },
@@ -258,7 +267,7 @@ export const authService = {
         });
       }
     } catch (error) {
-      console.error('Error during server logout:', error);
+      logger.error('Error during server logout:', error);
     } finally {
       // Clear tokens locally regardless of server response
       await clearTokens();
@@ -312,7 +321,7 @@ export const authService = {
       
       return false;
     } catch (error) {
-      console.error('Authentication check failed:', error);
+      logger.error('Authentication check failed:', error);
       return false;
     }
   }

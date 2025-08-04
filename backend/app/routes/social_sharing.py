@@ -6,11 +6,11 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from backend.app.core.database_manager import get_db
-from backend.app.core.auth import get_current_user
-from backend.app.models import User
-from backend.app.services.journey_video_service import journey_video_service
-from backend.app.core.logger import logger
+from app.database import get_db
+from app.core.auth import get_current_user
+from app.models import User
+from app.services.journey_video_service import journey_video_service
+from app.core.logger import logger
 
 
 router = APIRouter(prefix="/api/social", tags=["social"])
@@ -46,7 +46,7 @@ async def create_journey_video(
                 raise HTTPException(400, "Invalid music style")
         
         # Check if video already exists
-        from backend.app.core.cache import cache_manager
+        from app.core.cache import cache_manager
         cached_video = await cache_manager.get(f"journey_video:{trip_id}")
         if cached_video:
             return {
@@ -80,7 +80,7 @@ async def get_video_status(
 ) -> Dict[str, Any]:
     """Check journey video generation status"""
     try:
-        from backend.app.core.cache import cache_manager
+        from app.core.cache import cache_manager
         video_data = await cache_manager.get(f"journey_video:{trip_id}")
         
         if video_data:
@@ -117,7 +117,7 @@ async def prepare_share_content(
     
     try:
         # Get trip data
-        from backend.app.models import Trip
+        from app.models import Trip
         trip = db.query(Trip).filter(
             Trip.id == trip_id,
             Trip.user_id == current_user.id
@@ -182,7 +182,7 @@ async def prepare_share_content(
         
         # Add video URL if available
         if include_video:
-            from backend.app.core.cache import cache_manager
+            from app.core.cache import cache_manager
             video_data = await cache_manager.get(f"journey_video:{trip_id}")
             if video_data:
                 content["video_url"] = video_data["video_url"]

@@ -4,6 +4,7 @@ import * as SQLite from 'expo-sqlite';
 import { compress, decompress } from 'fflate';
 import { Region, Location, Route } from '../../types/location';
 
+import { logger } from '@/services/logger';
 // Constants for tile storage optimization
 const TILE_SIZE_BY_ZOOM: Record<number, number> = {
   8: 8 * 1024,    // 8 KB per tile (overview)
@@ -151,11 +152,11 @@ export class MapStorageOptimizer {
         `);
       }, 
       (error) => {
-        console.error('Error initializing MBTiles schema:', error);
+        logger.error('Error initializing MBTiles schema:', error);
         reject(error);
       },
       () => {
-        console.log('MBTiles schema initialized successfully');
+        logger.debug('MBTiles schema initialized successfully');
         resolve();
       });
     });

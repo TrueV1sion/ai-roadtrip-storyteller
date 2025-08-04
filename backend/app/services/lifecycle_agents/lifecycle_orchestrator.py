@@ -13,16 +13,16 @@ from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass
 from enum import Enum
 
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.core.standardized_errors import handle_errors
-from backend.app.models.user import User
-from backend.app.models.trip import Trip
-from backend.app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
-from backend.app.services.master_orchestration_agent import MasterOrchestrationAgent
-from backend.app.services.lifecycle_agents.base_lifecycle_agent import LifecycleContext, LifecycleResponse
-from backend.app.services.lifecycle_agents.pre_trip_agent import PreTripAgent
-from backend.app.services.lifecycle_agents.in_trip_agent import InTripAgent
-from backend.app.services.lifecycle_agents.post_trip_agent import PostTripAgent
+from app.core.unified_ai_client import UnifiedAIClient
+from app.core.standardized_errors import handle_errors
+from app.models.user import User
+from app.models.trip import Trip
+from app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
+from app.services.master_orchestration_agent import MasterOrchestrationAgent
+from app.services.lifecycle_agents.base_lifecycle_agent import LifecycleContext, LifecycleResponse
+from app.services.lifecycle_agents.pre_trip_agent import PreTripAgent
+from app.services.lifecycle_agents.in_trip_agent import InTripAgent
+from app.services.lifecycle_agents.post_trip_agent import PostTripAgent
 
 logger = logging.getLogger(__name__)
 
@@ -378,7 +378,7 @@ class LifecycleOrchestrator:
     def _create_master_agent_context(self, request: OrchestrationRequest,
                                     context: LifecycleContext):
         """Create master agent context from lifecycle context."""
-        from backend.app.services.master_orchestration_agent import JourneyContext
+        from app.services.master_orchestration_agent import JourneyContext
         
         return JourneyContext(
             current_location=context.current_location or {},

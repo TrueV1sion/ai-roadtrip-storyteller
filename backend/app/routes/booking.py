@@ -4,18 +4,18 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from backend.app.core.auth import get_current_user
-from backend.app.database import get_db
-from backend.app.models.user import User
-from backend.app.models.booking import BookingStatus
-from backend.app.services.booking_service import BookingService
-from backend.app.schemas.booking import (
+from app.core.auth import get_current_user
+from app.database import get_db
+from app.models.user import User
+from app.models.booking import BookingStatus
+from app.services.booking_service import BookingService
+from app.schemas.booking import (
     BookingCreate,
     BookingUpdate,
     BookingResponse,
     BookingListResponse
 )
-from backend.app.core.logger import logger
+from app.core.logger import logger
 
 
 router = APIRouter(
@@ -85,7 +85,7 @@ async def list_bookings(
         
         # Get total count
         from sqlalchemy import func
-        from backend.app.models.booking import Booking
+        from app.models.booking import Booking
         
         query = db.query(func.count(Booking.id)).filter(
             Booking.user_id == current_user.id

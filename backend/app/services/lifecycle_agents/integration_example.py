@@ -10,11 +10,11 @@ import logging
 from datetime import datetime
 from typing import Dict, Any
 
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.models.user import User
-from backend.app.models.trip import Trip
-from backend.app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
-from backend.app.services.lifecycle_agents import (
+from app.core.unified_ai_client import UnifiedAIClient
+from app.models.user import User
+from app.models.trip import Trip
+from app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
+from app.services.lifecycle_agents import (
     LifecycleOrchestrator,
     OrchestrationRequest,
     OrchestrationMode,

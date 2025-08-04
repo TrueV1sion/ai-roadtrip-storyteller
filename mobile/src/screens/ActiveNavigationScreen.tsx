@@ -16,6 +16,7 @@ import audioPlaybackService from '../services/audioPlaybackService';
 import { useNavigation } from '../hooks/useNavigation';
 import { useStory } from '../hooks/useStory';
 
+import { logger } from '@/services/logger';
 const LOCATION_TASK_NAME = 'background-location-task';
 const NAVIGATION_UPDATE_TASK = 'navigation-update-task';
 
@@ -105,7 +106,7 @@ export const ActiveNavigationScreen: React.FC<ActiveNavigationScreenProps> = ({ 
         await configureAudioForNavigation();
       }
     } catch (error) {
-      console.error('Failed to initialize navigation:', error);
+      logger.error('Failed to initialize navigation:', error);
       Alert.alert('Navigation Error', 'Failed to start navigation');
     }
   };
@@ -122,7 +123,7 @@ export const ActiveNavigationScreen: React.FC<ActiveNavigationScreenProps> = ({ 
         playThroughEarpieceAndroid: false,
       });
     } catch (error) {
-      console.error('Failed to configure audio:', error);
+      logger.error('Failed to configure audio:', error);
     }
   };
 
@@ -173,7 +174,7 @@ export const ActiveNavigationScreen: React.FC<ActiveNavigationScreenProps> = ({ 
         setLastInstructionTime(new Date());
       }
     } catch (error) {
-      console.error('Failed to update navigation:', error);
+      logger.error('Failed to update navigation:', error);
     }
   };
 
@@ -283,7 +284,7 @@ export const ActiveNavigationScreen: React.FC<ActiveNavigationScreenProps> = ({ 
 
   const handleNavigationUpdate = useCallback((update: any) => {
     // Handle updates from the map component
-    console.log('Navigation update:', update);
+    logger.debug('Navigation update:', update);
   }, []);
 
   return (

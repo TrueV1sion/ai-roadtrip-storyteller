@@ -67,7 +67,7 @@ class CodebaseCleanup:
                 response = input("Continue anyway? (y/N): ")
                 if response.lower() != 'y':
                     return False
-        except:
+        except Exception as e:
             print("⚠️  Warning: Unable to check git status")
             
         # Confirm with user

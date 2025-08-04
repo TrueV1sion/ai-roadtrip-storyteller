@@ -6,6 +6,7 @@ import { recordApiPerformance } from '@/utils/performance';
 import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
 
+import { logger } from '@/services/logger';
 // Cache settings
 const API_CACHE_PREFIX = '@RoadTrip:api_cache:';
 const DEFAULT_CACHE_TTL = 60 * 60 * 1000; // 1 hour
@@ -100,7 +101,7 @@ export class OptimizedApiClient extends ApiClient {
       
       this.cacheInitialized = true;
     } catch (error) {
-      console.error('Failed to initialize API cache:', error);
+      logger.error('Failed to initialize API cache:', error);
       // Reset registry on error
       this.cacheRegistry = {
         entries: {},
@@ -122,7 +123,7 @@ export class OptimizedApiClient extends ApiClient {
       }
       
       // Log network state change
-      console.log('Network state changed:', {
+      logger.debug('Network state changed:', {
         isConnected: state.isConnected,
         type: state.type,
         offlineMode: this.offlineMode,
@@ -138,7 +139,7 @@ export class OptimizedApiClient extends ApiClient {
         JSON.stringify(this.cacheRegistry)
       );
     } catch (error) {
-      console.error('Failed to save cache registry:', error);
+      logger.error('Failed to save cache registry:', error);
     }
   }
 
@@ -201,7 +202,7 @@ export class OptimizedApiClient extends ApiClient {
       this.cacheRegistry.totalSize -= metadata.size;
       delete this.cacheRegistry.entries[key];
     } catch (error) {
-      console.warn(`Failed to remove cache entry ${key}:`, error);
+      logger.warn(`Failed to remove cache entry ${key}:`, error);
     }
   }
 
@@ -292,7 +293,7 @@ export class OptimizedApiClient extends ApiClient {
         isStale,
       };
     } catch (error) {
-      console.warn(`Error reading cache for ${url}:`, error);
+      logger.warn(`Error reading cache for ${url}:`, error);
       return null;
     }
   }
@@ -342,7 +343,7 @@ export class OptimizedApiClient extends ApiClient {
         } catch (e) {
           // Fallback to uncompressed data
           dataToSave = jsonData;
-          console.warn('Compression failed, using uncompressed data:', e);
+          logger.warn('Compression failed, using uncompressed data:', e);
         }
       } else {
         dataToSave = jsonData;
@@ -387,7 +388,7 @@ export class OptimizedApiClient extends ApiClient {
         await this.cleanupCache();
       }
     } catch (error) {
-      console.error(`Failed to cache response for ${url}:`, error);
+      logger.error(`Failed to cache response for ${url}:`, error);
     }
   }
 
@@ -476,7 +477,7 @@ export class OptimizedApiClient extends ApiClient {
               if (cacheResponse) {
                 data = cacheResponse.data;
                 fromCache = true;
-                console.log(`Network request failed, using cached data for ${url}`);
+                logger.debug(`Network request failed, using cached data for ${url}`);
               } else {
                 throw error;
               }
@@ -505,7 +506,7 @@ export class OptimizedApiClient extends ApiClient {
                   this.saveCachedResponse(cacheKey, url, response.data, settings, response.headers);
                 }
               }).catch(error => {
-                console.warn(`Background refresh failed for ${url}:`, error);
+                logger.warn(`Background refresh failed for ${url}:`, error);
               });
             }
           } else if (this.offlineMode) {
@@ -575,7 +576,7 @@ export class OptimizedApiClient extends ApiClient {
               if (cacheResponse) {
                 data = cacheResponse.data;
                 fromCache = true;
-                console.log(`Network request failed, using cached data for ${url}`);
+                logger.debug(`Network request failed, using cached data for ${url}`);
               } else {
                 throw error;
               }
@@ -685,9 +686,9 @@ export class OptimizedApiClient extends ApiClient {
         }
       }
       
-      console.log('API cache cleared successfully');
+      logger.debug('API cache cleared successfully');
     } catch (error) {
-      console.error('Failed to clear API cache:', error);
+      logger.error('Failed to clear API cache:', error);
     }
   }
 
@@ -706,10 +707,10 @@ export class OptimizedApiClient extends ApiClient {
       // Save updated registry
       await this.saveRegistry();
       
-      console.log(`Cleared ${cleared} cache entries for pattern: ${urlPattern}`);
+      logger.debug(`Cleared ${cleared} cache entries for pattern: ${urlPattern}`);
       return cleared;
     } catch (error) {
-      console.error(`Failed to clear cache for pattern ${urlPattern}:`, error);
+      logger.error(`Failed to clear cache for pattern ${urlPattern}:`, error);
       return cleared;
     }
   }
@@ -729,10 +730,10 @@ export class OptimizedApiClient extends ApiClient {
       // Save updated registry
       await this.saveRegistry();
       
-      console.log(`Cleared ${cleared} private cache entries`);
+      logger.debug(`Cleared ${cleared} private cache entries`);
       return cleared;
     } catch (error) {
-      console.error('Failed to clear private cache:', error);
+      logger.error('Failed to clear private cache:', error);
       return cleared;
     }
   }
@@ -753,12 +754,12 @@ export class OptimizedApiClient extends ApiClient {
   // Network status methods
   setOfflineMode(enabled: boolean): void {
     this.offlineMode = enabled;
-    console.log(`Offline mode ${enabled ? 'enabled' : 'disabled'}`);
+    logger.debug(`Offline mode ${enabled ? 'enabled' : 'disabled'}`);
   }
 
   setLowBandwidthMode(enabled: boolean): void {
     this.lowBandwidthMode = enabled;
-    console.log(`Low bandwidth mode ${enabled ? 'enabled' : 'disabled'}`);
+    logger.debug(`Low bandwidth mode ${enabled ? 'enabled' : 'disabled'}`);
   }
 
   setMobileDataSaving(enabled: boolean): void {
@@ -785,7 +786,7 @@ export class OptimizedApiClient extends ApiClient {
       await this.get(url, params, settings);
       return true;
     } catch (error) {
-      console.warn(`Failed to prefetch ${url}:`, error);
+      logger.warn(`Failed to prefetch ${url}:`, error);
       return false;
     }
   }

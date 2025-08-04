@@ -272,7 +272,7 @@ async def main():
             if response.status_code != 200:
                 print("❌ Backend is not running! Please run: ./scripts/launch_beta.sh")
                 return
-        except:
+        except Exception as e:
             print("❌ Cannot connect to backend! Please run: ./scripts/launch_beta.sh")
             return
         

@@ -13,9 +13,9 @@ import hashlib
 import json
 from datetime import datetime, timedelta
 
-from backend.app.core.cache import CacheManager
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.core.logger import get_logger
+from app.core.cache import CacheManager
+from app.core.unified_ai_client import UnifiedAIClient
+from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 

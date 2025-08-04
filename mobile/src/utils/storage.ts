@@ -1,12 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
 class StorageManager {
   async getItem<T>(key: string): Promise<T | null> {
     try {
       const value = await AsyncStorage.getItem(key);
       return value ? JSON.parse(value) as T : null;
     } catch (error) {
-      console.error(`Failed to get item ${key}:`, error);
+      logger.error(`Failed to get item ${key}:`, error);
       return null;
     }
   }
@@ -15,7 +16,7 @@ class StorageManager {
     try {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error(`Failed to set item ${key}:`, error);
+      logger.error(`Failed to set item ${key}:`, error);
     }
   }
 
@@ -23,7 +24,7 @@ class StorageManager {
     try {
       await AsyncStorage.removeItem(key);
     } catch (error) {
-      console.error(`Failed to remove item ${key}:`, error);
+      logger.error(`Failed to remove item ${key}:`, error);
     }
   }
 
@@ -31,7 +32,7 @@ class StorageManager {
     try {
       await AsyncStorage.clear();
     } catch (error) {
-      console.error('Failed to clear storage:', error);
+      logger.error('Failed to clear storage:', error);
     }
   }
 }

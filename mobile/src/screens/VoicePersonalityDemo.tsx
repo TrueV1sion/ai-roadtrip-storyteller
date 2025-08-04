@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   ScrollView,
   View,
@@ -152,7 +153,7 @@ export const VoicePersonalityDemoScreen: React.FC = () => {
     });
 
     voiceRecognitionService.onSpeechError((error) => {
-      console.error('Speech recognition error:', error);
+      logger.error('Speech recognition error:', error);
       setIsListening(false);
     });
 

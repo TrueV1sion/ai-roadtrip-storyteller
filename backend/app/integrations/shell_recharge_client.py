@@ -20,8 +20,8 @@ from tenacity import (
     before_sleep_log
 )
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.cache import cache_manager
 
 
 class ShellRechargeClient:

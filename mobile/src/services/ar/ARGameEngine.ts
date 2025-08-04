@@ -8,6 +8,7 @@ import { voiceOrchestrationService } from '../voiceOrchestrationService';
 import { gameOrchestrator } from '../games/game_orchestrator';
 import { performanceMonitor } from '../performanceMonitor';
 
+import { logger } from '@/services/logger';
 export interface ARGame {
   id: string;
   type: 'scavenger' | 'landmark_quiz' | 'photo_hunt' | 'time_travel';
@@ -430,7 +431,7 @@ export class ARGameEngine {
   private async saveGameHistory(): Promise<void> {
     // This would save to persistent storage
     // For now, just log
-    console.log('Game history saved');
+    logger.debug('Game history saved');
   }
   
   /**

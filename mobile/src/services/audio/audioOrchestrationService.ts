@@ -10,6 +10,7 @@
 import { Audio } from 'expo-av';
 import { EventEmitter } from 'eventemitter3';
 
+import { logger } from '@/services/logger';
 type AudioPriority = 'navigation' | 'story' | 'balanced';
 type AudioSource = 'navigation' | 'story' | 'music' | 'ambient' | 'effect';
 
@@ -80,7 +81,7 @@ class AudioOrchestrationService extends EventEmitter {
   async registerSound(source: AudioSource, sound: Audio.Sound, volume: number = 1.0): Promise<void> {
     const layer = this.audioLayers.get(source);
     if (!layer) {
-      console.warn(`Unknown audio source: ${source}`);
+      logger.warn(`Unknown audio source: ${source}`);
       return;
     }
     

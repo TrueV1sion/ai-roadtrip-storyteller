@@ -1,0 +1,64 @@
+#!/bin/bash
+# Knowledge Graph Pre-commit Hook
+# Ensures all commits are validated by the Knowledge Graph
+
+set -e
+
+echo "🔍 Knowledge Graph Pre-commit Analysis..."
+
+# Check if Knowledge Graph is running
+if ! curl -s http://localhost:8000/api/health > /dev/null 2>&1; then
+    echo "❌ Knowledge Graph is not running!"
+    echo "Please start it with: docker-compose up -d knowledge-graph"
+    echo "Or run: ./start_with_kg.sh"
+    exit 1
+fi
+
+# Get list of changed files
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(py|js|ts|tsx|jsx)$' || true)
+
+if [ -z "$CHANGED_FILES" ]; then
+    echo "✅ No code files changed, skipping KG analysis"
+    exit 0
+fi
+
+# Convert to JSON array
+FILES_JSON=$(echo "$CHANGED_FILES" | jq -R . | jq -s .)
+
+# Get commit message
+COMMIT_MSG=$(cat .git/COMMIT_EDITMSG 2>/dev/null || echo "")
+
+# Send to Knowledge Graph for validation
+RESPONSE=$(curl -s -X POST http://localhost:8000/api/agent/pre-commit \
+    -H "Content-Type: application/json" \
+    -d "{\"files\": $FILES_JSON, \"message\": \"$COMMIT_MSG\"}")
+
+# Check if commit should be allowed
+ALLOW_COMMIT=$(echo "$RESPONSE" | jq -r '.allow_commit')
+SEVERITY=$(echo "$RESPONSE" | jq -r '.analysis.severity // "unknown"')
+
+if [ "$ALLOW_COMMIT" != "true" ]; then
+    echo "❌ Commit blocked by Knowledge Graph!"
+    echo "Severity: $SEVERITY"
+    echo ""
+    echo "Issues found:"
+    echo "$RESPONSE" | jq -r '.analysis.results[].findings[]' 2>/dev/null || echo "$RESPONSE"
+    echo ""
+    echo "To override (not recommended): git commit --no-verify"
+    exit 1
+fi
+
+# Check severity for warnings
+if [ "$SEVERITY" = "high" ]; then
+    echo "⚠️  High severity issues detected!"
+    echo "$RESPONSE" | jq -r '.analysis.results[].findings[]' 2>/dev/null || true
+    echo ""
+    echo "Proceeding with commit, but please review these issues."
+fi
+
+echo "✅ Knowledge Graph validation passed (severity: $SEVERITY)"
+
+# Optional: Add KG analysis results to commit message
+# This could include impact analysis, affected files, etc.
+
+exit 0

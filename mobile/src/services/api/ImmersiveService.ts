@@ -1,6 +1,7 @@
 import { apiClient } from './ApiClient';
 import { LocationData } from '../locationService';
 
+import { logger } from '@/services/logger';
 // Types for API requests and responses
 export interface ImmersiveRequest {
   conversation_id: string;
@@ -45,7 +46,7 @@ export class ImmersiveService {
       const response = await apiClient.post<ImmersiveResponse>('/api/immersive', request);
       return response;
     } catch (error) {
-      console.error('Error fetching immersive experience:', error);
+      logger.error('Error fetching immersive experience:', error);
       throw error;
     }
   }
@@ -73,7 +74,7 @@ export class ImmersiveService {
       
       return response.story;
     } catch (error) {
-      console.error('Error generating story:', error);
+      logger.error('Error generating story:', error);
       throw error;
     }
   }
@@ -93,7 +94,7 @@ export class ImmersiveService {
       
       return response;
     } catch (error) {
-      console.error('Error rating story:', error);
+      logger.error('Error rating story:', error);
       throw error;
     }
   }
@@ -112,7 +113,7 @@ export class ImmersiveService {
       
       return response;
     } catch (error) {
-      console.error('Error toggling favorite status:', error);
+      logger.error('Error toggling favorite status:', error);
       throw error;
     }
   }

@@ -1,0 +1,359 @@
+# Google Cloud Build configuration for RoadTrip Backend
+# Production-ready configuration with proper error handling and rollback strategy
+
+substitutions:
+  _SERVICE_NAME: roadtrip-backend
+  _REGION: us-central1
+  _MEMORY: 4Gi
+  _CPU: '4'
+  _MAX_INSTANCES: '200'
+  _MIN_INSTANCES: '2'
+  _CONCURRENCY: '200'
+  _SERVICE_ACCOUNT: roadtrip-backend@${PROJECT_ID}.iam.gserviceaccount.com
+  _IMAGE_NAME: gcr.io/${PROJECT_ID}/roadtrip-backend
+  _TIMEOUT: '600s'
+  _KG_SERVICE_URL: https://roadtrip-knowledge-graph-${PROJECT_ID}.${_REGION}.run.app
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  substitution_option: 'ALLOW_LOOSE'
+
+steps:
+  # Step 1: Enable required APIs
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'enable-apis'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Enabling required Google Cloud APIs..."
+        gcloud services enable \
+          run.googleapis.com \
+          cloudbuild.googleapis.com \
+          secretmanager.googleapis.com \
+          sqladmin.googleapis.com \
+          redis.googleapis.com \
+          aiplatform.googleapis.com \
+          cloudtrace.googleapis.com \
+          monitoring.googleapis.com \
+          logging.googleapis.com \
+          maps-backend.googleapis.com \
+          places-backend.googleapis.com \
+          texttospeech.googleapis.com \
+          speech.googleapis.com \
+          containeranalysis.googleapis.com
+    timeout: '300s'
+
+  # Step 2: Create service account if it doesn't exist
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'setup-service-account'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if ! gcloud iam service-accounts describe ${_SERVICE_ACCOUNT} 2>/dev/null; then
+          echo "Creating service account ${_SERVICE_ACCOUNT}..."
+          gcloud iam service-accounts create roadtrip-backend \
+            --display-name="RoadTrip Backend Service Account"
+        fi
+        
+        # Grant necessary IAM roles
+        echo "Granting IAM roles..."
+        for role in \
+          "roles/aiplatform.user" \
+          "roles/secretmanager.secretAccessor" \
+          "roles/cloudsql.client" \
+          "roles/redis.editor" \
+          "roles/cloudtrace.agent" \
+          "roles/monitoring.metricWriter" \
+          "roles/logging.logWriter"
+        do
+          gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+            --member="serviceAccount:${_SERVICE_ACCOUNT}" \
+            --role="${role}" \
+            --condition=None
+        done
+    timeout: '300s'
+
+  # Step 3: Build Docker image with caching
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '--cache-from'
+      - '${_IMAGE_NAME}:latest'
+      - '-t'
+      - '${_IMAGE_NAME}:${BUILD_ID}'
+      - '-t'
+      - '${_IMAGE_NAME}:latest'
+      - '-t'
+      - '${_IMAGE_NAME}:${SHORT_SHA}'
+      - '--build-arg'
+      - 'BUILDKIT_INLINE_CACHE=1'
+      - '-f'
+      - 'backend/Dockerfile'
+      - 'backend'
+    timeout: '900s'
+
+  # Step 4: Run Google Container Analysis security scan
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'container-analysis'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Running vulnerability scan with Google Container Analysis..."
+        gcloud container images scan ${_IMAGE_NAME}:${BUILD_ID} --quiet || true
+        
+        # Get scan results (non-blocking for now)
+        gcloud container images describe ${_IMAGE_NAME}:${BUILD_ID} \
+          --show-package-vulnerability || true
+    waitFor: ['build-image']
+    timeout: '300s'
+
+  # Step 5: Run unit tests
+  - name: '${_IMAGE_NAME}:${BUILD_ID}'
+    id: 'unit-tests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Running unit tests..."
+        cd /app && python -m pytest tests/unit/ -v --tb=short || exit 1
+    env:
+      - 'ENVIRONMENT=test'
+      - 'DATABASE_URL=sqlite:///test.db'
+    waitFor: ['container-analysis']
+    timeout: '600s'
+
+  # Step 6: Push image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_IMAGE_NAME}'
+    waitFor: ['unit-tests']
+    timeout: '300s'
+
+  # Step 7: Get current service revision for rollback
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'get-current-revision'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Save current revision for potential rollback
+        CURRENT_REVISION=$(gcloud run services describe ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --format='value(status.latestReadyRevisionName)' 2>/dev/null || echo "")
+        
+        if [ -n "$CURRENT_REVISION" ]; then
+          echo "$CURRENT_REVISION" > /workspace/current_revision.txt
+          echo "Current revision: $CURRENT_REVISION"
+        else
+          echo "No existing service found"
+          echo "" > /workspace/current_revision.txt
+        fi
+    waitFor: ['push-image']
+
+  # Step 8: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'deploy'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy ${_SERVICE_NAME} \
+          --image=${_IMAGE_NAME}:${BUILD_ID} \
+          --region=${_REGION} \
+          --platform=managed \
+          --memory=${_MEMORY} \
+          --cpu=${_CPU} \
+          --timeout=${_TIMEOUT} \
+          --concurrency=${_CONCURRENCY} \
+          --max-instances=${_MAX_INSTANCES} \
+          --min-instances=${_MIN_INSTANCES} \
+          --service-account=${_SERVICE_ACCOUNT} \
+          --allow-unauthenticated \
+          --port=8080 \
+          --set-env-vars="ENVIRONMENT=production" \
+          --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}" \
+          --set-env-vars="GOOGLE_AI_PROJECT_ID=${PROJECT_ID}" \
+          --set-env-vars="GOOGLE_AI_LOCATION=${_REGION}" \
+          --set-env-vars="GOOGLE_AI_MODEL=gemini-1.5-flash" \
+          --set-env-vars="VERTEX_AI_LOCATION=${_REGION}" \
+          --set-env-vars="LOG_LEVEL=INFO" \
+          --set-env-vars="CORS_ORIGINS=*" \
+          --set-env-vars="API_V1_STR=/api/v1" \
+          --set-env-vars="KNOWLEDGE_GRAPH_URL=${_KG_SERVICE_URL}" \
+          --set-env-vars="ENABLE_JOURNEY_TRACKING=true" \
+          --set-env-vars="ENABLE_AR_FEATURES=true" \
+          --set-env-vars="ENABLE_SPATIAL_AUDIO=true" \
+          --set-env-vars="ENABLE_2FA=true" \
+          --set-env-vars="STORY_CHECK_INTERVAL=300" \
+          --set-env-vars="MIN_STORY_GAP_MINUTES=10" \
+          --set-env-vars="MAX_STORIES_PER_HOUR=4" \
+          --set-env-vars="AUDIO_SAMPLE_RATE=48000" \
+          --set-secrets="DATABASE_URL=roadtrip-database-url:latest" \
+          --set-secrets="REDIS_URL=roadtrip-redis-url:latest" \
+          --set-secrets="JWT_SECRET_KEY=roadtrip-jwt-secret:latest" \
+          --set-secrets="GOOGLE_MAPS_API_KEY=roadtrip-google-maps-key:latest" \
+          --set-secrets="TICKETMASTER_API_KEY=roadtrip-ticketmaster-key:latest" \
+          --set-secrets="OPENTABLE_API_KEY=roadtrip-opentable-key:latest" \
+          --set-secrets="RECREATION_GOV_API_KEY=roadtrip-recreation-gov-key:latest" \
+          --set-secrets="VIATOR_API_KEY=roadtrip-viator-key:latest" \
+          --set-secrets="OPENWEATHER_API_KEY=roadtrip-openweather-key:latest" \
+          --set-secrets="SENTRY_DSN=roadtrip-sentry-dsn:latest" \
+          --set-secrets="TWO_FACTOR_SECRET=roadtrip-2fa-secret:latest" \
+          --set-secrets="AUDIO_ENCRYPTION_KEY=roadtrip-audio-encryption-key:latest" \
+          --set-secrets="AR_API_KEY=roadtrip-ar-api-key:latest" \
+          --set-cloudsql-instances="${PROJECT_ID}:${_REGION}:roadtrip-postgres" \
+          --vpc-connector="projects/${PROJECT_ID}/locations/${_REGION}/connectors/roadtrip-connector" \
+          --vpc-egress=private-ranges-only \
+          --labels="environment=production,app=roadtrip,component=backend" \
+          --tag="latest" \
+          --no-traffic
+    waitFor: ['get-current-revision']
+    timeout: '600s'
+
+  # Step 9: Run health checks on new revision
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'health-check'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Getting new revision URL..."
+        NEW_URL=$(gcloud run services describe ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --format='value(status.address.url)')
+        
+        NEW_REVISION=$(gcloud run services describe ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --format='value(status.latestCreatedRevisionName)')
+        
+        echo "New revision: $NEW_REVISION"
+        echo "Service URL: $NEW_URL"
+        
+        # Wait for service to be ready
+        echo "Waiting for service to be ready..."
+        sleep 30
+        
+        # Perform health checks
+        echo "Running health checks..."
+        for i in {1..10}; do
+          if curl -f -s -o /dev/null -w "%{http_code}" "${NEW_URL}/health" | grep -q "200"; then
+            echo "Health check passed on attempt $i"
+            break
+          else
+            echo "Health check failed on attempt $i, retrying in 10s..."
+            sleep 10
+          fi
+          
+          if [ $i -eq 10 ]; then
+            echo "Health checks failed after 10 attempts"
+            exit 1
+          fi
+        done
+        
+        # Test critical endpoints
+        echo "Testing critical endpoints..."
+        curl -f -s "${NEW_URL}/api/v1/health" || exit 1
+        curl -f -s "${NEW_URL}/docs" || exit 1
+        
+        echo "$NEW_REVISION" > /workspace/new_revision.txt
+    waitFor: ['deploy']
+    timeout: '300s'
+
+  # Step 10: Gradually shift traffic to new revision
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'traffic-shift'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        NEW_REVISION=$(cat /workspace/new_revision.txt)
+        CURRENT_REVISION=$(cat /workspace/current_revision.txt)
+        
+        echo "Starting traffic migration to $NEW_REVISION"
+        
+        # Shift 10% traffic first
+        gcloud run services update-traffic ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --to-revisions="${NEW_REVISION}=10"
+        
+        echo "10% traffic shifted, monitoring for 60 seconds..."
+        sleep 60
+        
+        # Shift 50% traffic
+        gcloud run services update-traffic ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --to-revisions="${NEW_REVISION}=50"
+        
+        echo "50% traffic shifted, monitoring for 60 seconds..."
+        sleep 60
+        
+        # Shift 100% traffic
+        gcloud run services update-traffic ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --to-revisions="${NEW_REVISION}=100"
+        
+        echo "100% traffic shifted to new revision"
+        
+        # Tag the new revision as 'latest'
+        gcloud run services update ${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --tag="latest" \
+          --to-revisions="${NEW_REVISION}=100"
+    waitFor: ['health-check']
+    timeout: '600s'
+
+  # Step 11: Clean up old revisions (keep last 3)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'cleanup'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Cleaning up old revisions..."
+        REVISIONS=$(gcloud run revisions list \
+          --service=${_SERVICE_NAME} \
+          --region=${_REGION} \
+          --format='value(name)' \
+          --sort-by='~creationTimestamp' | tail -n +4)
+        
+        if [ -n "$REVISIONS" ]; then
+          echo "Deleting old revisions:"
+          echo "$REVISIONS"
+          echo "$REVISIONS" | xargs -I {} gcloud run revisions delete {} \
+            --region=${_REGION} \
+            --quiet || true
+        fi
+    waitFor: ['traffic-shift']
+    timeout: '300s'
+
+# Build timeout
+timeout: 3600s
+
+# Available secrets for build steps
+availableSecrets:
+  secretManager:
+    - versionName: projects/${PROJECT_ID}/secrets/roadtrip-database-url/versions/latest
+      env: 'DATABASE_URL'
+    - versionName: projects/${PROJECT_ID}/secrets/roadtrip-redis-url/versions/latest
+      env: 'REDIS_URL'
+    - versionName: projects/${PROJECT_ID}/secrets/roadtrip-jwt-secret/versions/latest
+      env: 'JWT_SECRET_KEY'
+
+# Build triggers can be configured to:
+# - Trigger on push to main branch
+# - Trigger on tags matching pattern 'v*'
+# - Manual triggers for production deployments
+
+# Rollback instructions:
+# To rollback manually, run:
+# gcloud run services update-traffic roadtrip-backend \
+#   --region=us-central1 \
+#   --to-revisions=PREVIOUS_REVISION_NAME=100

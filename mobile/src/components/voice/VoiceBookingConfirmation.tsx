@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -90,7 +91,7 @@ export const VoiceBookingConfirmation: React.FC<VoiceBookingConfirmationProps> =
       setIsListening(true);
       await Voice.start('en-US');
     } catch (error) {
-      console.error('Error starting voice recognition:', error);
+      logger.error('Error starting voice recognition:', error);
       setIsListening(false);
     }
   };
@@ -100,7 +101,7 @@ export const VoiceBookingConfirmation: React.FC<VoiceBookingConfirmationProps> =
       setIsListening(false);
       await Voice.stop();
     } catch (error) {
-      console.error('Error stopping voice recognition:', error);
+      logger.error('Error stopping voice recognition:', error);
     }
   };
 
@@ -112,7 +113,7 @@ export const VoiceBookingConfirmation: React.FC<VoiceBookingConfirmationProps> =
   };
 
   const onSpeechError = (e: any) => {
-    console.error('Speech recognition error:', e);
+    logger.error('Speech recognition error:', e);
     setIsListening(false);
   };
 

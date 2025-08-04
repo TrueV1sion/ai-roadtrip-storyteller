@@ -7,9 +7,9 @@ from fastapi import APIRouter, Depends, Request, WebSocket
 from strawberry.asgi import GraphQL
 from strawberry.subscriptions import GRAPHQL_TRANSPORT_WS_PROTOCOL, GRAPHQL_WS_PROTOCOL
 
-from backend.app.graphql.schema import schema
-from backend.app.core.auth import get_current_user_optional
-from backend.app.core.logger import get_logger
+from app.graphql.schema import schema
+from app.core.auth import get_current_user_optional
+from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -46,7 +47,7 @@ export const RideshareVoiceInterface: React.FC<RideshareVoiceInterfaceProps> = (
   };
 
   const onSpeechError = (event: SpeechErrorEvent) => {
-    console.error('Speech error:', event.error);
+    logger.error('Speech error:', event.error);
     setIsListening(false);
     Alert.alert('Voice Error', 'Please try again');
   };
@@ -61,7 +62,7 @@ export const RideshareVoiceInterface: React.FC<RideshareVoiceInterfaceProps> = (
       setIsListening(true);
       await Voice.start('en-US');
     } catch (error) {
-      console.error('Error starting voice:', error);
+      logger.error('Error starting voice:', error);
       setIsListening(false);
     }
   };
@@ -71,7 +72,7 @@ export const RideshareVoiceInterface: React.FC<RideshareVoiceInterfaceProps> = (
       await Voice.stop();
       setIsListening(false);
     } catch (error) {
-      console.error('Error stopping voice:', error);
+      logger.error('Error stopping voice:', error);
     }
   };
 

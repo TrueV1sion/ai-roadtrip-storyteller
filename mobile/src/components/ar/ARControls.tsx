@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -51,7 +52,7 @@ const ARControls: React.FC<ARControlsProps> = ({ onClose }) => {
       
       await ApiClient.patch('/ar/render/settings', updatePayload);
     } catch (error) {
-      console.error('Failed to update AR settings:', error);
+      logger.error('Failed to update AR settings:', error);
     }
   };
 
@@ -265,7 +266,7 @@ const ARControls: React.FC<ARControlsProps> = ({ onClose }) => {
                   
                   // Send to server
                   ApiClient.patch('/ar/render/settings', defaults)
-                    .catch(error => console.error('Failed to reset AR settings:', error));
+                    .catch(error => logger.error('Failed to reset AR settings:', error));
                 }}
               >
                 <Text style={styles.resetButtonText}>Reset to Defaults</Text>

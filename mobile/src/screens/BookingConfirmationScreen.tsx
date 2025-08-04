@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -79,9 +80,9 @@ export const BookingConfirmationScreen: React.FC = () => {
       
       // This would trigger a voice response
       // In real implementation, we'd have a method to speak without recording
-      console.log('Speaking:', confirmationText);
+      logger.debug('Speaking:', confirmationText);
     } catch (error) {
-      console.error('Failed to speak confirmation:', error);
+      logger.error('Failed to speak confirmation:', error);
     } finally {
       setSpeakingConfirmation(false);
     }
@@ -102,7 +103,7 @@ Confirmation: ${booking.confirmation_number}
         title: 'Booking Confirmation',
       });
     } catch (error) {
-      console.error('Error sharing:', error);
+      logger.error('Error sharing:', error);
     }
   };
 
@@ -134,7 +135,7 @@ Confirmation: ${booking.confirmation_number}
       await Calendar.createEventAsync(defaultCalendar.id, eventDetails);
       Alert.alert('Success', 'Added to calendar!');
     } catch (error) {
-      console.error('Calendar error:', error);
+      logger.error('Calendar error:', error);
       Alert.alert('Error', 'Failed to add to calendar.');
     }
   };

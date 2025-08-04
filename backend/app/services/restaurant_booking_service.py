@@ -5,10 +5,10 @@ Restaurant booking service integrating OpenTable with the booking system.
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
-from backend.app.integrations.booking.opentable_client import opentable_client
-from backend.app.services.booking_service import BookingService
+from app.integrations.booking.opentable_client import opentable_client
+from app.services.booking_service import BookingService
 from app.core.enums import BookingType
-from backend.app.core.logger import logger
+from app.core.logger import logger
 
 
 class RestaurantBookingService:

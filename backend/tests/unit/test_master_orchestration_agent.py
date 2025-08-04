@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from typing import Dict, Any
 
-from backend.app.services.master_orchestration_agent import (
+from app.services.master_orchestration_agent import (
     MasterOrchestrationAgent,
     IntentType,
     UrgencyLevel,
@@ -18,8 +18,8 @@ from backend.app.services.master_orchestration_agent import (
     JourneyContext,
     ConversationState
 )
-from backend.app.models.user import User
-from backend.app.core.unified_ai_client import UnifiedAIClient
+from app.models.user import User
+from app.core.unified_ai_client import UnifiedAIClient
 
 
 @pytest.fixture

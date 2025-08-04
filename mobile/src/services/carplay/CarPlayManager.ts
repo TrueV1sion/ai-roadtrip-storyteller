@@ -10,6 +10,7 @@ import { navigationService } from '../navigation/NavigationService';
 import { offlineManager } from '../OfflineManager';
 import { performanceMonitor } from '../performanceMonitor';
 
+import { logger } from '@/services/logger';
 const { RNCarPlay } = NativeModules;
 const carPlayEventEmitter = new NativeEventEmitter(RNCarPlay);
 
@@ -142,7 +143,7 @@ class CarPlayManager {
   async initialize(): Promise<void> {
     try {
       if (!RNCarPlay) {
-        console.log('CarPlay not available on this device');
+        logger.debug('CarPlay not available on this device');
         return;
       }
       
@@ -159,7 +160,7 @@ class CarPlayManager {
       performanceMonitor.logEvent('carplay_initialized');
       
     } catch (error) {
-      console.error('Failed to initialize CarPlay:', error);
+      logger.error('Failed to initialize CarPlay:', error);
     }
   }
   
@@ -219,7 +220,7 @@ class CarPlayManager {
    * CarPlay connected callback
    */
   private async onCarPlayConnected(): Promise<void> {
-    console.log('CarPlay connected');
+    logger.debug('CarPlay connected');
     
     // Initialize voice for CarPlay
     await voiceOrchestrator.initializeForCarPlay();
@@ -240,7 +241,7 @@ class CarPlayManager {
    * CarPlay disconnected callback
    */
   private onCarPlayDisconnected(): void {
-    console.log('CarPlay disconnected');
+    logger.debug('CarPlay disconnected');
     
     // Clean up navigation session
     if (this.navigationSession) {
@@ -283,7 +284,7 @@ class CarPlayManager {
       });
       
     } catch (error) {
-      console.error('Failed to start CarPlay navigation:', error);
+      logger.error('Failed to start CarPlay navigation:', error);
     }
   }
   

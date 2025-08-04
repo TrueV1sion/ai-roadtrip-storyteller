@@ -20,8 +20,9 @@ from tenacity import (
     before_sleep_log
 )
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.http_client import AioHTTPClient, TimeoutProfile, TimeoutError
 
 
 class RecreationGovClient:
@@ -57,7 +58,8 @@ class RecreationGovClient:
         )
         
         # Request configuration
-        self.timeout = aiohttp.ClientTimeout(total=30)
+        # Use standard timeout profile for Recreation.gov API
+        self.client = AioHTTPClient(timeout_profile=TimeoutProfile.STANDARD)
         self.user_agent = "RoadTripStorytellerAPI/1.0"
         
         # Rate limiting
@@ -228,22 +230,25 @@ class RecreationGovClient:
         logger.debug(f"Request body: {json_data}")
         
         try:
-            async with aiohttp.ClientSession(timeout=self.timeout) as session:
-                async with session.request(
-                    method,
-                    url,
-                    headers=headers,
-                    params=params,
-                    json=json_data
-                ) as response:
-                    response_text = await response.text()
-                    
-                    # Log response
-                    logger.debug(f"Response status: {response.status}")
-                    logger.debug(f"Response body: {response_text[:500]}...")  # Truncate long responses
-                    
-                    # Handle successful responses
-                    if response.status in [200, 201]:
+            # Ensure client is started
+            await self.client.start()
+            
+            response = await self.client.request(
+                method,
+                url,
+                headers=headers,
+                params=params,
+                json=json_data
+            )
+            
+            response_text = await response.text()
+            
+            # Log response
+            logger.debug(f"Response status: {response.status}")
+            logger.debug(f"Response body: {response_text[:500]}...")  # Truncate long responses
+            
+            # Handle successful responses
+            if response.status in [200, 201]:
                         self._record_success()
                         
                         # Parse response
@@ -318,6 +323,10 @@ class RecreationGovClient:
                             message=f"Unexpected status code: {response.status}"
                         )
                         
+        except TimeoutError as e:
+            self._record_failure()
+            logger.error(f"Recreation.gov API timeout: {str(e)}")
+            raise
         except ClientError as e:
             self._record_failure()
             logger.error(f"Recreation.gov API client error: {str(e)}")
@@ -1103,7 +1112,8 @@ class RecreationGovClient:
                 })
                 
             return activities
-        except:
+        except Exception as e:
+            logger.error(f"Failed to get facility activities: {e}")
             return []
     
     async def _get_facility_media(self, facility_id: str) -> List[str]:
@@ -1122,7 +1132,8 @@ class RecreationGovClient:
                     images.append(media.get("URL", ""))
                     
             return images
-        except:
+        except Exception as e:
+            logger.error(f"Failed to get facility media: {e}")
             return []
     
     async def _get_nearby_attractions(self, facility_id: str) -> List[Dict[str, Any]]:
@@ -1249,3 +1260,11 @@ class RecreationGovClient:
         except Exception as e:
             logger.error(f"Failed to modify reservation: {str(e)}")
             raise
+    
+    async def close(self):
+        """Close the HTTP client."""
+        await self.client.close()
+
+
+# Singleton instance
+recreation_gov_client = RecreationGovClient()

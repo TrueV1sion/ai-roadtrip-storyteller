@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { navigationService } from './navigationService';
 import { navigationVoiceService } from './navigationVoiceService';
 
+import { logger } from '@/services/logger';
 const LOCATION_TASK_NAME = 'background-location-task';
 const NAVIGATION_STATE_KEY = '@navigation_state';
 const NAVIGATION_ROUTE_KEY = '@navigation_route';
@@ -45,7 +46,7 @@ class BackgroundNavigationService {
       // Request background permissions
       const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
       if (backgroundStatus !== 'granted') {
-        console.warn('Background location permission not granted');
+        logger.warn('Background location permission not granted');
         return;
       }
       
@@ -64,10 +65,10 @@ class BackgroundNavigationService {
       });
       
       this.isInitialized = true;
-      console.log('Background navigation initialized');
+      logger.debug('Background navigation initialized');
       
     } catch (error) {
-      console.error('Failed to initialize background navigation:', error);
+      logger.error('Failed to initialize background navigation:', error);
       throw error;
     }
   }
@@ -84,7 +85,7 @@ class BackgroundNavigationService {
         await AsyncStorage.setItem(NAVIGATION_STATE_KEY, JSON.stringify(state));
       }
     } catch (error) {
-      console.error('Failed to update background navigation state:', error);
+      logger.error('Failed to update background navigation state:', error);
     }
   }
 
@@ -100,7 +101,7 @@ class BackgroundNavigationService {
         this.isInitialized = false;
       }
     } catch (error) {
-      console.error('Failed to stop background navigation:', error);
+      logger.error('Failed to stop background navigation:', error);
     }
   }
 
@@ -196,7 +197,7 @@ class BackgroundNavigationService {
       }
       
     } catch (error) {
-      console.error('Failed to process background location update:', error);
+      logger.error('Failed to process background location update:', error);
     }
   }
 
@@ -275,7 +276,7 @@ class BackgroundNavigationService {
 // Define the background task
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
   if (error) {
-    console.error('Background location task error:', error);
+    logger.error('Background location task error:', error);
     return;
   }
   

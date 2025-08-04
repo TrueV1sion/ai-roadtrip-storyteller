@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { API_URL, ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, TOKEN_EXPIRY_KEY, TOKEN_REFRESH_BUFFER, SECURE_STORAGE_ENABLED, CSRF_TOKEN_KEY } from '@/config';
 
+import { logger } from '@/services/logger';
 // API Response types
 interface ApiResponse<T> {
   data: T;
@@ -80,7 +81,7 @@ export class ApiClient {
         await SecureStore.setItemAsync(TOKEN_EXPIRY_KEY, expiryTime.toString());
         return;
       } catch (error) {
-        console.error('Error storing tokens in SecureStore, falling back to AsyncStorage:', error);
+        logger.error('Error storing tokens in SecureStore, falling back to AsyncStorage:', error);
       }
     }
     
@@ -115,7 +116,7 @@ export class ApiClient {
           };
         }
       } catch (error) {
-        console.error('Error accessing SecureStore, falling back to AsyncStorage:', error);
+        logger.error('Error accessing SecureStore, falling back to AsyncStorage:', error);
       }
     }
     
@@ -139,7 +140,7 @@ export class ApiClient {
         expiryTime: expiryTimeStr ? parseInt(expiryTimeStr) : 0
       };
     } catch (error) {
-      console.error('Error getting tokens:', error);
+      logger.error('Error getting tokens:', error);
       return {
         accessToken: null,
         refreshToken: null,
@@ -157,7 +158,7 @@ export class ApiClient {
         await SecureStore.deleteItemAsync(TOKEN_EXPIRY_KEY);
         await SecureStore.deleteItemAsync(CSRF_TOKEN_KEY);
       } catch (error) {
-        console.error('Error clearing tokens from SecureStore:', error);
+        logger.error('Error clearing tokens from SecureStore:', error);
       }
     }
     
@@ -168,7 +169,7 @@ export class ApiClient {
       await AsyncStorage.removeItem(TOKEN_EXPIRY_KEY);
       await AsyncStorage.removeItem(CSRF_TOKEN_KEY);
     } catch (error) {
-      console.error('Error clearing tokens from AsyncStorage:', error);
+      logger.error('Error clearing tokens from AsyncStorage:', error);
     }
   }
   
@@ -179,7 +180,7 @@ export class ApiClient {
         await SecureStore.setItemAsync(CSRF_TOKEN_KEY, token);
         return;
       } catch (error) {
-        console.error('Error storing CSRF token in SecureStore, falling back to AsyncStorage:', error);
+        logger.error('Error storing CSRF token in SecureStore, falling back to AsyncStorage:', error);
       }
     }
     
@@ -198,7 +199,7 @@ export class ApiClient {
           return token;
         }
       } catch (error) {
-        console.error('Error accessing CSRF token from SecureStore, falling back to AsyncStorage:', error);
+        logger.error('Error accessing CSRF token from SecureStore, falling back to AsyncStorage:', error);
       }
     }
     
@@ -207,7 +208,7 @@ export class ApiClient {
       token = await AsyncStorage.getItem(CSRF_TOKEN_KEY);
       return token;
     } catch (error) {
-      console.error('Error getting CSRF token:', error);
+      logger.error('Error getting CSRF token:', error);
       return null;
     }
   }
@@ -221,7 +222,7 @@ export class ApiClient {
       });
       
       if (!response.ok) {
-        console.error('Failed to fetch CSRF token:', response.status);
+        logger.error('Failed to fetch CSRF token:', response.status);
         return false;
       }
       
@@ -256,10 +257,10 @@ export class ApiClient {
         // Ignore JSON parsing errors
       }
       
-      console.warn('Could not extract CSRF token from response');
+      logger.warn('Could not extract CSRF token from response');
       return false;
     } catch (error) {
-      console.error('Error fetching CSRF token:', error);
+      logger.error('Error fetching CSRF token:', error);
       return false;
     }
   }
@@ -311,7 +312,7 @@ export class ApiClient {
         
         return true;
       } catch (error) {
-        console.error('Token refresh failed:', error);
+        logger.error('Token refresh failed:', error);
         return false;
       } finally {
         this.isRefreshing = false;
@@ -369,7 +370,7 @@ export class ApiClient {
       
       return headers;
     } catch (error) {
-      console.error('Error preparing headers:', error);
+      logger.error('Error preparing headers:', error);
       return this.defaultHeaders;
     }
   }
@@ -465,7 +466,7 @@ export class ApiClient {
         const errorBody = await response.text();
         
         if (errorBody.includes('CSRF') || errorBody.includes('csrf')) {
-          console.warn('CSRF token error detected, fetching new token and retrying...');
+          logger.warn('CSRF token error detected, fetching new token and retrying...');
           // Try to get a new CSRF token and retry
           const csrfSuccess = await this.fetchCSRFToken();
           

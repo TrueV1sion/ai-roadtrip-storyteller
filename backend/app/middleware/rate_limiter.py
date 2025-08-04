@@ -6,7 +6,7 @@ from typing import Optional, Callable
 import time
 import json
 from fastapi import Request, Response, HTTPException, status
-from backend.app.core.cache import redis_client
+from app.core.cache import redis_client
 import logging
 
 logger = logging.getLogger(__name__)

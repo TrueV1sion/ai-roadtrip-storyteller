@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI } from '@/config';
 import { APIClient } from '@utils/apiUtils';
 
+import { logger } from '@/services/logger';
 interface SpotifyTokens {
   accessToken: string;
   refreshToken: string;
@@ -42,7 +43,7 @@ class SpotifyService {
       const tokensJson = await AsyncStorage.getItem('spotify_tokens');
       return tokensJson ? JSON.parse(tokensJson) : null;
     } catch (error) {
-      console.error('Failed to load Spotify tokens:', error);
+      logger.error('Failed to load Spotify tokens:', error);
       return null;
     }
   }
@@ -51,7 +52,7 @@ class SpotifyService {
     try {
       await AsyncStorage.setItem('spotify_tokens', JSON.stringify(tokens));
     } catch (error) {
-      console.error('Failed to save Spotify tokens:', error);
+      logger.error('Failed to save Spotify tokens:', error);
     }
   }
 
@@ -65,7 +66,7 @@ class SpotifyService {
       const tokens = await this.loadTokens();
       return !!tokens && !!tokens.accessToken;
     } catch (error) {
-      console.error('Error checking authentication:', error);
+      logger.error('Error checking authentication:', error);
       return false;
     }
   }
@@ -92,7 +93,7 @@ class SpotifyService {
       await this.saveTokens(response);
       this.setTokens(response);
     } catch (error) {
-      console.error('Error exchanging code for token:', error);
+      logger.error('Error exchanging code for token:', error);
       throw new Error('Failed to exchange authorization code for token');
     }
   }

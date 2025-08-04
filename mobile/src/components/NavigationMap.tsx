@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { logger } from '@/services/logger';
 import MapView, { 
   PROVIDER_GOOGLE, 
   Marker, 
@@ -74,7 +75,7 @@ export const NavigationMap: React.FC<NavigationMapProps> = ({
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.error('Location permission denied');
+        logger.error('Location permission denied');
         return;
       }
 
@@ -100,7 +101,7 @@ export const NavigationMap: React.FC<NavigationMapProps> = ({
         }
       });
     } catch (error) {
-      console.error('Error starting location tracking:', error);
+      logger.error('Error starting location tracking:', error);
     }
   };
 

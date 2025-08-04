@@ -12,10 +12,11 @@ import hashlib
 import hmac
 import json
 
-from backend.app.core.config import settings
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import logger
-from backend.app.core.resilience import CircuitBreaker, circuit_breaker_factory
+from app.core.config import settings
+from app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.resilience import CircuitBreaker, circuit_breaker_factory
+from app.core.http_client import AsyncHTTPClient, TimeoutProfile, TimeoutError
 
 
 class ViatorClient:
@@ -30,14 +31,13 @@ class ViatorClient:
         self.use_sandbox = settings.ENVIRONMENT != "production"
         self.base_url = self.SANDBOX_URL if self.use_sandbox else self.BASE_URL
         
-        self.client = httpx.AsyncClient(
-            timeout=30.0,
-            headers={
-                "exp-api-key": self.api_key,
-                "Accept": "application/json;version=2.0",
-                "Content-Type": "application/json"
-            }
-        )
+        # Use standard timeout profile for Viator API
+        self.client = AsyncHTTPClient(timeout_profile=TimeoutProfile.STANDARD)
+        self.default_headers = {
+            "exp-api-key": self.api_key,
+            "Accept": "application/json;version=2.0",
+            "Content-Type": "application/json"
+        }
         
         # Circuit breaker for fault tolerance
         self.circuit_breaker = circuit_breaker_factory.create("viator_api")
@@ -437,21 +437,35 @@ class ViatorClient:
         endpoint: str,
         **kwargs
     ) -> httpx.Response:
-        """Make HTTP request to Viator API."""
+        """Make HTTP request to Viator API with proper timeout handling."""
         url = f"{self.base_url}{endpoint}"
         
-        response = await self.client.request(
-            method,
-            url,
-            **kwargs
-        )
+        # Merge default headers with any provided headers
+        headers = kwargs.get('headers', {})
+        headers.update(self.default_headers)
+        kwargs['headers'] = headers
         
-        return response
+        try:
+            response = await self.client.request(
+                method,
+                url,
+                **kwargs
+            )
+            return response
+            
+        except TimeoutError as e:
+            logger.error(f"Viator API timeout for {method} {endpoint}: {e}")
+            raise
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Viator API HTTP error {e.response.status_code} for {method} {endpoint}: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Viator API error for {method} {endpoint}: {e}")
+            raise
     
-    def __del__(self):
-        """Cleanup when client is destroyed."""
-        if hasattr(self, 'client'):
-            asyncio.create_task(self.client.aclose())
+    async def close(self):
+        """Close the HTTP client."""
+        await self.client.close()
 
 
 # Singleton instance

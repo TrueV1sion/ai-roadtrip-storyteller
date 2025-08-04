@@ -10,11 +10,11 @@ from scipy import stats
 
 from app.models.booking import Booking, BookingStatus
 from app.core.enums import BookingType
-from backend.app.models.commission import Commission, CommissionStatus
-from backend.app.models.partner import Partner
-from backend.app.models.revenue_analytics import RevenueAnalytics
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
+from app.models.commission import Commission, CommissionStatus
+from app.models.partner import Partner
+from app.models.revenue_analytics import RevenueAnalytics
+from app.core.logger import logger
+from app.core.cache import cache_manager
 
 
 class RevenueAnalyticsService:

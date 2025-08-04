@@ -10,7 +10,7 @@ import json
 from google.cloud import secretmanager
 from google.api_core import exceptions as gcp_exceptions
 
-from backend.app.core.logger import logger
+from app.core.logger import logger
 
 
 class SecretManager:
@@ -88,6 +88,58 @@ class SecretManager:
                 logger.error(f"Failed to parse JSON secret {secret_id}")
                 return None
         return None
+    
+    def create_or_update_secret(self, secret_id: str, secret_value: str) -> bool:
+        """
+        Create or update a secret in Google Secret Manager.
+        
+        Args:
+            secret_id: The ID of the secret
+            secret_value: The secret value to store
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not self.client or not self.project_id:
+            logger.error("Secret Manager client not initialized")
+            return False
+            
+        try:
+            parent = f"projects/{self.project_id}"
+            secret_name = f"{parent}/secrets/{secret_id}"
+            
+            # Try to create the secret
+            try:
+                secret = {"replication": {"automatic": {}}}
+                self.client.create_secret(
+                    request={
+                        "parent": parent,
+                        "secret_id": secret_id,
+                        "secret": secret
+                    }
+                )
+                logger.info(f"Created new secret: {secret_id}")
+            except gcp_exceptions.AlreadyExists:
+                logger.debug(f"Secret {secret_id} already exists")
+            
+            # Add the secret version
+            payload = {"data": secret_value.encode("UTF-8")}
+            response = self.client.add_secret_version(
+                request={
+                    "parent": secret_name,
+                    "payload": payload
+                }
+            )
+            
+            # Update cache
+            self._cache[f"{secret_id}:latest"] = secret_value
+            
+            logger.info(f"Successfully stored secret {secret_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to create/update secret {secret_id}: {e}")
+            return False
     
     def clear_cache(self):
         """Clear the internal secret cache."""

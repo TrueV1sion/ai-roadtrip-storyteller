@@ -1,9 +1,8 @@
 from typing import Dict, List, Optional
 # import openai # Removed
 import vertexai
-from vertexai.generative_models import GenerativeModel
-from vertexai.generative_models import GenerationConfig, HarmCategory, HarmBlockThreshold
-from vertexai.generative_models import Content, Part
+from vertexai.generative_models import GenerativeModel, GenerationConfig, Part
+# Note: HarmCategory and HarmBlockThreshold are part of safety settings in this version
 from app.core.config import settings
 from app.core.logger import get_logger
 from app.core.circuit_breaker import get_ai_circuit_breaker, CircuitOpenError

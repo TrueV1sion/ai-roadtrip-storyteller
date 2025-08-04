@@ -786,7 +786,7 @@ async def download_sdk(language: str):
             filename = "roadtrip-storyteller-mobile.js"
             content_type = "text/javascript"
         else:
-            raise HTTPException(status_code=404, detail="SDK not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SDK not found")
         
         return HTMLResponse(
             content=sdk_content,
@@ -796,7 +796,7 @@ async def download_sdk(language: str):
             }
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.get("/generate-all-sdks")
@@ -817,4 +817,4 @@ async def generate_all_sdks_endpoint():
             }
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -74,7 +75,7 @@ export const GameResultsScreen: React.FC<GameResultsScreenProps> = ({ route }) =
         title: 'Road Trip Game Results',
       });
     } catch (error) {
-      console.error('Error sharing:', error);
+      logger.error('Error sharing:', error);
     }
   };
 

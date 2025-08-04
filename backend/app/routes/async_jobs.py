@@ -15,18 +15,18 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from celery.result import AsyncResult
 
-from backend.app.core.auth import get_current_user
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import get_logger
-from backend.app.models.user import User
-from backend.app.tasks.ai_enhanced import (
+from app.core.auth import get_current_user
+from app.core.cache import cache_manager
+from app.core.logger import get_logger
+from app.models.user import User
+from app.tasks.ai_enhanced import (
     generate_story_with_status,
     synthesize_story_voice,
     process_journey_image,
     batch_pregenerate_stories
 )
-from backend.app.tasks.booking import process_reservation
-from backend.app.core.celery_app import celery_app
+from app.tasks.booking import process_reservation
+from app.core.celery_app import celery_app
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/api/v1/jobs", tags=["async_jobs"])
@@ -111,7 +111,7 @@ async def submit_story_generation(
         
     except Exception as e:
         logger.error(f"Failed to submit story generation job: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to submit job")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to submit job")
 
 
 @router.post("/booking/process", response_model=JobSubmissionResponse)
@@ -145,7 +145,7 @@ async def submit_booking(
         
     except Exception as e:
         logger.error(f"Failed to submit booking job: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to submit booking")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to submit booking")
 
 
 @router.get("/status/{job_id}", response_model=JobStatusResponse)
@@ -215,7 +215,7 @@ async def get_job_status(
             
     except Exception as e:
         logger.error(f"Failed to get job status: {str(e)}")
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
 
 
 @router.post("/cancel/{job_id}")
@@ -259,7 +259,7 @@ async def cancel_job(
         
     except Exception as e:
         logger.error(f"Failed to cancel job: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to cancel job")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to cancel job")
 
 
 @router.post("/batch/stories", response_model=BatchJobResponse)
@@ -274,7 +274,7 @@ async def submit_batch_stories(
     """
     try:
         if len(routes) > 50:
-            raise HTTPException(status_code=400, detail="Maximum 50 routes per batch")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 50 routes per batch")
         
         # Submit batch task
         batch_task = batch_pregenerate_stories.apply_async(
@@ -300,7 +300,7 @@ async def submit_batch_stories(
         
     except Exception as e:
         logger.error(f"Failed to submit batch job: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to submit batch")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to submit batch")
 
 
 @router.get("/batch/status/{batch_id}")
@@ -331,7 +331,7 @@ async def get_batch_status(
         
     except Exception as e:
         logger.error(f"Failed to get batch status: {str(e)}")
-        raise HTTPException(status_code=404, detail="Batch not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found")
 
 
 @router.get("/queue/stats")
@@ -369,7 +369,7 @@ async def get_queue_statistics(
         
     except Exception as e:
         logger.error(f"Failed to get queue statistics: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get statistics")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get statistics")
 
 
 @router.get("/jobs/recent")
@@ -403,4 +403,4 @@ async def get_recent_jobs(
         
     except Exception as e:
         logger.error(f"Failed to get recent jobs: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get job history")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get job history")

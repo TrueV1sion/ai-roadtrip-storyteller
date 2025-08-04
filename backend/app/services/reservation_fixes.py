@@ -145,7 +145,7 @@ class ReservationErrorHandlingFixes:
 # Apply fixes to ReservationManagementService
 def apply_reservation_fixes():
     """Apply all fixes to the reservation management service"""
-    from backend.app.services.reservation_management_service import ReservationManagementService
+    from app.services.reservation_management_service import ReservationManagementService
     
     # Store original methods
     original_create = ReservationManagementService.create_reservation

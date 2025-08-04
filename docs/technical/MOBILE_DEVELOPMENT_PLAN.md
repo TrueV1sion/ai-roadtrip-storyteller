@@ -1,107 +1,124 @@
 # Mobile Development Plan - Launch Excellence
 
-**Current Status:** 85% Feature Complete, <20% Test Coverage  
-**Target:** 100% Feature Complete, 80% Test Coverage  
-**Timeline:** 4 Weeks  
-**Priority:** CRITICAL - Blocks App Store Submission
+**Current Status:** 95% Feature Complete, <20% Test Coverage  
+**Backend:** ✅ Deployed to Production  
+**Mobile:** 🚧 4-5 Weeks to App Stores  
+**Priority:** CRITICAL - Security Hardening Required
 
 ## Executive Summary
 
-The mobile application represents the primary user interface for the AI Road Trip Storyteller. While feature development is largely complete (85%), critical gaps in testing, state management, and production readiness prevent app store submission. This plan provides a forensic roadmap to achieve launch excellence.
+The mobile application is **feature-complete and connected to the production backend**, but requires critical security hardening before app store submission. A comprehensive production readiness audit identified 200+ console.log statements, exposed API keys, and missing security features that must be addressed. This plan incorporates findings from PRODUCTION_READINESS_AUDIT.md.
 
 ## Current State Analysis
 
 ### ✅ Strengths (What's Working)
-- 31 screens implemented covering all user journeys
-- Voice-first interfaces with safety considerations  
-- AR and spatial audio components functional
-- Comprehensive service layer with 25+ services
-- TypeScript providing type safety
-- Accessibility features implemented
-- Offline infrastructure in place
+- **31 screens implemented** covering all user journeys
+- **Production backend connection** at `https://roadtrip-mvp-792001900150.us-central1.run.app`
+- **Voice recognition** with @react-native-voice/voice
+- **Real booking flows** for OpenTable, Ticketmaster, Recreation.gov
+- **25+ services** with proper error handling
+- **TypeScript** throughout for type safety
+- **Offline support** with AsyncStorage caching
 
-### ❌ Critical Gaps (Must Fix)
-1. **Test Coverage <20%** (Target: 80%)
-   - Only 7 components tested of 45
-   - Only 4 services tested of 25
-   - No integration tests
-   - No E2E tests
+### 🚨 Critical Security Issues (From Production Audit)
+1. **Console Logging Throughout**
+   - 200+ console.log statements leaking sensitive data
+   - Must implement proper logging service
+   
+2. **Hardcoded API Keys & Endpoints**
+   - `/src/config/index.ts`: "your_google_maps_api_key"
+   - `/src/config/api.ts`: Hardcoded IP addresses
+   - `/src/config/env.ts`: Exposed API keys
 
-2. **State Management Not Implemented**
-   - Redux Toolkit installed but not configured
-   - No global state management
-   - Props drilling throughout app
+3. **Missing Security Features**
+   - No crash reporting (Sentry configured but not implemented)
+   - No certificate pinning
+   - Insecure token storage fallback
+   - No jailbreak/root detection
+   - No code obfuscation
 
-3. **Navigation Needs Consolidation**
-   - Two navigation setups (App.tsx vs RootNavigator)
-   - Inconsistent navigation patterns
+4. **Production Config Issues**
+   - MVP_MODE hardcoded to true
+   - EAS config has placeholder values
+   - Missing network security config
+   
+5. **Performance Gaps**
+   - No image optimization/CDN
+   - Missing list virtualization
+   - Bundle size not optimized
+   - Memory leak risks in services
 
-4. **Performance Not Optimized**
-   - Bundle size not analyzed
-   - No code splitting
-   - Images not optimized
-   - Startup time 2.5s (target <2s)
+## 4-5 Week Security Hardening Plan
 
-5. **Missing Production Features**
-   - Commission tracking UI
-   - Event journey visualization  
-   - Advanced offline caching
-   - Push notifications
+### Week 1: Critical Security Fixes
 
-## 4-Week Sprint Plan
+#### Days 1-2: Remove Console Logs & Implement Logging Service
+**Goal:** Eliminate information leakage
 
-### Week 1: Foundation & Testing Infrastructure
+**Tasks:**
+- [ ] Create centralized logging service
+- [ ] Replace all 200+ console.log statements
+- [ ] Configure log levels (debug/info/warn/error)
+- [ ] Disable logging in production builds
 
-#### Days 1-2: Testing Setup & State Management
-**Goal:** Establish solid foundation for quality
+```typescript
+// services/logger.ts
+export const logger = {
+  debug: __DEV__ ? console.log : () => {},
+  info: __DEV__ ? console.info : () => {},
+  warn: console.warn,
+  error: (error: Error, context?: any) => {
+    if (__DEV__) console.error(error, context);
+    // Send to crash reporting in production
+    Sentry.captureException(error, { extra: context });
+  }
+};
+```
 
-**Testing Infrastructure:**
-```bash
-# Install testing dependencies
-npm install --save-dev @testing-library/react-native
-npm install --save-dev @testing-library/jest-native  
-npm install --save-dev jest-expo
-npm install --save-dev detox@latest  # E2E testing
+#### Days 3-5: Fix API Keys & Implement Secure Storage
+**Goal:** Remove all hardcoded secrets
+
+**Critical Files to Fix:**
+```typescript
+// src/config/index.ts - BEFORE
+export const MAPS_API_KEY = process.env.MAPS_API_KEY || 'your_google_maps_api_key';
+
+// AFTER
+export const MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;
+if (!MAPS_API_KEY && !__DEV__) {
+  throw new Error('Google Maps API key is required in production');
+}
 ```
 
 **Tasks:**
-- [ ] Configure Jest with React Native preset
-- [ ] Set up React Testing Library
-- [ ] Configure Detox for E2E tests
-- [ ] Create test utilities and mocks
-- [ ] Set up coverage reporting
+- [ ] Remove all hardcoded API keys
+- [ ] Fix token storage to use SecureStore only
+- [ ] Implement biometric authentication
+- [ ] Add API key validation on startup
+### Week 2: Crash Reporting & Security Hardening
 
-**Redux Implementation:**
+#### Days 6-7: Implement Sentry
+**Goal:** Enable production crash monitoring
+
 ```typescript
-// store/index.ts
-- [ ] Create Redux store configuration
-- [ ] Define root state type
-- [ ] Set up Redux DevTools
+// App.tsx
+import * as Sentry from 'sentry-expo';
 
-// store/slices/
-- [ ] authSlice.ts (user auth state)
-- [ ] navigationSlice.ts (route state)
-- [ ] bookingSlice.ts (booking flow)
-- [ ] voiceSlice.ts (voice interaction state)
-- [ ] offlineSlice.ts (offline queue)
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  enableInExpoDevelopment: false,
+  debug: false,
+  environment: __DEV__ ? 'development' : 'production',
+});
 ```
 
-#### Days 3-5: Component Testing Blitz
-**Goal:** Test all 45 custom components
-
-**Priority Components (Day 3):**
-- [ ] VoiceAssistant.test.tsx
-- [ ] VoiceCommandListener.test.tsx  
-- [ ] NavigationView.test.tsx
-- [ ] BookingFlow.test.tsx
-- [ ] ARView.test.tsx
-
-**Batch Testing Plan:**
-- Day 3: 15 core components
-- Day 4: 15 feature components  
-- Day 5: 15 utility components
-
-**Test Template:**
+#### Days 8-10: Security Features
+**Tasks:**
+- [ ] Implement certificate pinning
+- [ ] Add jailbreak/root detection
+- [ ] Enable code obfuscation
+- [ ] Configure network security
+- [ ] Remove MVP_MODE flag
 ```typescript
 describe('ComponentName', () => {
   it('renders correctly', () => {});

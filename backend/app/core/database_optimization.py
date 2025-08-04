@@ -14,9 +14,9 @@ from sqlalchemy.orm import Session, Query, selectinload, joinedload, subqueryloa
 from sqlalchemy.sql import func
 from sqlalchemy.engine import Engine
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.models import User, Story, Theme, SideQuest, Reservation
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.models import User, Story, Theme, SideQuest, Reservation
 
 
 T = TypeVar('T')

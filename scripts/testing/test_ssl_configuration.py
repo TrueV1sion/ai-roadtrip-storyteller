@@ -200,7 +200,7 @@ class SSLTester:
                         supported.append(name)
                         details[name] = 'Supported'
                         
-            except:
+            except Exception as e:
                 details[name] = 'Not supported'
         
         # Check for insecure protocols
@@ -559,7 +559,7 @@ class SSLTester:
                 with socket.create_connection((self.domain, self.port), timeout=5) as sock:
                     with context.wrap_socket(sock) as ssock:
                         return True  # SSLv3 is enabled, vulnerable to POODLE
-        except:
+        except Exception as e:
             pass
         
         return False

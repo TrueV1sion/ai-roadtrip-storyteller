@@ -14,8 +14,8 @@ import re
 from urllib.parse import urlparse
 import mimetypes
 
-from backend.app.core.logger import get_logger
-from backend.app.services.persona_synthesis_service import (
+from app.core.logger import get_logger
+from app.services.persona_synthesis_service import (
     ContentType, ContentAnalysisResult, PersonalityDimension
 )
 

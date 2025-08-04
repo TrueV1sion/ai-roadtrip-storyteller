@@ -3,6 +3,7 @@
  */
 // import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice'; // Removed
 import { Platform, PermissionsAndroid, Alert } from 'react-native';
+import { logger } from '@/services/logger';
 import { Audio } from 'expo-av'; // Import expo-av
 import * as FileSystem from 'expo-file-system'; // To read the audio file
 import { apiClient } from '@services/api/ApiClient'; // Import API client using path alias
@@ -85,7 +86,7 @@ class VoiceCommandService {
     if (this.initialized) {
       return true;
     }
-    console.log('Initializing Voice Command Service (Backend STT)...');
+    logger.debug('Initializing Voice Command Service (Backend STT)...');
     try {
       // Set up commands
       if (config?.commands) {
@@ -100,10 +101,10 @@ class VoiceCommandService {
       this.audioPermissionGranted = await this.requestPermission();
 
       this.initialized = true;
-      console.log('Voice Command Service Initialized (Backend STT). Permission granted:', this.audioPermissionGranted);
+      logger.debug('Voice Command Service Initialized (Backend STT). Permission granted:', this.audioPermissionGranted);
       return true; // Initialization successful, even if permission denied initially
     } catch (error) {
-      console.error('Error initializing voice command service:', error);
+      logger.error('Error initializing voice command service:', error);
       this.initialized = false;
       return false;
     }
@@ -113,19 +114,19 @@ class VoiceCommandService {
    * Request microphone permission using expo-av.
    */
   async requestPermission(): Promise<boolean> {
-      console.log("Requesting audio recording permissions...");
+      logger.debug("Requesting audio recording permissions...");
       try {
           const { status } = await Audio.requestPermissionsAsync();
           this.audioPermissionGranted = status === 'granted';
           if (!this.audioPermissionGranted) {
               Alert.alert('Permission Denied', 'Microphone permission is required for voice commands.');
-              console.warn('Audio recording permission denied.');
+              logger.warn('Audio recording permission denied.');
           } else {
-              console.log('Audio recording permission granted.');
+              logger.debug('Audio recording permission granted.');
           }
           return this.audioPermissionGranted;
       } catch (err) {
-          console.warn('Error requesting audio permission:', err);
+          logger.warn('Error requesting audio permission:', err);
           return false;
       }
   }
@@ -150,12 +151,12 @@ class VoiceCommandService {
    */
   async startListening(): Promise<boolean> {
     if (!this.initialized) {
-      console.warn('Voice service not initialized.');
+      logger.warn('Voice service not initialized.');
       await this.initialize(); // Attempt to initialize if not already
       if (!this.initialized) return false;
     }
     if (this.isListening) {
-        console.warn('Already recording.');
+        logger.warn('Already recording.');
         return true;
     }
 
@@ -172,19 +173,19 @@ class VoiceCommandService {
             playsInSilentModeIOS: true, // Optional: Allow recording even if device is silent
         });
 
-        console.log('Starting audio recording...');
+        logger.debug('Starting audio recording...');
         const { recording } = await Audio.Recording.createAsync(this.recordingSettings);
         this.recording = recording;
         await this.recording.startAsync();
         this.isListening = true;
-        console.log('Audio recording started.');
+        logger.debug('Audio recording started.');
         return true;
     } catch (error) {
-      console.error('Error starting audio recording:', error);
+      logger.error('Error starting audio recording:', error);
       this.isListening = false;
       // Clean up recording object if created but failed to start
       if (this.recording) {
-          await this.recording.stopAndUnloadAsync().catch(e => console.error("Error unloading failed recording:", e));
+          await this.recording.stopAndUnloadAsync().catch(e => logger.error("Error unloading failed recording:", e));
           this.recording = null;
       }
       return false;
@@ -196,26 +197,26 @@ class VoiceCommandService {
    */
   async stopListening(): Promise<void> {
     if (!this.isListening || !this.recording) {
-        console.log('Not currently recording.');
+        logger.debug('Not currently recording.');
         return;
     }
-    console.log('Stopping audio recording...');
+    logger.debug('Stopping audio recording...');
     try {
       await this.recording.stopAndUnloadAsync();
       const uri = this.recording.getURI();
       this.isListening = false; // Mark as not listening anymore
       this.recording = null; // Clear recording object
-      console.log('Audio recording stopped. URI:', uri);
+      logger.debug('Audio recording stopped. URI:', uri);
 
       if (uri) {
         // Read file, encode, and send
         await this.processRecordedAudio(uri);
       } else {
-          console.error('Recording URI is null after stopping.');
+          logger.error('Recording URI is null after stopping.');
       }
 
     } catch (error) {
-      console.error('Error stopping audio recording:', error);
+      logger.error('Error stopping audio recording:', error);
       // Ensure state is reset even on error
       this.isListening = false;
       this.recording = null;
@@ -227,21 +228,21 @@ class VoiceCommandService {
    */
   private async processRecordedAudio(uri: string): Promise<void> {
       try {
-          console.log('Reading audio file:', uri);
+          logger.debug('Reading audio file:', uri);
           const audioBase64 = await FileSystem.readAsStringAsync(uri, {
               encoding: FileSystem.EncodingType.Base64,
           });
-          console.log('Audio file read and encoded to base64.');
+          logger.debug('Audio file read and encoded to base64.');
 
           // Send for transcription
           await this.sendAudioForTranscription(audioBase64);
 
           // Optionally delete the local file after processing
           // await FileSystem.deleteAsync(uri);
-          // console.log('Deleted local audio file:', uri);
+          // logger.debug('Deleted local audio file:', uri);
 
       } catch (error) {
-          console.error('Error processing recorded audio:', error);
+          logger.error('Error processing recorded audio:', error);
           Alert.alert('Processing Error', 'Could not process recorded audio.');
       }
   }
@@ -250,7 +251,7 @@ class VoiceCommandService {
    * Send base64 encoded audio to the backend for transcription.
    */
   private async sendAudioForTranscription(audioBase64: string): Promise<void> {
-      console.log('Sending audio to backend for transcription...');
+      logger.debug('Sending audio to backend for transcription...');
       try {
           const response: TranscriptionResponse = await apiClient.post('/api/stt/transcribe', {
               audio_base64: audioBase64,
@@ -258,10 +259,10 @@ class VoiceCommandService {
           });
 
           if (response.error) {
-              console.error('Backend transcription error:', response.error);
+              logger.error('Backend transcription error:', response.error);
               Alert.alert('Transcription Error', response.error);
           } else if (response.transcript) {
-              console.log('Transcription received:', response.transcript);
+              logger.debug('Transcription received:', response.transcript);
               // Process the transcript using existing command logic
               this.processCommand(response.transcript);
               
@@ -272,7 +273,7 @@ class VoiceCommandService {
                   }, 500);
               }
           } else {
-              console.warn('Backend returned no transcript and no error.');
+              logger.warn('Backend returned no transcript and no error.');
               // Handle case with no transcript (e.g., silence)
               
               // Still restart in continuous mode
@@ -283,7 +284,7 @@ class VoiceCommandService {
               }
           }
       } catch (error: any) {
-          console.error('Error sending audio for transcription:', error);
+          logger.error('Error sending audio for transcription:', error);
           Alert.alert('API Error', `Failed to get transcription: ${error.message}`);
       }
   }
@@ -293,23 +294,23 @@ class VoiceCommandService {
    * Destroy the service, unload recordings, etc. (No Voice listeners to remove now)
    */
   async destroy(): Promise<void> {
-      console.log('Destroying Voice Command Service...');
+      logger.debug('Destroying Voice Command Service...');
       if (this.isListening && this.recording) {
-          console.log('Unloading active recording...');
-          await this.recording.stopAndUnloadAsync().catch(e => console.error("Error unloading recording on destroy:", e));
+          logger.debug('Unloading active recording...');
+          await this.recording.stopAndUnloadAsync().catch(e => logger.error("Error unloading recording on destroy:", e));
       }
       // Reset state
       this.initialized = false;
       this.isListening = false;
       this.recording = null;
       this.commandCallbacks = [];
-      console.log('Voice Command Service destroyed.');
+      logger.debug('Voice Command Service destroyed.');
   }
 
 
   // --- Command Processing Logic (Adjusted) ---
   private processCommand(transcript: string): boolean {
-    console.log(`Processing transcript: "${transcript}"`);
+    logger.debug(`Processing transcript: "${transcript}"`);
 
     // Wake word check might be less relevant now, or handled differently
     // const containsWakeWord = this.wakeWords.some(word => ...);
@@ -323,12 +324,12 @@ class VoiceCommandService {
       const match = commandText.match(patternToMatch);
 
       if (match) {
-        console.log(`Matched command: ${command.action}`);
+        logger.debug(`Matched command: ${command.action}`);
         let params: string[] | undefined;
 
         if (command.paramRegex && match) {
            params = match.slice(1).filter(m => m !== undefined).map(p => p.trim());
-           console.log('Extracted params:', params);
+           logger.debug('Extracted params:', params);
         }
 
         const recognizedCommand: RecognizedCommand = {
@@ -338,12 +339,12 @@ class VoiceCommandService {
         };
 
         this.commandCallbacks.forEach(callback => {
-          try { callback(recognizedCommand); } catch (error) { console.error('Error in command callback:', error); }
+          try { callback(recognizedCommand); } catch (error) { logger.error('Error in command callback:', error); }
         });
         return true;
       }
     }
-    console.log('No command matched.');
+    logger.debug('No command matched.');
     return false;
   }
 

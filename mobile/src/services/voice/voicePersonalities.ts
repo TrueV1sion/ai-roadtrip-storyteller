@@ -1,6 +1,7 @@
 import { Voice, SpeakingStyle } from './voiceTypes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
 export interface VoicePersonality {
   id: string;
   name: string;
@@ -329,7 +330,7 @@ class VoicePersonalityManager {
         this.customPersonalities = JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Failed to load custom personalities:', error);
+      logger.error('Failed to load custom personalities:', error);
     }
   }
 
@@ -340,7 +341,7 @@ class VoicePersonalityManager {
         JSON.stringify(this.customPersonalities)
       );
     } catch (error) {
-      console.error('Failed to save custom personalities:', error);
+      logger.error('Failed to save custom personalities:', error);
     }
   }
 
@@ -351,7 +352,7 @@ class VoicePersonalityManager {
         this.customThemes = JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Failed to load custom themes:', error);
+      logger.error('Failed to load custom themes:', error);
     }
   }
 
@@ -362,7 +363,7 @@ class VoicePersonalityManager {
         JSON.stringify(this.customThemes)
       );
     } catch (error) {
-      console.error('Failed to save custom themes:', error);
+      logger.error('Failed to save custom themes:', error);
     }
   }
 }

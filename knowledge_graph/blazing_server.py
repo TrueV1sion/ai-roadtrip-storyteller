@@ -230,7 +230,7 @@ async def analyze_codebase_async():
                         "links": len(valid_links)
                     }
                 })
-            except:
+            except Exception as e:
                 pass
                 
     finally:
@@ -495,7 +495,7 @@ async def broadcast_to_websockets(data: Dict[str, Any]):
     for ws in websocket_connections:
         try:
             await ws.send_json(data)
-        except:
+        except Exception as e:
             disconnected.append(ws)
     
     # Clean up disconnected clients

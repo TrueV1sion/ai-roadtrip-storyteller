@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { Platform } from 'react-native';
 import apiClient from './apiClient';
 
+import { logger } from '@/services/logger';
 export interface AudioPosition3D {
   x: number; // Left(-1) to Right(1)
   y: number; // Down(-1) to Up(1)
@@ -68,9 +69,9 @@ class SpatialAudioService {
       }
 
       this.isInitialized = true;
-      console.log('Spatial audio service initialized');
+      logger.debug('Spatial audio service initialized');
     } catch (error) {
-      console.error('Failed to initialize spatial audio:', error);
+      logger.error('Failed to initialize spatial audio:', error);
     }
   }
 
@@ -98,7 +99,7 @@ class SpatialAudioService {
       
       return null;
     } catch (error) {
-      console.error('Failed to coordinate spatial audio with backend:', error);
+      logger.error('Failed to coordinate spatial audio with backend:', error);
       return null;
     }
   }
@@ -149,9 +150,9 @@ class SpatialAudioService {
       }
 
       this.activeSources.set(source.id, source);
-      console.log(`Added spatial audio source: ${source.id}`);
+      logger.debug(`Added spatial audio source: ${source.id}`);
     } catch (error) {
-      console.error(`Failed to add spatial audio source ${source.id}:`, error);
+      logger.error(`Failed to add spatial audio source ${source.id}:`, error);
     }
   }
 
@@ -166,9 +167,9 @@ class SpatialAudioService {
           source.panner.disconnect();
         }
         this.activeSources.delete(sourceId);
-        console.log(`Removed spatial audio source: ${sourceId}`);
+        logger.debug(`Removed spatial audio source: ${sourceId}`);
       } catch (error) {
-        console.error(`Failed to remove source ${sourceId}:`, error);
+        logger.error(`Failed to remove source ${sourceId}:`, error);
       }
     }
   }

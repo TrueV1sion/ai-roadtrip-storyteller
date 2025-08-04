@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { logger } from '@/services/logger';
 import { 
   Text, 
   List, 
@@ -39,7 +40,7 @@ const SettingsScreen: React.FC = () => {
         value: newValue
       });
     } catch (error) {
-      console.error('Failed to save voice guidance setting:', error);
+      logger.error('Failed to save voice guidance setting:', error);
     }
   };
   
@@ -57,7 +58,7 @@ const SettingsScreen: React.FC = () => {
         value: newValue
       });
     } catch (error) {
-      console.error('Failed to save autoplay stories setting:', error);
+      logger.error('Failed to save autoplay stories setting:', error);
     }
   };
   
@@ -77,7 +78,7 @@ const SettingsScreen: React.FC = () => {
       
       // Theme would be updated through a context provider in a real app
     } catch (error) {
-      console.error('Failed to save dark mode setting:', error);
+      logger.error('Failed to save dark mode setting:', error);
     }
   };
   
@@ -98,7 +99,7 @@ const SettingsScreen: React.FC = () => {
       // Navigate to login screen
       // navigation.navigate('Auth');
     } catch (error) {
-      console.error('Failed to logout:', error);
+      logger.error('Failed to logout:', error);
     }
   };
   
@@ -116,7 +117,7 @@ const SettingsScreen: React.FC = () => {
       
       setShowClearDataDialog(false);
     } catch (error) {
-      console.error('Failed to clear data:', error);
+      logger.error('Failed to clear data:', error);
     }
   };
   

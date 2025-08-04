@@ -23,10 +23,10 @@ from tenacity import (
     before_sleep_log
 )
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.config import settings
-from backend.app.schemas.booking import (
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.config import settings
+from app.schemas.booking import (
     RestaurantSearchRequest,
     RestaurantAvailabilityRequest,
     RestaurantReservationRequest,

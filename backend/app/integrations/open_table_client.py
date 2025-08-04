@@ -20,8 +20,9 @@ from tenacity import (
     before_sleep_log
 )
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.http_client import AioHTTPClient, TimeoutProfile, TimeoutError
 
 
 class OpenTableClient:
@@ -53,7 +54,8 @@ class OpenTableClient:
         # API Configuration
         self.base_url = os.getenv("OPENTABLE_API_URL", "https://api.opentable.com/v2")
         self.auth_url = os.getenv("OPENTABLE_AUTH_URL", "https://oauth.opentable.com/v2/token")
-        self.timeout = aiohttp.ClientTimeout(total=30)
+        # Use standard timeout profile for OpenTable API
+        self.client = AioHTTPClient(timeout_profile=TimeoutProfile.STANDARD)
         
         # Rate limiting
         self.rate_limit_delay = 0.1  # 100ms between requests
@@ -80,7 +82,8 @@ class OpenTableClient:
             return self.oauth_token
             
         # Refresh token
-        async with aiohttp.ClientSession() as session:
+        await self.client.start()
+        try:
             data = {
                 "grant_type": "refresh_token",
                 "refresh_token": self.oauth_refresh_token,
@@ -88,15 +91,15 @@ class OpenTableClient:
                 "client_secret": self.api_secret
             }
             
-            async with session.post(self.auth_url, data=data) as response:
-                if response.status == 200:
-                    token_data = await response.json()
-                    self.oauth_token = token_data["access_token"]
-                    self._token_expires_at = time.time() + token_data.get("expires_in", 3600)
-                    if "refresh_token" in token_data:
-                        self.oauth_refresh_token = token_data["refresh_token"]
-                    return self.oauth_token
-                else:
+            response = await self.client.post(self.auth_url, data=data)
+            if response.status == 200:
+                token_data = await response.json()
+                self.oauth_token = token_data["access_token"]
+                self._token_expires_at = time.time() + token_data.get("expires_in", 3600)
+                if "refresh_token" in token_data:
+                    self.oauth_refresh_token = token_data["refresh_token"]
+                return self.oauth_token
+            else:
                     logger.error(f"Failed to refresh OAuth token: {response.status}")
                     raise Exception("OAuth token refresh failed")
     
@@ -240,22 +243,25 @@ class OpenTableClient:
         logger.debug(f"Request body: {json_data}")
         
         try:
-            async with aiohttp.ClientSession(timeout=self.timeout) as session:
-                async with session.request(
-                    method,
-                    url,
-                    headers=headers,
-                    params=params,
-                    json=json_data
-                ) as response:
-                    response_text = await response.text()
-                    
-                    # Log response
-                    logger.debug(f"Response status: {response.status}")
-                    logger.debug(f"Response body: {response_text}")
-                    
-                    # Handle successful responses
-                    if response.status in [200, 201]:
+            # Ensure client is started
+            await self.client.start()
+            
+            response = await self.client.request(
+                method,
+                url,
+                headers=headers,
+                params=params,
+                json=json_data
+            )
+            
+            response_text = await response.text()
+            
+            # Log response
+            logger.debug(f"Response status: {response.status}")
+            logger.debug(f"Response body: {response_text}")
+            
+            # Handle successful responses
+            if response.status in [200, 201]:
                         self._record_success()
                         result = json.loads(response_text) if response_text else {}
                         
@@ -327,6 +333,10 @@ class OpenTableClient:
                             message=f"Unexpected status code: {response.status}"
                         )
                         
+        except TimeoutError as e:
+            self._record_failure()
+            logger.error(f"OpenTable API timeout: {str(e)}")
+            raise
         except ClientError as e:
             self._record_failure()
             logger.error(f"OpenTable API client error: {str(e)}")
@@ -881,3 +891,11 @@ class OpenTableClient:
         except Exception as e:
             logger.error(f"Failed to modify reservation: {str(e)}")
             raise
+    
+    async def close(self):
+        """Close the HTTP client."""
+        await self.client.close()
+
+
+# Singleton instance
+opentable_client = OpenTableClient()

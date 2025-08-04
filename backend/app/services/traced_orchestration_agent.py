@@ -9,12 +9,12 @@ import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from backend.app.services.master_orchestration_agent import MasterOrchestrationAgent
-from backend.app.core.tracing import (
+from app.services.master_orchestration_agent import MasterOrchestrationAgent
+from app.core.tracing import (
     get_tracer, trace_method, add_span_attributes, 
     add_span_event, get_current_trace_id
 )
-from backend.app.core.logger import get_logger
+from app.core.logger import get_logger
 from opentelemetry import trace
 
 logger = get_logger(__name__)

@@ -1,0 +1,20 @@
+# Minimal Dockerfile for quick deployment
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install only essential dependencies
+RUN pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    python-multipart==0.0.6 \
+    httpx==0.25.2
+
+# Copy only the minimal app file
+COPY app/main_minimal.py /app/main.py
+
+# Expose port
+EXPOSE 8080
+
+# Run the application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

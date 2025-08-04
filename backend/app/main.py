@@ -10,7 +10,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from app.routes import story, auth, user, immersive, personalized_story, personalization, games, utils, theme, side_quest, spatial_audio, contextual_awareness, serendipity, ar, interactive_narrative, driving_assistant, voice_character, tts, ai_stories, cache_management, db_monitoring, revenue_analytics, booking, voice_assistant, event_journey, rideshare, rideshare_mode, voice_personality, spotify, reservations_v2, database_health, database_monitoring, performance_monitoring, airport_parking, airport_amenities, personality, health, two_factor, security_monitoring, security_monitoring_v2, sessions, intrusion_detection, rate_limiting, security_dashboard, automated_threat_response, security_metrics, mvp_voice, mvp_voice_enhanced, api_documentation, mobile_dev_webhook, jwks, maps_proxy, csrf, password, async_jobs, health_v2, metrics, circuit_breaker_monitoring, api_keys, api_secured_example, mobile_security, navigation, voice_orchestration
+# Import core dependencies first
 from app.core.logger import get_logger
 from app.core.config import settings
 from app.core.error_handler import register_exception_handlers
@@ -19,7 +19,7 @@ from app.core.cors_https import configure_cors
 from app.core.auth import get_current_admin_user
 from app.monitoring.middleware_v2 import PrometheusMiddlewareV2
 from app.middleware.csrf_middleware import CSRFMiddleware
-from app.core.security_headers import SecurityHeadersMiddleware
+from app.core.security_headers import EnhancedSecurityHeadersMiddleware, RequestBodySizeLimitMiddleware
 from app.middleware.performance_middleware import PerformanceOptimizationMiddleware
 from app.middleware.security_monitoring import SecurityMonitoringMiddleware
 from app.middleware.rate_limit_middleware import RateLimitMiddleware
@@ -39,6 +39,57 @@ from app.core.openapi_enhanced import setup_enhanced_openapi
 from app.core.knowledge_graph import KnowledgeGraphMiddleware, kg_client
 
 logger = get_logger(__name__)
+
+# Import routes with error handling to prevent startup failures
+route_imports = {}
+failed_routes = []
+
+# Core routes that must be imported
+core_routes = ['health', 'auth', 'csrf', 'jwks', 'maps_proxy']
+
+# All available routes
+all_routes = [
+    'story', 'auth', 'user', 'immersive', 'personalized_story', 'personalization',
+    'games', 'utils', 'theme', 'side_quest', 'spatial_audio', 'contextual_awareness',
+    'serendipity', 'ar', 'interactive_narrative', 'driving_assistant', 'voice_character',
+    'tts', 'ai_stories', 'cache_management', 'db_monitoring', 'revenue_analytics',
+    'booking', 'voice_assistant', 'event_journey', 'rideshare', 'rideshare_mode',
+    'voice_personality', 'spotify', 'reservations_v2', 'database_health',
+    'database_monitoring', 'performance_monitoring', 'airport_parking',
+    'airport_amenities', 'personality', 'health', 'two_factor', 'security_monitoring',
+    'security_monitoring_v2', 'sessions', 'intrusion_detection', 'rate_limiting',
+    'security_dashboard', 'automated_threat_response', 'security_metrics',
+    'mvp_voice', 'mvp_voice_enhanced', 'api_documentation', 'mobile_dev_webhook',
+    'jwks', 'maps_proxy', 'csrf', 'password', 'async_jobs', 'health_v2', 'metrics',
+    'circuit_breaker_monitoring', 'api_keys', 'api_secured_example',
+    'mobile_security', 'navigation', 'voice_orchestration', 'story_timing',
+    'journey_tracking', 'service_health', 'security_csp_report', 'csp_example'
+]
+
+# Import routes with error handling
+for route_name in all_routes:
+    try:
+        module = __import__(f'app.routes.{route_name}', fromlist=[route_name])
+        route_imports[route_name] = getattr(module, 'router', None)
+        if route_imports[route_name] is None:
+            logger.warning(f"Route module '{route_name}' has no router attribute")
+            failed_routes.append((route_name, "No router attribute"))
+    except ImportError as e:
+        logger.error(f"Failed to import route '{route_name}': {str(e)}")
+        failed_routes.append((route_name, str(e)))
+        if route_name in core_routes:
+            logger.critical(f"Core route '{route_name}' failed to import!")
+            # For core routes, we might want to fail fast in production
+            # raise
+    except Exception as e:
+        logger.error(f"Unexpected error importing route '{route_name}': {str(e)}")
+        failed_routes.append((route_name, str(e)))
+
+# Log import summary
+if failed_routes:
+    logger.warning(f"Failed to import {len(failed_routes)} routes: {[r[0] for r in failed_routes]}")
+else:
+    logger.info(f"Successfully imported all {len(route_imports)} routes")
 
 
 @asynccontextmanager
@@ -86,6 +137,15 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize database optimization: {e}")
         # Continue anyway - optimization is not critical for startup
     
+    # Initialize story opportunity scheduler
+    try:
+        from app.services.story_opportunity_scheduler import story_scheduler
+        await story_scheduler.start()
+        logger.info("Story opportunity scheduler started")
+    except Exception as e:
+        logger.error(f"Failed to start story scheduler: {e}")
+        # Continue anyway - scheduler is not critical for basic operation
+    
     # Initialize any other resources here
     logger.info("Application startup complete")
     
@@ -93,6 +153,13 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down AI Road Trip Storyteller...")
+    
+    # Stop story scheduler
+    try:
+        await story_scheduler.stop()
+        logger.info("Story opportunity scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping story scheduler: {e}")
     
     # Stop security monitoring services
     await security_monitor.stop()
@@ -146,11 +213,14 @@ app.add_middleware(APIVersioningMiddleware)
 # Add security monitoring middleware (early to catch all requests)
 app.add_middleware(SecurityMonitoringMiddleware)
 
+# Add request body size limit middleware (early to reject large requests)
+app.add_middleware(RequestBodySizeLimitMiddleware)
+
 # Add rate limiting middleware (before security headers)
 app.add_middleware(RateLimitMiddleware)
 
-# Add security headers middleware
-app.add_middleware(SecurityHeadersMiddleware)
+# Add enhanced security headers middleware with CSP nonce support
+app.add_middleware(EnhancedSecurityHeadersMiddleware)
 
 # Add CSRF protection middleware
 app.add_middleware(CSRFMiddleware)
@@ -186,92 +256,131 @@ async def add_request_id(request: Request, call_next):
 # Register error handlers
 register_exception_handlers(app)
 
-# Include JWKS endpoint (no prefix for .well-known path)
-app.include_router(jwks.router, tags=["JWKS"])
+# Define route configurations
+route_configs = [
+    # Core routes (no prefix for .well-known path)
+    ('jwks', '', ['JWKS']),
+    ('csrf', '', ['CSRF']),
+    ('maps_proxy', '', ['Maps Proxy']),
+    
+    # Authentication routes
+    ('auth', '/api/auth', ['Auth']),
+    ('two_factor', '/api/auth', ['Two-Factor Auth']),
+    ('sessions', '/api/auth', ['Sessions']),
+    ('password', '/api/password', ['Password Security']),
+    
+    # User and profile routes
+    ('user', '/api/users', ['Users']),
+    ('personality', '', ['Personality System']),
+    ('personalization', '/api', ['Personalization']),
+    
+    # Story and content routes
+    ('story', '/api/story', ['Story']),
+    ('immersive', '/api', ['Immersive']),
+    ('personalized_story', '/api', ['Personalized']),
+    ('ai_stories', '/api/stories', ['AI Stories']),
+    ('story_timing', '/api/story-timing', ['Story Timing']),
+    
+    # Voice and audio routes
+    ('voice_character', '/api', ['Voice Character']),
+    ('voice_personality', '', ['Voice Personality']),
+    ('voice_assistant', '/api', ['Voice Assistant']),
+    ('voice_orchestration', '', ['Voice Orchestration']),
+    ('tts', '/api/tts', ['Text-to-Speech']),
+    ('spatial_audio', '/api', ['Spatial Audio']),
+    ('navigation', '/api', ['Navigation Voice']),
+    
+    # Gaming and interactive features
+    ('games', '/api', ['Games']),
+    ('side_quest', '/api', ['Side Quests']),
+    ('interactive_narrative', '/api', ['Interactive Narrative']),
+    ('ar', '/api', ['Augmented Reality']),
+    
+    # Booking and reservations
+    ('booking', '', ['Bookings']),
+    ('reservations_v2', '/api/reservations', ['Reservations V2']),
+    ('airport_parking', '', ['Airport Parking']),
+    ('airport_amenities', '', ['Airport Amenities']),
+    
+    # Journey and location features
+    ('event_journey', '', ['Event Journeys']),
+    ('journey_tracking', '/api/journey', ['Journey Tracking']),
+    ('contextual_awareness', '/api', ['Contextual Awareness']),
+    ('serendipity', '/api', ['Serendipity']),
+    ('driving_assistant', '/api', ['Driving Assistant']),
+    
+    # Rideshare features
+    ('rideshare', '/api', ['Rideshare']),
+    ('rideshare_mode', '', ['Rideshare Mode']),
+    
+    # External integrations
+    ('spotify', '/api', ['Spotify']),
+    
+    # Utilities and themes
+    ('utils', '/api', ['Utilities']),
+    ('theme', '/api', ['Themes']),
+    
+    # Monitoring and health
+    ('health', '', ['Health Monitoring']),
+    ('health_v2', '', ['Health Monitoring V2']),
+    ('service_health', '', ['Service Health']),
+    ('metrics', '', ['Metrics']),
+    ('performance_monitoring', '/api', ['Performance Monitoring']),
+    ('database_health', '/api', ['Database Health']),
+    ('database_monitoring', '', ['Database Monitoring']),
+    ('db_monitoring', '/api', ['Database Monitoring']),
+    ('circuit_breaker_monitoring', '', ['Circuit Breaker Monitoring']),
+    
+    # Admin and security routes
+    ('security_monitoring', '/api/admin', ['Security Monitoring']),
+    ('security_monitoring_v2', '', ['Security Monitoring V2']),
+    ('intrusion_detection', '/api/admin', ['Intrusion Detection']),
+    ('rate_limiting', '/api/admin', ['Rate Limiting']),
+    ('security_dashboard', '/api/admin', ['Security Dashboard']),
+    ('automated_threat_response', '/api/admin', ['Automated Threat Response']),
+    ('security_metrics', '/api/admin', ['Security Metrics']),
+    ('security_csp_report', '', ['CSP Reporting']),
+    ('api_keys', '', ['API Keys']),
+    ('mobile_security', '', ['Mobile Security']),
+    
+    # Development and documentation
+    ('api_documentation', '', ['API Documentation']),
+    ('api_secured_example', '', ['Secured API Examples']),
+    ('csp_example', '', ['CSP Examples']),
+    ('mobile_dev_webhook', '', ['Mobile Development']),
+    
+    # Other features
+    ('cache_management', '/api', ['Cache Management']),
+    ('revenue_analytics', '', ['Revenue Analytics']),
+    ('async_jobs', '', ['Async Jobs']),
+    ('mvp_voice', '', ['MVP Voice']),
+    ('mvp_voice_enhanced', '', ['MVP Voice Enhanced']),
+]
 
-# Include security endpoints
-app.include_router(csrf.router, tags=["CSRF"])
+# Include successfully imported routes
+for route_name, prefix, tags in route_configs:
+    if route_name in route_imports and route_imports[route_name]:
+        try:
+            app.include_router(route_imports[route_name], prefix=prefix, tags=tags)
+            logger.debug(f"Registered route: {route_name} with prefix: {prefix}")
+        except Exception as e:
+            logger.error(f"Failed to register route '{route_name}': {str(e)}")
+    else:
+        logger.warning(f"Skipping route '{route_name}' - not available")
 
-# Include Maps proxy to protect API keys
-app.include_router(maps_proxy.router, tags=["Maps Proxy"])
+# Special handling for api_documentation_enhanced which is imported differently
+try:
+    from app.routes import api_documentation_enhanced
+    app.include_router(api_documentation_enhanced.router, tags=["API Documentation"])
+except Exception as e:
+    logger.error(f"Failed to import api_documentation_enhanced: {str(e)}")
 
-# Include application routers
-app.include_router(story.router, prefix="/api/story", tags=["Story"])
-app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-app.include_router(two_factor.router, prefix="/api/auth", tags=["Two-Factor Auth"])
-app.include_router(sessions.router, prefix="/api/auth", tags=["Sessions"])
-app.include_router(password.router, prefix="/api/password", tags=["Password Security"])
-app.include_router(user.router, prefix="/api/users", tags=["Users"])
-app.include_router(immersive.router, prefix="/api", tags=["Immersive"])
-app.include_router(personalized_story.router, prefix="/api", tags=["Personalized"])
-app.include_router(personalization.router, prefix="/api", tags=["Personalization"])  # Added personalization router
-app.include_router(games.router, prefix="/api", tags=["Games"])
-app.include_router(utils.router, prefix="/api", tags=["Utilities"])
-app.include_router(theme.router, prefix="/api", tags=["Themes"])
-app.include_router(side_quest.router, prefix="/api", tags=["Side Quests"])
-app.include_router(spatial_audio.router, prefix="/api", tags=["Spatial Audio"])
-app.include_router(contextual_awareness.router, prefix="/api", tags=["Contextual Awareness"])
-app.include_router(serendipity.router, prefix="/api", tags=["Serendipity"])
-app.include_router(ar.router, prefix="/api", tags=["Augmented Reality"])
-app.include_router(interactive_narrative.router, prefix="/api", tags=["Interactive Narrative"])
-app.include_router(driving_assistant.router, prefix="/api", tags=["Driving Assistant"])
-app.include_router(voice_character.router, prefix="/api", tags=["Voice Character"])
-app.include_router(navigation.router, prefix="/api", tags=["Navigation Voice"])
-app.include_router(voice_orchestration.router, tags=["Voice Orchestration"])
-app.include_router(tts.router, prefix="/api/tts", tags=["Text-to-Speech"])
-app.include_router(ai_stories.router, prefix="/api/stories", tags=["AI Stories"])
-app.include_router(cache_management.router, prefix="/api", tags=["Cache Management"])
-app.include_router(db_monitoring.router, prefix="/api", tags=["Database Monitoring"])
-app.include_router(revenue_analytics.router, tags=["Revenue Analytics"])
-app.include_router(booking.router, tags=["Bookings"])
-app.include_router(voice_assistant.router, prefix="/api", tags=["Voice Assistant"])
-app.include_router(event_journey.router, tags=["Event Journeys"])
-app.include_router(rideshare.router, prefix="/api", tags=["Rideshare"])
-app.include_router(rideshare_mode.router, tags=["Rideshare Mode"])
-app.include_router(voice_personality.router, tags=["Voice Personality"])
-app.include_router(spotify.router, prefix="/api", tags=["Spotify"])
-app.include_router(reservations_v2.router, prefix="/api/reservations", tags=["Reservations V2"])
-app.include_router(database_health.router, prefix="/api", tags=["Database Health"])
-app.include_router(database_monitoring.router, tags=["Database Monitoring"])
-app.include_router(performance_monitoring.router, prefix="/api", tags=["Performance Monitoring"])
-app.include_router(airport_parking.router, tags=["Airport Parking"])
-app.include_router(airport_amenities.router, tags=["Airport Amenities"])
-app.include_router(personality.router, tags=["Personality System"])
-# Include comprehensive health monitoring
-app.include_router(health.router, tags=["Health Monitoring"])
-# Include v2 health monitoring for horizontal scaling
-app.include_router(health_v2.router, tags=["Health Monitoring V2"])
-# Include metrics endpoint for Prometheus
-app.include_router(metrics.router, tags=["Metrics"])
-# Security monitoring endpoints (admin only)
-app.include_router(security_monitoring.router, prefix="/api/admin", tags=["Security Monitoring"])
-# Include production security monitoring V2
-app.include_router(security_monitoring_v2.router, tags=["Security Monitoring V2"])
-app.include_router(intrusion_detection.router, prefix="/api/admin", tags=["Intrusion Detection"])
-app.include_router(rate_limiting.router, prefix="/api/admin", tags=["Rate Limiting"])
-app.include_router(security_dashboard.router, prefix="/api/admin", tags=["Security Dashboard"])
-app.include_router(automated_threat_response.router, prefix="/api/admin", tags=["Automated Threat Response"])
-app.include_router(security_metrics.router, prefix="/api/admin", tags=["Security Metrics"])
-# Include MVP routes (simplified for testing)
-app.include_router(mvp_voice.router, tags=["MVP Voice"])
-app.include_router(mvp_voice_enhanced.router, tags=["MVP Voice Enhanced"])
-# Include enhanced API documentation routes
-from app.routes import api_documentation_enhanced
-app.include_router(api_documentation_enhanced.router, tags=["API Documentation"])
-# Include mobile development control routes
-app.include_router(mobile_dev_webhook.router, tags=["Mobile Development"])
-# Include async job management endpoints
-app.include_router(async_jobs.router, tags=["Async Jobs"])
-# Include monitoring endpoints
-app.add_route("/metrics", metrics)
-# Include circuit breaker monitoring endpoints
-app.include_router(circuit_breaker_monitoring.router, tags=["Circuit Breaker Monitoring"])
-# Include API key management endpoints
-app.include_router(api_keys.router, tags=["API Keys"])
-# Include secured API examples
-app.include_router(api_secured_example.router, tags=["Secured API Examples"])
-# Include mobile security endpoints
-app.include_router(mobile_security.router, tags=["Mobile Security"])
+# Add metrics route if available
+if 'metrics' in route_imports and hasattr(route_imports['metrics'], 'metrics'):
+    app.add_route("/metrics", route_imports['metrics'].metrics)
+
+# Log final route count
+logger.info(f"Application initialized with {len(app.routes)} routes")
 
 # Setup enhanced OpenAPI documentation
 setup_enhanced_openapi(app)

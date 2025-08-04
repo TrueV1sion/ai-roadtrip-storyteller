@@ -1,5 +1,5 @@
-from backend.app.routes.experience.reservations import RESERVATIONS
-from backend.app.routes.experience.pitstops import PITSTOPS
+from app.routes.experience.reservations import RESERVATIONS
+from app.routes.experience.pitstops import PITSTOPS
 
 
 def generate_itinerary() -> dict:

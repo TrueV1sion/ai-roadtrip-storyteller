@@ -11,10 +11,10 @@ from decimal import Decimal
 import base64
 from urllib.parse import urlencode
 
-from backend.app.core.config import settings
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import logger
-from backend.app.core.resilience import CircuitBreaker, circuit_breaker_factory
+from app.core.config import settings
+from app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.resilience import CircuitBreaker, circuit_breaker_factory
 
 
 class ChargePointClient:

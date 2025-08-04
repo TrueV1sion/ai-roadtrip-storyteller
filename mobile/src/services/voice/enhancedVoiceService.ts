@@ -9,6 +9,7 @@ import { VoicePersonality } from './voicePersonalities';
 import { Story } from '@/types/cultural';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
 interface VoiceServiceConfig {
   defaultPersonalityId: string;
   autoPlayStories: boolean;
@@ -46,7 +47,7 @@ class EnhancedVoiceService {
         this.currentPersonalityId = savedPersonality;
       }
     } catch (error) {
-      console.error('Failed to load voice config:', error);
+      logger.error('Failed to load voice config:', error);
     }
   }
 
@@ -55,7 +56,7 @@ class EnhancedVoiceService {
       await AsyncStorage.setItem('voice_service_config', JSON.stringify(this.config));
       await AsyncStorage.setItem('current_personality', this.currentPersonalityId);
     } catch (error) {
-      console.error('Failed to save voice config:', error);
+      logger.error('Failed to save voice config:', error);
     }
   }
 
@@ -109,7 +110,7 @@ class EnhancedVoiceService {
         await audioPlaybackService.play(playbackOptions);
       }
     } catch (error) {
-      console.error('Failed to synthesize speech:', error);
+      logger.error('Failed to synthesize speech:', error);
       throw error;
     }
   }
@@ -144,7 +145,7 @@ class EnhancedVoiceService {
         await this.synthesizeSpeech(outro, { immediate: false, ssml: true });
       }
     } catch (error) {
-      console.error('Failed to start story narration:', error);
+      logger.error('Failed to start story narration:', error);
       this.isNarrating = false;
       this.currentStoryId = null;
       throw error;

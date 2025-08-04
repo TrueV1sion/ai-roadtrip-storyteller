@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
+import { logger } from '@/services/logger';
 interface ErrorConfig {
   title: string;
   message: string;
@@ -24,7 +25,7 @@ class ErrorHandler {
   }
 
   async handleError(error: any, config: ErrorConfig): Promise<void> {
-    console.error('Error occurred:', error);
+    logger.error('Error occurred:', error);
 
     // Check network connectivity
     const netInfo = await NetInfo.fetch();

@@ -67,27 +67,69 @@ curl -X POST http://localhost:8000/api/agent/note \
 
 **NEVER skip the Knowledge Graph. It prevents disasters and ensures consistency.**
 
-### IMPORTANT: Knowledge Graph Consultation
-- **Always consult the knowledge graph and claude.md files before any code operation.**
+## 🔧 Context7 MCP Integration
+
+**Context7 MCP provides real-time, version-specific documentation directly in your development workflow.**
+
+### What is Context7 MCP?
+Context7 is a Model Context Protocol server that dynamically fetches up-to-date documentation for libraries and frameworks you're using, preventing outdated code suggestions.
+
+### Installation & Usage:
+```bash
+# Install globally (already done)
+npm install -g @upstash/context7-mcp@latest
+
+# Run Context7 for this project
+./scripts/utilities/run-context7.sh
+
+# Or use directly with npx
+npx -y @upstash/context7-mcp@latest
+```
+
+### How to Use:
+Simply add "use context7" to any prompt to fetch current documentation:
+- "How do I implement voice recognition in React Native? use context7"
+- "Show me the latest FastAPI security patterns use context7"
+- "What's the current Google Cloud TTS API? use context7"
+
+### Project Configuration:
+Context7 is configured for our tech stack in `.mcp/context7.json`:
+- FastAPI, React Native, Expo
+- Google Cloud services
+- SQLAlchemy, Redis, Celery
+- TypeScript, Python
+
+### Benefits:
+- Always get current API documentation
+- Avoid deprecated methods
+- Access version-specific examples
+- Reduce errors from outdated information
 
 ## Project Overview
 
-AI Road Trip Storyteller - An AI-powered road trip companion that transforms drives into magical journeys through storytelling, voice personalities, and real-time booking integration.
+AI Road Trip Storyteller - A **fully implemented, production-ready** AI-powered road trip companion that transforms drives into magical journeys through storytelling, voice personalities, and real-time booking integration.
+
+**Current Status:**
+- ✅ Backend: **Deployed to production** at `https://roadtrip-mvp-792001900150.us-central1.run.app`
+- ✅ AI: **Real Google Vertex AI integration** actively generating stories
+- ✅ Voice: **Google Cloud TTS** with 20+ personalities implemented
+- ✅ Bookings: **Real API integrations** (Ticketmaster, OpenTable, Recreation.gov, Viator)
+- 🚧 Mobile: **Fully functional** but needs 4-5 weeks of security hardening
 
 **Tech Stack:**
 - Backend: FastAPI (Python 3.9+), PostgreSQL, Redis, Google Vertex AI
 - Mobile: React Native + Expo, TypeScript
-- Infrastructure: Google Cloud Run, Docker, Terraform
+- Infrastructure: Google Cloud Run, Docker, Cloud SQL
 
 ## Essential Commands
 
 ### Development Setup
 ```bash
 # Initial setup
-./setup_dev_environment.sh
+./scripts/development/setup_dev_environment.sh
 
 # Start all services
-docker-compose up -d
+docker-compose -f infrastructure/docker/docker-compose.yml up -d
 
 # Start backend server
 uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
@@ -129,12 +171,26 @@ alembic upgrade head
 
 # Create new migration
 alembic revision --autogenerate -m "Description"
+
+# Reset database (development only)
+alembic downgrade base && alembic upgrade head
 ```
 
 ### Deployment
 ```bash
-# Deploy to Google Cloud Run
-./scripts/deployment/deploy.sh --project-id YOUR_PROJECT_ID
+# Backend is already deployed! Check health:
+curl https://roadtrip-mvp-792001900150.us-central1.run.app/health
+
+# Deploy backend updates to Google Cloud Run
+./scripts/deployment/deploy.sh --project-id roadtrip-mvp
+
+# Mobile app production build
+cd mobile
+eas build --platform all --profile production
+
+# Submit to app stores (after security hardening)
+eas submit --platform ios
+eas submit --platform android
 ```
 
 ## High-Level Architecture
@@ -176,6 +232,18 @@ mobile/src/
 └── hooks/          # Custom React hooks
 ```
 
+### Knowledge Graph System
+AI-powered code intelligence system:
+
+```
+knowledge_graph/
+├── blazing_server.py    # Main FastAPI server
+├── core/               # Graph database and analysis
+├── analyzers/          # Code pattern detection
+├── agents/             # Automated code agents
+└── ui/                # Web dashboard interface
+```
+
 ### AI Integration
 - **Primary AI**: Google Vertex AI (Gemini 1.5) for story generation
 - **Voice**: Google Cloud TTS/STT with 20+ personality options
@@ -195,32 +263,39 @@ mobile/src/
 - Always check for cached responses before making AI API calls
 - Use the master orchestration agent for routing - don't call sub-agents directly
 - Voice personalities are defined in `backend/app/services/voice_services.py`
+- AI responses are cached with 1-hour TTL by default
 
 ### Database Considerations
 - Always use connection pooling (already configured)
 - Write migrations for any schema changes
 - Use repository pattern for data access
+- Connection pool settings: min=5, max=20 connections
 
 ### Testing Requirements
 - Minimum 80% code coverage required
 - Always write tests for new features
 - Use pytest markers: @pytest.mark.mvp, @pytest.mark.integration, etc.
+- Run specific test: `pytest -k "test_name"`
+- Skip slow tests: `pytest -m "not slow"`
 
 ### API Development
 - All endpoints must have Pydantic schemas for request/response
 - Include proper error handling and logging
 - Document endpoints with OpenAPI annotations
+- Use dependency injection for services
 
 ### Mobile Development
 - Test on both iOS and Android simulators
 - Handle offline scenarios gracefully
 - Voice features require device permissions
+- Minimum iOS 13.0, Android API 23
 
 ### Deployment Checklist
 - Run full test suite
 - Update environment variables in Secret Manager
 - Verify database migrations
 - Check monitoring dashboards post-deployment
+- Ensure all API keys are properly secured
 
 ## Common Tasks
 
@@ -269,8 +344,53 @@ Critical environment variables (set in .env):
 
 ## Production Considerations
 
-- All secrets must be in Google Secret Manager
-- Enable Cloud Monitoring and Logging
-- Set up alerting for error rates and latency
-- Configure auto-scaling in Cloud Run
-- Implement proper backup strategy for PostgreSQL
+### Backend (Already in Production):
+- ✅ Deployed on Google Cloud Run
+- ✅ PostgreSQL on Cloud SQL with backups
+- ✅ Redis caching configured
+- ✅ Monitoring with Prometheus
+- ✅ Auto-scaling configured
+- ⚠️ Ensure all API keys are in Secret Manager (not .env)
+
+### Mobile App (Pre-Production):
+- 🚨 Remove all console.log statements before production
+- 🚨 Replace hardcoded API keys with environment variables
+- 🚨 Implement certificate pinning for API calls
+- 🚨 Enable crash reporting (Sentry)
+- 🚨 Configure proper code obfuscation
+- 📱 Add app store assets (icons, screenshots)
+- 📱 Complete security audit items from PRODUCTION_READINESS_AUDIT.md
+
+### Current Production URLs:
+- Backend API: `https://roadtrip-mvp-792001900150.us-central1.run.app`
+- API Docs: `https://roadtrip-mvp-792001900150.us-central1.run.app/docs`
+- Health Check: `https://roadtrip-mvp-792001900150.us-central1.run.app/health`
+
+## Quick Reference
+
+### Running Single Tests
+```bash
+# Backend specific test
+pytest tests/unit/test_voice_services.py::test_personality_generation
+
+# Mobile specific test
+cd mobile && npm test -- PersonalitySelector.test.tsx
+
+# Test with debugging
+pytest -s -vv tests/unit/test_specific.py
+```
+
+### Common Port Usage
+- Backend API: 8000
+- Knowledge Graph: 8000 (when backend not running)
+- PostgreSQL: 5432
+- Redis: 6379
+- Prometheus: 9090
+- Grafana: 3000
+
+### Environment Setup Order
+1. Start Docker services first
+2. Run database migrations
+3. Start backend server
+4. Start mobile app (if needed)
+5. Verify Knowledge Graph is accessible

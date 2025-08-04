@@ -6,7 +6,7 @@ This module provides a clean interface for accessing settings throughout the app
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from backend.app.core.config import Settings
+    from app.core.config import Settings
 
 # Global settings instance will be injected here
 _settings: Optional['Settings'] = None
@@ -22,7 +22,7 @@ def get_settings() -> 'Settings':
     """Get the current settings instance"""
     if _settings is None:
         # Fallback: try to import and create settings
-        from backend.app.core.config import settings
+        from app.core.config import settings
         return settings
     return _settings
 

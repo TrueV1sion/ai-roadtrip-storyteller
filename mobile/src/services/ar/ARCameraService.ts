@@ -18,6 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { arService } from '../arService';
 import { performanceMonitor } from '../performanceMonitor';
 
+import { logger } from '@/services/logger';
 interface ARSessionConfig {
   quality: 'low' | 'medium' | 'high';
   targetFPS: 30 | 60;
@@ -84,21 +85,21 @@ export class ARCameraService {
       // Check AR support
       const isSupported = await this.checkARSupport();
       if (!isSupported) {
-        console.warn('AR not supported on this device');
+        logger.warn('AR not supported on this device');
         return false;
       }
       
       // Check permissions
       const hasPermission = await this.checkPermissions();
       if (!hasPermission) {
-        console.warn('Camera permission not granted');
+        logger.warn('Camera permission not granted');
         return false;
       }
       
       // Get camera device
       this.device = await this.getOptimalCameraDevice();
       if (!this.device) {
-        console.warn('No suitable camera device found');
+        logger.warn('No suitable camera device found');
         return false;
       }
       
@@ -110,7 +111,7 @@ export class ARCameraService {
       
       return true;
     } catch (error) {
-      console.error('AR initialization failed:', error);
+      logger.error('AR initialization failed:', error);
       return false;
     }
   }
@@ -176,7 +177,7 @@ export class ARCameraService {
    */
   async startSession(config?: Partial<ARSessionConfig>): Promise<void> {
     if (this.isSessionActive) {
-      console.warn('AR session already active');
+      logger.warn('AR session already active');
       return;
     }
     
@@ -337,7 +338,7 @@ export class ARCameraService {
     this.sessionConfig.targetFPS = 30;
     this.sessionConfig.quality = 'low';
     
-    console.log('AR: Battery saving mode enabled');
+    logger.debug('AR: Battery saving mode enabled');
   }
   
   /**
@@ -347,7 +348,7 @@ export class ARCameraService {
     this.sessionConfig.quality = 'low';
     this.sessionConfig.targetFPS = 30;
     
-    console.log('AR: Thermal throttling enabled');
+    logger.debug('AR: Thermal throttling enabled');
   }
   
   /**
@@ -391,7 +392,7 @@ export class ARCameraService {
       
       return processedPhoto;
     } catch (error) {
-      console.error('AR photo capture failed:', error);
+      logger.error('AR photo capture failed:', error);
       return null;
     }
   }
@@ -425,7 +426,7 @@ export class ARCameraService {
         this.sessionConfig = { ...this.sessionConfig, ...parsed };
       }
     } catch (error) {
-      console.error('Failed to load AR preferences:', error);
+      logger.error('Failed to load AR preferences:', error);
     }
   }
   
@@ -442,7 +443,7 @@ export class ARCameraService {
         })
       );
     } catch (error) {
-      console.error('Failed to save performance metrics:', error);
+      logger.error('Failed to save performance metrics:', error);
     }
   }
   

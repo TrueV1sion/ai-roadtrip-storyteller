@@ -20,7 +20,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'database_optimization_six_sigma'
-down_revision = 'add_performance_indexes'
+down_revision = 'add_password_history'
 branch_labels = None
 depends_on = None
 
@@ -56,7 +56,7 @@ def upgrade():
         op.create_index('idx_commissions_booking_id_fk', 'commissions', ['booking_id'])
         op.create_index('idx_commissions_partner_id_fk', 'commissions', ['partner_id'])
         op.create_index('idx_commissions_status_created', 'commissions', ['status', sa.text('created_at DESC')])
-    except:
+    except Exception as e:
         print("Commissions table indexes skipped (table may not exist)")
     
     # Side quests table (if exists)
@@ -64,7 +64,7 @@ def upgrade():
         op.create_index('idx_side_quests_story_id_fk', 'side_quests', ['story_id'])
         op.create_index('idx_side_quests_location_spatial', 'side_quests', ['latitude', 'longitude'])
         op.create_index('idx_side_quests_is_active_idx', 'side_quests', ['is_active'])
-    except:
+    except Exception as e:
         print("Side quests table indexes skipped (table may not exist)")
     
     # Themes table (if exists)
@@ -72,7 +72,7 @@ def upgrade():
         op.create_index('idx_themes_user_id_fk', 'themes', ['user_id'])
         op.create_index('idx_themes_is_active_idx', 'themes', ['is_active'])
         op.create_index('idx_themes_name_idx', 'themes', ['name'])
-    except:
+    except Exception as e:
         print("Themes table indexes skipped (table may not exist)")
     
     # Reservations table (if exists)
@@ -81,7 +81,7 @@ def upgrade():
         op.create_index('idx_reservations_booking_id_fk', 'reservations', ['booking_id'])
         op.create_index('idx_reservations_check_in_date_idx', 'reservations', ['check_in_date'])
         op.create_index('idx_reservations_status_idx', 'reservations', ['status'])
-    except:
+    except Exception as e:
         print("Reservations table indexes skipped (table may not exist)")
     
     # 2. Create composite indexes for common query patterns
@@ -333,28 +333,28 @@ def downgrade():
         op.drop_index('idx_reservations_check_in_date_idx', 'reservations')
         op.drop_index('idx_reservations_booking_id_fk', 'reservations')
         op.drop_index('idx_reservations_user_id_fk', 'reservations')
-    except:
+    except Exception as e:
         pass
         
     try:
         op.drop_index('idx_themes_name_idx', 'themes')
         op.drop_index('idx_themes_is_active_idx', 'themes')
         op.drop_index('idx_themes_user_id_fk', 'themes')
-    except:
+    except Exception as e:
         pass
         
     try:
         op.drop_index('idx_side_quests_is_active_idx', 'side_quests')
         op.drop_index('idx_side_quests_location_spatial', 'side_quests')
         op.drop_index('idx_side_quests_story_id_fk', 'side_quests')
-    except:
+    except Exception as e:
         pass
         
     try:
         op.drop_index('idx_commissions_status_created', 'commissions')
         op.drop_index('idx_commissions_partner_id_fk', 'commissions')
         op.drop_index('idx_commissions_booking_id_fk', 'commissions')
-    except:
+    except Exception as e:
         pass
         
     op.drop_index('idx_bookings_booking_type_status', 'bookings')

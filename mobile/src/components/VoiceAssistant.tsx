@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -66,7 +67,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
         name: 'Current Location'
       };
     } catch (error) {
-      console.error('Failed to get location:', error);
+      logger.error('Failed to get location:', error);
       // Return default location
       return {
         latitude: 37.7749,

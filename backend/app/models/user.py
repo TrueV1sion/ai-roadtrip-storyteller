@@ -8,7 +8,7 @@ import logging
 
 from app.db.base import Base
 from app.core.enums import UserRole
-from app.core.encryption import encrypt_field, decrypt_field
+from app.core.encryption import encryption_service
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class User(Base):
         """Get decrypted 2FA secret."""
         if self._two_factor_secret_encrypted:
             try:
-                return decrypt_field(self._two_factor_secret_encrypted)
+                return encryption_service.decrypt(self._two_factor_secret_encrypted)
             except Exception as e:
                 logger.error(f"Failed to decrypt 2FA secret for user {self.id}: {e}")
                 # Return the raw value if it's not encrypted (for migration purposes)
@@ -58,7 +58,7 @@ class User(Base):
         """Set encrypted 2FA secret."""
         if value:
             try:
-                self._two_factor_secret_encrypted = encrypt_field(value)
+                self._two_factor_secret_encrypted = encryption_service.encrypt(value)
             except Exception as e:
                 logger.error(f"Failed to encrypt 2FA secret for user {self.id}: {e}")
                 # Store unencrypted in development if encryption fails
@@ -81,6 +81,10 @@ class User(Base):
     bookings = relationship("Booking", back_populates="user", cascade="all, delete-orphan")
     event_journeys = relationship("EventJourney", back_populates="user", cascade="all, delete-orphan")
     # Side quests are handled through UserSideQuest relationship
+    
+    # Progress tracking relationships
+    progress_notes = relationship("ProgressNote", back_populates="user", cascade="all, delete-orphan")
+    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email}>"

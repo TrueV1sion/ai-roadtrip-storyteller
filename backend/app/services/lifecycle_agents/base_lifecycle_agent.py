@@ -14,13 +14,13 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.core.cache import get_cache
-from backend.app.core.standardized_errors import handle_errors
-from backend.app.models.user import User
-from backend.app.models.trip import Trip
-from backend.app.services.memory.trip_memory_system import TripMemorySystem, TripPhase, TripMemory
-from backend.app.services.story_generation_agent import StoryGenerationAgent
+from app.core.unified_ai_client import UnifiedAIClient
+from app.core.cache import get_cache
+from app.core.standardized_errors import handle_errors
+from app.models.user import User
+from app.models.trip import Trip
+from app.services.memory.trip_memory_system import TripMemorySystem, TripPhase, TripMemory
+from app.services.story_generation_agent import StoryGenerationAgent
 
 logger = logging.getLogger(__name__)
 

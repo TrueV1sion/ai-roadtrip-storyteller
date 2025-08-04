@@ -12,7 +12,7 @@ from app.core.logger import get_logger
 from app.core.cache import cacheable, redis_client, generate_cache_key
 from app.core.config import settings
 from sqlalchemy.orm import Session # Added Session
-from app.db.base import get_db # Or your actual path to get_db
+from app.database import get_db # Or your actual path to get_db
 from app.crud import user_saved_experience_crud
 from app.schemas.experience import (
     ExperienceSavePayload, 

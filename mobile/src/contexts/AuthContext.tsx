@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { User } from '@/types/user';
 import { authService } from '@services/authService';
 
+import { logger } from '@/services/logger';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      logger.error('Auth check failed:', error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await authService.login(email, password);
       setUser(userData);
     } catch (error) {
-      console.error('Login failed:', error);
+      logger.error('Login failed:', error);
       
       // Show user-friendly error message
       Alert.alert(
@@ -84,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newUser = await authService.register(userData);
       setUser(newUser);
     } catch (error: any) {
-      console.error('Registration failed:', error);
+      logger.error('Registration failed:', error);
       
       // Extract error message for user
       const errorMessage = error?.response?.data?.detail || 
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await authService.logout();
       setUser(null);
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('Logout failed:', error);
       
       // Even if server logout fails, still clear local state
       setUser(null);
@@ -122,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const updatedUser = await authService.updateUser(userData);
       setUser(updatedUser);
     } catch (error) {
-      console.error('User update failed:', error);
+      logger.error('User update failed:', error);
       Alert.alert(
         'Update Failed',
         'Failed to update your profile. Please try again later.',
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       return false;
     } catch (error) {
-      console.error('Authentication refresh failed:', error);
+      logger.error('Authentication refresh failed:', error);
       setUser(null);
       return false;
     }

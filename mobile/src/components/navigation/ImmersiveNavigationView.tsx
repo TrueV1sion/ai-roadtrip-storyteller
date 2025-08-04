@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -423,7 +424,7 @@ export const ImmersiveNavigationView: React.FC<ImmersiveNavigationViewProps> = (
         storyPlayerRef.current = storySound;
       }
     } catch (error) {
-      console.error('Error setting up audio:', error);
+      logger.error('Error setting up audio:', error);
     }
   };
 
@@ -457,7 +458,7 @@ export const ImmersiveNavigationView: React.FC<ImmersiveNavigationViewProps> = (
       }
       setIsPlaying(!isPlaying);
     } catch (error) {
-      console.error('Error toggling playback:', error);
+      logger.error('Error toggling playback:', error);
     }
   };
 
@@ -466,7 +467,7 @@ export const ImmersiveNavigationView: React.FC<ImmersiveNavigationViewProps> = (
       await musicPlayerRef.current?.unloadAsync();
       await storyPlayerRef.current?.unloadAsync();
     } catch (error) {
-      console.error('Error cleaning up:', error);
+      logger.error('Error cleaning up:', error);
     }
   };
 
@@ -512,7 +513,7 @@ export const ImmersiveNavigationView: React.FC<ImmersiveNavigationViewProps> = (
         triggerProximityContent(data);
       }
     } catch (error) {
-      console.error('Error checking nearby content:', error);
+      logger.error('Error checking nearby content:', error);
     }
   };
 
@@ -558,7 +559,7 @@ export const ImmersiveNavigationView: React.FC<ImmersiveNavigationViewProps> = (
         await new Promise(resolve => setTimeout(resolve, stepDuration * 1000));
       }
     } catch (error) {
-      console.error('Error during audio crossfade:', error);
+      logger.error('Error during audio crossfade:', error);
     }
   };
 

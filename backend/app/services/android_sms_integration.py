@@ -10,9 +10,10 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from enum import Enum
 
-from backend.app.core.logger import logger
-from backend.app.core.config import settings
-from backend.app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.config import settings
+from app.core.cache import cache_manager
+from app.core.http_client import SyncHTTPClient, TimeoutProfile, TimeoutError
 
 
 class AndroidSMSProvider(str, Enum):
@@ -35,6 +36,8 @@ class AndroidSMSService:
                 "priority_keywords": ["urgent", "critical", "deploy", "security"]
             }
         }
+        # Initialize HTTP client with quick timeout for SMS
+        self.http_client = SyncHTTPClient(timeout_profile=TimeoutProfile.QUICK)
         
         logger.info(f"Android SMS Service initialized with provider: {self.provider}")
     
@@ -210,11 +213,15 @@ class AndroidSMSService:
                 "apiKey": api_key
             }
             
-            async with asyncio.timeout(10):
-                response = requests.post(
-                    f"{gateway_url}/send",
-                    json=payload,
-                    headers={"Content-Type": "application/json"}
+            # Use sync client in async context with proper timeout
+            try:
+                response = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self.http_client.post(
+                        f"{gateway_url}/send",
+                        json=payload,
+                        headers={"Content-Type": "application/json"}
+                    )
                 )
                 
                 if response.status_code == 200:
@@ -226,6 +233,10 @@ class AndroidSMSService:
                     }
                 else:
                     raise Exception(f"Gateway returned {response.status_code}")
+                    
+            except TimeoutError as e:
+                logger.error(f"SMS Gateway timeout: {e}")
+                raise Exception(f"SMS Gateway timeout: {e}")
                     
         except Exception as e:
             raise Exception(f"SMS Gateway failed: {e}")
@@ -269,7 +280,7 @@ class AndroidSMSService:
         for log in logs:
             try:
                 parsed_logs.append(json.loads(log))
-            except:
+            except Exception as e:
                 continue
         
         # Calculate stats

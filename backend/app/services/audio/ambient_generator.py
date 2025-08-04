@@ -8,8 +8,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import numpy as np
 
-from backend.app.services.audio.sound_library import SoundLibrary
-from backend.app.core.logger import logger
+from app.services.audio.sound_library import SoundLibrary
+from app.core.logger import logger
 
 
 class AmbientGenerator:

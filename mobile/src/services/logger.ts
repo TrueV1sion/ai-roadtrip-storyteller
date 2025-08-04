@@ -3,9 +3,17 @@
  * Replaces all console.log statements with structured logging
  */
 
-import * as Sentry from 'sentry-expo';
-import { ENV } from '@/config/env.production';
+// import * as Sentry from 'sentry-expo';
+// import { ENV } from '@/config/env.production';
 
+// Mock Sentry for development
+const Sentry = {
+  Native: {
+    captureException: (error: any) => console.error('Sentry mock:', error),
+    captureMessage: (message: string) => console.log('Sentry mock:', message),
+    addBreadcrumb: (breadcrumb: any) => console.log('Sentry breadcrumb:', breadcrumb),
+  }
+};
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -24,7 +32,7 @@ class Logger {
   private isDevelopment: boolean;
 
   private constructor() {
-    this.isDevelopment = ENV.APP_ENV !== 'production';
+    this.isDevelopment = process.env.NODE_ENV !== 'production';
     this.logLevel = this.isDevelopment ? LogLevel.DEBUG : LogLevel.ERROR;
   }
 

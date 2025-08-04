@@ -24,7 +24,7 @@ class KnowledgeGraphAutoStart:
         try:
             response = httpx.get(f"{self.kg_url}/api/health", timeout=2)
             return response.status_code == 200
-        except:
+        except Exception as e:
             return False
     
     def start_server(self):
@@ -40,7 +40,7 @@ class KnowledgeGraphAutoStart:
         try:
             subprocess.run(["fuser", "-k", f"{self.kg_port}/tcp"], 
                          capture_output=True, text=True)
-        except:
+        except Exception as e:
             pass
         
         # Start blazing server in background
@@ -60,7 +60,7 @@ class KnowledgeGraphAutoStart:
                 try:
                     httpx.post(f"{self.kg_url}/api/analyze/codebase", timeout=5)
                     print("📊 Codebase analysis initiated")
-                except:
+                except Exception as e:
                     pass
                     
                 return
@@ -226,7 +226,7 @@ class KnowledgeGraphImportHook:
                     "File modified via open()",
                     "SystemHook"
                 )
-            except:
+            except Exception as e:
                 pass
 
 # Auto-install hook

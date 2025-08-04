@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -69,7 +70,7 @@ export default function SocialSharingScreen({ route, navigation }: SocialSharing
         setVideoStatus('idle');
       }
     } catch (error) {
-      console.error('Error checking video status:', error);
+      logger.error('Error checking video status:', error);
     }
   };
 
@@ -150,7 +151,7 @@ export default function SocialSharingScreen({ route, navigation }: SocialSharing
           break;
       }
     } catch (error) {
-      console.error('Share error:', error);
+      logger.error('Share error:', error);
     }
   };
 

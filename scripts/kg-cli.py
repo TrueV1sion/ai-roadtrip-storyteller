@@ -36,7 +36,7 @@ class KnowledgeGraphCLI:
         try:
             response = self.client.get("/api/health")
             return response.status_code == 200
-        except:
+        except Exception as e:
             return False
     
     def analyze_impact(self, file_path: str) -> Dict[str, Any]:
@@ -329,7 +329,7 @@ def patterns(kg: KnowledgeGraphCLI, pattern_type: str, examples: int):
             )
             console.print(panel)
             
-        except:
+        except Exception as e:
             console.print(f"{i}. [cyan]{file_path}[/cyan]")
 
 
@@ -354,7 +354,7 @@ def watch(kg: KnowledgeGraphCLI):
                 console.print(f"[green]✅ Analysis complete: {data.get('file')}[/green]")
             else:
                 console.print(f"[cyan]📡 {event_type}: {json.dumps(data, indent=2)}[/cyan]")
-        except:
+        except Exception as e:
             console.print(f"[dim]{message}[/dim]")
     
     def on_error(ws, error):

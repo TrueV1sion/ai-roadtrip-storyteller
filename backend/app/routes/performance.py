@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from app.core.database_manager import get_db
+from app.database import get_db
 from app.core.auth import get_current_active_user
 from app.core.authorization import require_permissions
 from app.models.user import User

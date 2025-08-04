@@ -8,7 +8,7 @@ import hashlib
 import json
 import time
 from fastapi import Request
-from backend.app.core.cache import redis_client
+from app.core.cache import redis_client
 import logging
 
 logger = logging.getLogger(__name__)

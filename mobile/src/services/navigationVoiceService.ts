@@ -10,6 +10,7 @@ import { apiClient } from './apiClient';
 import { spatialAudioService } from './audio/spatialAudioService';
 import { audioOrchestrationService } from './audio/audioOrchestrationService';
 
+import { logger } from '@/services/logger';
 interface NavigationInstruction {
   text: string;
   priority: 'critical' | 'high' | 'medium' | 'low';
@@ -89,13 +90,13 @@ class NavigationVoiceService {
         }
       });
       
-      console.log('Navigation voice initialized:', response.data);
+      logger.debug('Navigation voice initialized:', response.data);
       
       // Initialize spatial audio for navigation
       await spatialAudioService.setEnvironment('car_interior');
       
     } catch (error) {
-      console.error('Failed to initialize navigation voice:', error);
+      logger.error('Failed to initialize navigation voice:', error);
       throw error;
     }
   }
@@ -140,7 +141,7 @@ class NavigationVoiceService {
       }
       
     } catch (error) {
-      console.error('Failed to check/play navigation instruction:', error);
+      logger.error('Failed to check/play navigation instruction:', error);
     }
   }
 
@@ -227,10 +228,10 @@ class NavigationVoiceService {
       this.lastInstructionTime = new Date();
       
       // Log for debugging
-      console.log(`Playing navigation instruction: ${instruction.text}`);
+      logger.debug(`Playing navigation instruction: ${instruction.text}`);
       
     } catch (error) {
-      console.error('Failed to play navigation instruction:', error);
+      logger.error('Failed to play navigation instruction:', error);
     }
   }
 
@@ -308,7 +309,7 @@ class NavigationVoiceService {
       });
       
     } catch (error) {
-      console.error('Failed to play navigation tone:', error);
+      logger.error('Failed to play navigation tone:', error);
     }
   }
 

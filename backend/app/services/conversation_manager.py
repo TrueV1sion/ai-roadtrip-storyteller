@@ -321,7 +321,7 @@ class ConversationManager:
         try:
             intent_str = await self.ai_client.generate_response(intent_prompt)
             return IntentType(intent_str.strip().lower())
-        except:
+        except Exception as e:
             return IntentType.COMMAND
     
     async def _detect_topic(
@@ -361,7 +361,7 @@ class ConversationManager:
             try:
                 topic_str = await self.ai_client.generate_response(topic_prompt)
                 return ConversationTopic(topic_str.strip().lower())
-            except:
+            except Exception as e:
                 pass
         
         return ConversationTopic.GENERAL_CHAT

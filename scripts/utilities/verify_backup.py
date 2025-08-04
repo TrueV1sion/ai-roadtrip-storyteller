@@ -220,7 +220,7 @@ class BackupVerifier:
             # Try to clean up
             try:
                 self._delete_test_instance(test_instance_name)
-            except:
+            except Exception as e:
                 pass
             return False
             

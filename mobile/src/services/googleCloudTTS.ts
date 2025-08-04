@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL, ACCESS_TOKEN_KEY } from '../config';
 import { toBackendPersonalityId } from '../constants/personalityMappings';
 
+import { logger } from '@/services/logger';
 interface TTSRequest {
   text: string;
   personalityId: string;
@@ -242,7 +243,7 @@ class GoogleCloudTTSService {
       // Calculate current cache size
       await this.calculateCacheSize();
     } catch (error) {
-      console.error('Failed to initialize TTS cache:', error);
+      logger.error('Failed to initialize TTS cache:', error);
     }
   }
 
@@ -320,7 +321,7 @@ class GoogleCloudTTSService {
 
       return filePath;
     } catch (error) {
-      console.error('TTS synthesis error:', error);
+      logger.error('TTS synthesis error:', error);
       // Fallback to local generation if backend fails
       return this.generateFallbackAudio(request.text);
     }
@@ -535,13 +536,13 @@ class GoogleCloudTTSService {
       
       this.currentCacheSize = totalSize;
     } catch (error) {
-      console.error('Failed to calculate cache size:', error);
+      logger.error('Failed to calculate cache size:', error);
     }
   }
 
   private async generateFallbackAudio(text: string): Promise<string> {
     // This is a fallback - in production, always use server-side TTS
-    console.warn('Using fallback audio generation - no TTS available');
+    logger.warn('Using fallback audio generation - no TTS available');
     
     // Create a silent audio file as placeholder
     const silentAudioBase64 = 'SUQzAwAAAAAAF1RJVDIAAAAFAAAAblVsbABUUEUxAAAABQAAAG5VbGwA//uSwAAAAAAAAAAAAAAAAAAAAAAA';
@@ -563,7 +564,7 @@ class GoogleCloudTTSService {
       this.currentCacheSize = 0;
       await AsyncStorage.removeItem('tts_cache_index');
     } catch (error) {
-      console.error('Failed to clear TTS cache:', error);
+      logger.error('Failed to clear TTS cache:', error);
     }
   }
 
@@ -576,7 +577,7 @@ class GoogleCloudTTSService {
         };
       }
     } catch (error) {
-      console.error('Failed to get auth token:', error);
+      logger.error('Failed to get auth token:', error);
     }
     return {};
   }
@@ -603,7 +604,7 @@ class GoogleCloudTTSService {
             ssml: true,
           });
         } catch (error) {
-          console.error(`Failed to preload phrase for ${personalityId}:`, error);
+          logger.error(`Failed to preload phrase for ${personalityId}:`, error);
         }
       }
     }

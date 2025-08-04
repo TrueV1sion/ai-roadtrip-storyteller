@@ -1,0 +1,170 @@
+{
+  "expo": {
+    "name": "AI Road Trip Storyteller",
+    "slug": "ai-roadtrip-storyteller",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6366F1"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/..."
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.roadtripai.storyteller",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "AI Road Trip Storyteller needs access to your location to provide navigation and location-based stories.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "AI Road Trip Storyteller needs access to your location to provide navigation and location-based stories even when the app is in the background.",
+        "NSMicrophoneUsageDescription": "AI Road Trip Storyteller needs access to your microphone for voice commands.",
+        "NSSpeechRecognitionUsageDescription": "AI Road Trip Storyteller needs access to speech recognition for voice commands.",
+        "NSCameraUsageDescription": "AI Road Trip Storyteller needs access to your camera to capture journey photos.",
+        "NSPhotoLibraryUsageDescription": "AI Road Trip Storyteller needs access to your photo library to save and share journey photos.",
+        "NSPhotoLibraryAddUsageDescription": "AI Road Trip Storyteller needs permission to save photos to your library.",
+        "UIBackgroundModes": ["audio", "location", "fetch", "remote-notification"]
+      },
+      "config": {
+        "googleMapsApiKey": "${GOOGLE_MAPS_IOS_KEY}"
+      },
+      "associatedDomains": [
+        "applinks:roadtripai.com",
+        "applinks:app.roadtripai.com"
+      ],
+      "usesAppleSignIn": true,
+      "googleServicesFile": "./GoogleService-Info.plist"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6366F1"
+      },
+      "package": "com.roadtripai.storyteller",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "WAKE_LOCK"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "${GOOGLE_MAPS_ANDROID_KEY}"
+        }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "roadtripai.com",
+              "pathPrefix": "/app"
+            },
+            {
+              "scheme": "roadtripai"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "AI Road Trip Storyteller uses your location to provide navigation and stories.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "AI Road Trip Storyteller needs camera access to capture journey moments."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "AI Road Trip Storyteller needs access to save journey photos.",
+          "savePhotosPermission": "AI Road Trip Storyteller needs permission to save photos.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "AI Road Trip Storyteller needs microphone access for voice commands.",
+          "speechRecognitionPermission": "AI Road Trip Storyteller needs speech recognition for voice commands."
+        }
+      ],
+      "expo-apple-authentication",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0",
+            "minSdkVersion": 21
+          },
+          "ios": {
+            "deploymentTarget": "13.0",
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "${EAS_PROJECT_ID}"
+      },
+      "bugsnag": {
+        "apiKey": "${BUGSNAG_API_KEY}"
+      },
+      "sentry": {
+        "dsn": "${SENTRY_DSN}",
+        "environment": "production"
+      }
+    },
+    "scheme": "roadtripai",
+    "privacy": "public",
+    "platforms": ["ios", "android"],
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#6366F1",
+      "androidMode": "default",
+      "androidCollapsedTitle": "AI Road Trip Updates"
+    },
+    "locales": {
+      "en": {
+        "name": "AI Road Trip Storyteller",
+        "description": "Transform your drives into magical journeys with AI-powered storytelling"
+      }
+    },
+    "experiments": {
+      "tsconfigPaths": true
+    }
+  }
+}

@@ -11,10 +11,10 @@ from urllib.parse import urlencode
 import aiohttp
 from aiohttp import ClientError, ClientResponseError
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.config import settings
-from backend.app.core.circuit_breaker import (
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.config import settings
+from app.core.circuit_breaker import (
     get_weather_circuit_breaker, 
     CircuitOpenError,
     with_circuit_breaker

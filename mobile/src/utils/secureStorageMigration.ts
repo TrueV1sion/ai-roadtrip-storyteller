@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import secureStorageService from '../services/secureStorageService';
 import * as SecureStore from 'expo-secure-store';
 
+import { logger } from '@/services/logger';
 interface MigrationResult {
   success: boolean;
   migratedKeys: string[];
@@ -70,7 +71,7 @@ class SecureStorageMigration {
         )
       );
 
-      console.log(`Found ${keysToMigrate.length} sensitive keys to migrate`);
+      logger.debug(`Found ${keysToMigrate.length} sensitive keys to migrate`);
 
       // Migrate each key
       for (const key of keysToMigrate) {
@@ -96,9 +97,9 @@ class SecureStorageMigration {
       }
 
       // Log migration summary
-      console.log(`Migration completed: ${result.migratedKeys.length} keys migrated`);
+      logger.debug(`Migration completed: ${result.migratedKeys.length} keys migrated`);
       if (result.failedKeys.length > 0) {
-        console.error(`Failed to migrate ${result.failedKeys.length} keys`);
+        logger.error(`Failed to migrate ${result.failedKeys.length} keys`);
       }
 
     } catch (error) {
@@ -126,7 +127,7 @@ class SecureStorageMigration {
         )
       );
     } catch (error) {
-      console.error('Error checking migration status:', error);
+      logger.error('Error checking migration status:', error);
       return false;
     }
   }
@@ -146,7 +147,7 @@ class SecureStorageMigration {
       );
 
       if (remainingSensitiveKeys.length > 0) {
-        console.error('Sensitive keys still in AsyncStorage:', remainingSensitiveKeys);
+        logger.error('Sensitive keys still in AsyncStorage:', remainingSensitiveKeys);
         return false;
       }
 
@@ -155,14 +156,14 @@ class SecureStorageMigration {
       for (const key of criticalKeys) {
         const value = await SecureStore.getItemAsync(key);
         if (!value) {
-          console.warn(`Critical key '${key}' not found in SecureStore`);
+          logger.warn(`Critical key '${key}' not found in SecureStore`);
           // This might be okay if user hasn't logged in yet
         }
       }
 
       return true;
     } catch (error) {
-      console.error('Error validating migration:', error);
+      logger.error('Error validating migration:', error);
       return false;
     }
   }
@@ -183,10 +184,10 @@ class SecureStorageMigration {
           }
         }
         
-        console.log('Backup created with', Object.keys(backup).length, 'keys');
+        logger.debug('Backup created with', Object.keys(backup).length, 'keys');
         return backup;
       } catch (error) {
-        console.error('Error creating backup:', error);
+        logger.error('Error creating backup:', error);
         return {};
       }
     }
@@ -226,11 +227,11 @@ class SecureStorageMigration {
       });
 
       if (keysToRemove.length > 0) {
-        console.warn(`Removing ${keysToRemove.length} potentially sensitive keys`);
+        logger.warn(`Removing ${keysToRemove.length} potentially sensitive keys`);
         await AsyncStorage.multiRemove(keysToRemove);
       }
     } catch (error) {
-      console.error('Error cleaning up sensitive data:', error);
+      logger.error('Error cleaning up sensitive data:', error);
     }
   }
 }

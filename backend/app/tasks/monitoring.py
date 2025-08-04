@@ -15,11 +15,11 @@ from celery import Task
 from celery.app.control import Inspect
 import redis
 
-from backend.app.core.celery_app import celery_app
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import get_logger
-from backend.app.monitoring.metrics import metrics_collector
-from backend.app.services.notification_service import NotificationService
+from app.core.celery_app import celery_app
+from app.core.cache import cache_manager
+from app.core.logger import get_logger
+from app.monitoring.metrics import metrics_collector
+from app.services.notification_service import NotificationService
 
 logger = get_logger(__name__)
 

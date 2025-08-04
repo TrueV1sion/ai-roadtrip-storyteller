@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -86,7 +87,7 @@ export const ReservationSearchScreen: React.FC = () => {
         }));
       },
       (error) => {
-        console.error('Location error:', error);
+        logger.error('Location error:', error);
       }
     );
   }, []);
@@ -112,7 +113,7 @@ export const ReservationSearchScreen: React.FC = () => {
       
       setSearchResults(response.data.results);
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('Search error:', error);
       Alert.alert('Search Error', 'Unable to search for restaurants. Please try again.');
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { optimizedApiClient } from '@/services/api/OptimizedApiClient';
 
+import { logger } from '@/services/logger';
 // Constants
 const CONNECTION_STATE_KEY = '@RoadTrip:connection_state';
 const CONNECTION_SETTINGS_KEY = '@RoadTrip:connection_settings';
@@ -108,7 +109,7 @@ export async function initConnectionManager(): Promise<void> {
       startConnectionChecking();
     }
   } catch (error) {
-    console.error('Error initializing connection manager:', error);
+    logger.error('Error initializing connection manager:', error);
   }
 }
 
@@ -183,7 +184,7 @@ function handleNetworkStateChange(state: NetInfoState): void {
   
   // Set offline mode if auto-enable is on and we're offline
   if (connectionSettings.autoEnableOfflineMode && networkOffline && !manualOfflineMode) {
-    console.log('Auto-enabling offline mode due to network disconnection');
+    logger.debug('Auto-enabling offline mode due to network disconnection');
     manualOfflineMode = true;
     saveConnectionState();
     
@@ -283,7 +284,7 @@ async function checkConnection(): Promise<boolean> {
       // Auto enable offline mode if threshold reached
       if (connectionSettings.autoEnableOfflineMode && 
           unreliableConnectionCounter >= connectionSettings.unreliableNetworkThreshold) {
-        console.log('Auto-enabling offline mode due to unreliable connection');
+        logger.debug('Auto-enabling offline mode due to unreliable connection');
         setOfflineMode(true);
       }
       
@@ -294,7 +295,7 @@ async function checkConnection(): Promise<boolean> {
       return true;
     }
   } catch (error) {
-    console.warn('Error checking connection:', error);
+    logger.warn('Error checking connection:', error);
     
     // Increment counter for connection errors
     unreliableConnectionCounter++;
@@ -303,7 +304,7 @@ async function checkConnection(): Promise<boolean> {
     // Auto enable offline mode if threshold reached
     if (connectionSettings.autoEnableOfflineMode && 
         unreliableConnectionCounter >= connectionSettings.unreliableNetworkThreshold) {
-      console.log('Auto-enabling offline mode due to connection errors');
+      logger.debug('Auto-enabling offline mode due to connection errors');
       setOfflineMode(true);
     }
     
@@ -318,7 +319,7 @@ async function saveConnectionState(): Promise<void> {
       manualOfflineMode,
     }));
   } catch (error) {
-    console.warn('Error saving connection state:', error);
+    logger.warn('Error saving connection state:', error);
   }
 }
 
@@ -327,7 +328,7 @@ async function saveConnectionSettings(): Promise<void> {
   try {
     await AsyncStorage.setItem(CONNECTION_SETTINGS_KEY, JSON.stringify(connectionSettings));
   } catch (error) {
-    console.warn('Error saving connection settings:', error);
+    logger.warn('Error saving connection settings:', error);
   }
 }
 
@@ -365,7 +366,7 @@ export function setOfflineMode(enabled: boolean): void {
   // Notify listeners
   notifyConnectionStatusListeners();
   
-  console.log(`Offline mode ${enabled ? 'enabled' : 'disabled'}`);
+  logger.debug(`Offline mode ${enabled ? 'enabled' : 'disabled'}`);
 }
 
 // Update connection settings
@@ -444,7 +445,7 @@ function notifyConnectionStatusListeners(): void {
     try {
       listener(status);
     } catch (error) {
-      console.error('Error in connection status listener:', error);
+      logger.error('Error in connection status listener:', error);
     }
   });
 }
@@ -535,8 +536,8 @@ export async function resetConnectionManager(): Promise<void> {
     // Notify listeners
     notifyConnectionStatusListeners();
     
-    console.log('Connection manager reset to defaults');
+    logger.debug('Connection manager reset to defaults');
   } catch (error) {
-    console.error('Error resetting connection manager:', error);
+    logger.error('Error resetting connection manager:', error);
   }
 }

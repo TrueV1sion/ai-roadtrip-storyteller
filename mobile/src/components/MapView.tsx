@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import { StyleSheet, View, Text, ActivityIndicator, Button, Alert } from 'react-native'; // Alert import is correct
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps'; // Removed MapViewProps import
 import { locationService, LocationData } from '@services/locationService'; // Use alias
@@ -99,7 +100,7 @@ const MapScreenComponent: React.FC = () => {
               setError("No route found.");
           }
       } catch (err: any) {
-          console.error("Error fetching directions:", err);
+          logger.error("Error fetching directions:", err);
           setError(`Failed to fetch route: ${err.message || err}`);
       } finally {
           setIsFetchingRoute(false);

@@ -12,9 +12,9 @@ from enum import Enum
 from dataclasses import dataclass
 import os
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.services.mobile_dev_notifications import (
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.services.mobile_dev_notifications import (
     mobile_dev_service,
     send_build_status,
     send_deployment_update,
@@ -374,7 +374,7 @@ class DevelopmentAutomationService:
         # Run actual security checks
         try:
             # Use the production environment setup tool
-            from backend.app.core.production_env_setup import ProductionEnvSetup
+            from app.core.production_env_setup import ProductionEnvSetup
             audit_results = ProductionEnvSetup.run_security_audit()
             
             return {

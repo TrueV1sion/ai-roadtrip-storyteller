@@ -334,7 +334,7 @@ async def analyze_codebase():
                     "links": len(valid_links)
                 }
             })
-        except:
+        except Exception as e:
             pass
 
 @app.on_event("startup")

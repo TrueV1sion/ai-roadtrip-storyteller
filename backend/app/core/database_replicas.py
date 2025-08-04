@@ -18,9 +18,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker, Session, Query
 from sqlalchemy.pool import NullPool, QueuePool
 
-from backend.app.core.config import settings
-from backend.app.core.logger import get_logger
-from backend.app.core.tracing import trace_method, add_span_attributes
+from app.core.config import settings
+from app.core.logger import get_logger
+from app.core.tracing import trace_method, add_span_attributes
 
 logger = get_logger(__name__)
 

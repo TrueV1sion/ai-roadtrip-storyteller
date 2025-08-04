@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -137,7 +138,7 @@ const SimpleMVPNavigationScreen: React.FC = () => {
         Alert.alert('Error', 'Failed to process your request. Please try again.');
       }
     } catch (error) {
-      console.error('Error processing voice input:', error);
+      logger.error('Error processing voice input:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setIsProcessing(false);
@@ -166,7 +167,7 @@ const SimpleMVPNavigationScreen: React.FC = () => {
         }
       });
     } catch (error) {
-      console.error('Error playing audio:', error);
+      logger.error('Error playing audio:', error);
     }
   };
   
@@ -201,7 +202,7 @@ const SimpleMVPNavigationScreen: React.FC = () => {
               }
             },
             onError: (error) => {
-              console.error('Voice recognition error:', error);
+              logger.error('Voice recognition error:', error);
               setIsListening(false);
               Alert.alert('Error', 'Voice recognition failed. Please try again.');
             },
@@ -211,7 +212,7 @@ const SimpleMVPNavigationScreen: React.FC = () => {
           }
         );
       } catch (error) {
-        console.error('Error starting voice recognition:', error);
+        logger.error('Error starting voice recognition:', error);
         setIsListening(false);
         Alert.alert('Error', 'Failed to start voice recognition.');
       }

@@ -16,8 +16,8 @@ from celery.signals import (
     task_prerun, task_postrun, task_failure, 
     task_retry, worker_ready, worker_shutdown
 )
-from backend.app.core.logger import get_logger
-from backend.app.monitoring.metrics import metrics_collector
+from app.core.logger import get_logger
+from app.monitoring.metrics import metrics_collector
 
 logger = get_logger(__name__)
 

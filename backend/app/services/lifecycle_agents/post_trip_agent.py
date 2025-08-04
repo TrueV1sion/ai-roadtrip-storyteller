@@ -14,13 +14,13 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
-from backend.app.services.lifecycle_agents.base_lifecycle_agent import (
+from app.core.unified_ai_client import UnifiedAIClient
+from app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
+from app.services.lifecycle_agents.base_lifecycle_agent import (
     BaseLifecycleAgent, LifecycleContext, LifecycleResponse, LifecycleState
 )
-from backend.app.services.photo_storage_service import PhotoStorageService
-from backend.app.services.spotify_service import SpotifyService
+from app.services.photo_storage_service import PhotoStorageService
+from app.services.spotify_service import SpotifyService
 
 logger = logging.getLogger(__name__)
 

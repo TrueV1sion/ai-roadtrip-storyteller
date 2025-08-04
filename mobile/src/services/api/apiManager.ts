@@ -1,6 +1,7 @@
 import { APIClient } from '@utils/apiUtils';
 import StorageManager from '@utils/storage';
 
+import { logger } from '@/services/logger';
 // Custom EventEmitter implementation
 class EventEmitter {
   private listeners: Map<string, Array<(data: any) => void>> = new Map();
@@ -839,7 +840,7 @@ class APIManager {
         { ...options, forceBypass: true }
       );
     } catch (fallbackError) {
-      console.error('Fallback request failed:', fallbackError);
+      logger.error('Fallback request failed:', fallbackError);
       return null;
     }
   }

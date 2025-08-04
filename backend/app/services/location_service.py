@@ -8,9 +8,9 @@ import asyncio
 from datetime import datetime
 import googlemaps
 
-from backend.app.core.config import settings
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
+from app.core.config import settings
+from app.core.logger import logger
+from app.core.cache import cache_manager
 
 
 class LocationService:

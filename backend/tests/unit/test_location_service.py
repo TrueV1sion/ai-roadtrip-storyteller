@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from typing import Dict, List, Any
 import math
 
-from backend.app.services.location_service import (
+from app.services.location_service import (
     LocationService,
     Location,
     LocationUpdate,
@@ -20,7 +20,7 @@ from backend.app.services.location_service import (
     GeofenceEvent,
     LocationCluster
 )
-from backend.app.models.user import User
+from app.models.user import User
 
 
 @pytest.fixture

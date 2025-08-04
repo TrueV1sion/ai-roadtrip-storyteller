@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_admin_user, get_current_active_user
 from app.core.logger import get_logger
-from app.db.base import get_db
+from app.database import get_db
 from app.models.user import User
 from app.core.enhanced_rate_limiter import enhanced_rate_limiter, RateLimitTier
 

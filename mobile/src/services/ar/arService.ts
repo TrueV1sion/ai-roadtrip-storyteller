@@ -1,4 +1,5 @@
 import { ApiClient } from '../api/ApiClient';
+import { logger } from '@/services/logger';
 import { 
   ARPointRequest, 
   ARPointResponse, 
@@ -40,7 +41,7 @@ class ARService {
       //   this.settings = JSON.parse(savedSettings);
       // }
     } catch (error) {
-      console.error('Failed to load AR settings:', error);
+      logger.error('Failed to load AR settings:', error);
     }
   }
 
@@ -52,7 +53,7 @@ class ARService {
       // This would typically use AsyncStorage or similar
       // await AsyncStorage.setItem('ar_settings', JSON.stringify(this.settings));
     } catch (error) {
-      console.error('Failed to save AR settings:', error);
+      logger.error('Failed to save AR settings:', error);
     }
   }
 
@@ -74,7 +75,7 @@ class ARService {
     try {
       return await ApiClient.post<ARPointResponse[]>('/ar/points', request);
     } catch (error) {
-      console.error('Failed to fetch AR points:', error);
+      logger.error('Failed to fetch AR points:', error);
       throw error;
     }
   }
@@ -98,7 +99,7 @@ class ARService {
     try {
       return await ApiClient.post<ARRenderResponse>('/ar/render', request, viewParams);
     } catch (error) {
-      console.error('Failed to render AR view:', error);
+      logger.error('Failed to render AR view:', error);
       throw error;
     }
   }
@@ -113,7 +114,7 @@ class ARService {
       await this.saveSettings();
       return updatedSettings;
     } catch (error) {
-      console.error('Failed to update AR settings:', error);
+      logger.error('Failed to update AR settings:', error);
       throw error;
     }
   }
@@ -134,7 +135,7 @@ class ARService {
     try {
       return await ApiClient.post<HistoricalOverlayResponse>('/ar/historical/overlay', request);
     } catch (error) {
-      console.error('Failed to fetch historical overlay:', error);
+      logger.error('Failed to fetch historical overlay:', error);
       throw error;
     }
   }

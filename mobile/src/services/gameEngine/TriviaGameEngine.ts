@@ -1,5 +1,6 @@
 import { LocationData } from '../locationService';
 import { GameDifficulty } from './GameStateManager';
+import { logger } from '@/services/logger';
 import { apiClient } from '../api/ApiClient'; // Import the API client
 
 export enum TriviaCategory {
@@ -87,7 +88,7 @@ class TriviaGameEngine {
     questionCount: number = 5,
     categories?: string[]
   ): Promise<TriviaGame | null> { // Return null on failure
-    console.log(`Generating trivia game for loc: ${location.latitude},${location.longitude}, diff: ${difficulty}, count: ${questionCount}, cats: ${categories}`);
+    logger.debug(`Generating trivia game for loc: ${location.latitude},${location.longitude}, diff: ${difficulty}, count: ${questionCount}, cats: ${categories}`);
     try {
       // Fetch questions from the backend API
       const params: any = {
@@ -106,7 +107,7 @@ class TriviaGameEngine {
       const fetchedQuestions: TriviaQuestion[] = await apiClient.get('/api/games/trivia/questions', params);
 
       if (!fetchedQuestions || fetchedQuestions.length === 0) {
-        console.error('No questions received from API');
+        logger.error('No questions received from API');
         // Handle error: maybe return a default game or null
         return null;
       }
@@ -124,11 +125,11 @@ class TriviaGameEngine {
         location // Store the location used to generate the game
       };
 
-      console.log(`Trivia game generated with ${fetchedQuestions.length} questions.`);
+      logger.debug(`Trivia game generated with ${fetchedQuestions.length} questions.`);
       return this.activeGame;
 
     } catch (error) {
-      console.error('Error generating trivia game from API:', error);
+      logger.error('Error generating trivia game from API:', error);
       // Handle API error appropriately (e.g., show message to user)
       this.activeGame = null; // Ensure no active game on error
       return null;
@@ -153,13 +154,13 @@ class TriviaGameEngine {
    */
   answerQuestion(optionIndex: number): boolean {
     if (!this.activeGame || this.activeGame.isCompleted) {
-      console.warn('Cannot answer question: No active game or game already completed.');
+      logger.warn('Cannot answer question: No active game or game already completed.');
       return false;
     }
 
     const currentQuestion = this.activeGame.questions[this.activeGame.currentQuestionIndex];
     if (!currentQuestion) {
-        console.error('Error: Current question is undefined.');
+        logger.error('Error: Current question is undefined.');
         return false; // Should not happen in a valid game state
     }
     const isCorrect = optionIndex === currentQuestion.correctOptionIndex;
@@ -173,7 +174,7 @@ class TriviaGameEngine {
     if (this.activeGame.currentQuestionIndex >= this.activeGame.questions.length) {
       this.activeGame.isCompleted = true;
       this.activeGame.endTime = Date.now();
-      console.log(`Game ${this.activeGame.id} completed. Score: ${this.activeGame.score}/${this.activeGame.maxScore}`);
+      logger.debug(`Game ${this.activeGame.id} completed. Score: ${this.activeGame.score}/${this.activeGame.maxScore}`);
     }
 
     return isCorrect;
@@ -184,7 +185,7 @@ class TriviaGameEngine {
    */
   skipQuestion(): void {
     if (!this.activeGame || this.activeGame.isCompleted) {
-       console.warn('Cannot skip question: No active game or game already completed.');
+       logger.warn('Cannot skip question: No active game or game already completed.');
       return;
     }
 
@@ -193,7 +194,7 @@ class TriviaGameEngine {
     if (this.activeGame.currentQuestionIndex >= this.activeGame.questions.length) {
       this.activeGame.isCompleted = true;
       this.activeGame.endTime = Date.now();
-       console.log(`Game ${this.activeGame.id} completed via skip. Score: ${this.activeGame.score}/${this.activeGame.maxScore}`);
+       logger.debug(`Game ${this.activeGame.id} completed via skip. Score: ${this.activeGame.score}/${this.activeGame.maxScore}`);
     }
   }
 
@@ -202,7 +203,7 @@ class TriviaGameEngine {
    */
   completeGame(): TriviaResult | null { // Return null if no active game
     if (!this.activeGame) {
-      console.warn('No active game to complete');
+      logger.warn('No active game to complete');
       return null;
     }
 

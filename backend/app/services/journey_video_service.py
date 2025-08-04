@@ -18,11 +18,11 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 import cv2
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.models import User, Story, Trip
-from backend.app.services.tts_service import tts_service
-from backend.app.core.config import settings
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.models import User, Story, Trip
+from app.services.tts_service import tts_service
+from app.core.config import settings
 
 
 class JourneyVideoService:

@@ -134,7 +134,7 @@ class MVPValidator:
                     "❌ Backend health check failed"
                 )
                 return False
-        except:
+        except Exception as e:
             self.results["integration"]["failed"] += 1
             self.results["integration"]["issues"].append(
                 "❌ Backend not running on localhost:8000"

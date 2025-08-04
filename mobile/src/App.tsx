@@ -7,6 +7,12 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
+import { initializeSentry } from '@/services/sentry/SentryService';
+import { ENV } from '@/config/env.production';
+import { SentryErrorBoundary } from '@/components/error/SentryErrorBoundary';
+import EnhancedMobileSecurityService from '@/services/security/EnhancedMobileSecurityService';
+import { DevelopmentConfig } from '@/config/development';
 // Onboarding screens
 import OnboardingScreen from './screens/OnboardingScreen';
 import PermissionsScreen from './screens/PermissionsScreen';
@@ -43,22 +49,46 @@ export default function App() {
   const [isReady, setIsReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList>('Onboarding');
   
-  // Check if the user has completed onboarding
+  // Initialize app and check onboarding status
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
+    const initializeApp = async () => {
       try {
+        // Skip Sentry in development if no DSN provided
+        if (!__DEV__ || ENV.SENTRY_DSN) {
+          await initializeSentry({
+            dsn: ENV.SENTRY_DSN,
+            environment: ENV.APP_ENV as 'development' | 'staging' | 'production',
+            enableInDevelopment: false,
+            tracesSampleRate: ENV.APP_ENV === 'production' ? 0.1 : 1.0,
+            attachScreenshot: true,
+            attachStacktrace: true,
+          });
+          logger.info('Sentry initialized successfully');
+        } else {
+          logger.info('Skipping Sentry in development mode');
+        }
+        
+        // Skip security service in development if disabled
+        if (!__DEV__ || !DevelopmentConfig.DISABLE_SECURITY) {
+          await EnhancedMobileSecurityService.initialize();
+          logger.info('Security service initialized successfully');
+        } else {
+          logger.info('Security service disabled in development mode');
+        }
+        
+        // Check onboarding status
         const hasCompletedOnboarding = await AsyncStorage.getItem('hasCompletedOnboarding');
         if (hasCompletedOnboarding === 'true') {
           setInitialRoute('Main');
         }
       } catch (error) {
-        console.error('Error checking onboarding status:', error);
+        logger.error('Error initializing app:', error);
       } finally {
         setIsReady(true);
       }
     };
     
-    checkOnboardingStatus();
+    initializeApp();
   }, []);
   
   if (!isReady) {
@@ -70,18 +100,25 @@ export default function App() {
   }
   
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <LocalizationProvider>
-          <AccessibilityProvider>
-            <NavigationContainer>
-              <StatusBar style="auto" />
-              <Stack.Navigator
-                initialRouteName={initialRoute}
-                screenOptions={{
-                  headerShown: false,
-                }}
-              >
+    <SentryErrorBoundary 
+      showDialog={true}
+      enableAutoRecovery={true}
+      onError={(error, errorInfo) => {
+        logger.error('App Error Boundary caught error:', error, { errorInfo });
+      }}
+    >
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <LocalizationProvider>
+            <AccessibilityProvider>
+              <NavigationContainer>
+                <StatusBar style="auto" />
+                <Stack.Navigator
+                  initialRouteName={initialRoute}
+                  screenOptions={{
+                    headerShown: false,
+                  }}
+                >
                 {/* Onboarding Flow */}
                 <Stack.Screen name="Onboarding" component={OnboardingScreen} />
                 <Stack.Screen name="Permissions" component={PermissionsScreen} />
@@ -130,6 +167,7 @@ export default function App() {
         </LocalizationProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+    </SentryErrorBoundary>
   );
 }
 

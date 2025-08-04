@@ -4,6 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { logger } from '@/services/logger';
 import {
   StyleSheet,
   View,
@@ -179,7 +180,7 @@ export const ARCameraView: React.FC<ARCameraViewProps> = ({
         );
       }
     } catch (error) {
-      console.error('AR initialization failed:', error);
+      logger.error('AR initialization failed:', error);
       Alert.alert('AR Error', 'Failed to initialize AR features.');
       navigation.goBack();
     }
@@ -228,7 +229,7 @@ export const ARCameraView: React.FC<ARCameraViewProps> = ({
         // Update overlay positions
         arOverlayRenderer.updateOverlayPositions(updatedLandmarks);
       } catch (error) {
-        console.error('Failed to update landmarks:', error);
+        logger.error('Failed to update landmarks:', error);
       }
     }, 1000);
     
@@ -264,7 +265,7 @@ export const ARCameraView: React.FC<ARCameraViewProps> = ({
         navigation.navigate('ARPhotoReview', { photoPath, landmarks });
       }
     } catch (error) {
-      console.error('Photo capture failed:', error);
+      logger.error('Photo capture failed:', error);
       Alert.alert('Error', 'Failed to capture AR photo');
     } finally {
       setIsProcessing(false);

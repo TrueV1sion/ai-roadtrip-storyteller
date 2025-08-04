@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -120,17 +121,17 @@ const InteractiveFeatureButton: React.FC<InteractiveFeatureButtonProps> = ({
   
   // Handlers for voice commands
   const handleStoryCommand = (action: string, params?: string[]) => {
-    console.log('Story command:', action, params);
+    logger.debug('Story command:', action, params);
     // Implement story command handling
   };
   
   const handleNavigationCommand = (action: string, params?: string[]) => {
-    console.log('Navigation command:', action, params);
+    logger.debug('Navigation command:', action, params);
     // Implement navigation command handling
   };
   
   const handlePlaybackCommand = (action: string, params?: string[]) => {
-    console.log('Playback command:', action, params);
+    logger.debug('Playback command:', action, params);
     // Implement playback command handling
     
     if (action === 'play' && onImmersiveExperienceRequest) {

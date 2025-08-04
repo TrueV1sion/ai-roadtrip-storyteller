@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -67,7 +68,7 @@ export const VoiceNavigationInterface: React.FC<VoiceNavigationInterfaceProps> =
   }, []);
 
   const onSpeechError = useCallback((error: any) => {
-    console.error('Speech recognition error:', error);
+    logger.error('Speech recognition error:', error);
     setIsListening(false);
     stopPulseAnimation();
     provideFeedback('Sorry, I didn\'t catch that. Please try again.');
@@ -181,7 +182,7 @@ export const VoiceNavigationInterface: React.FC<VoiceNavigationInterfaceProps> =
         onCommandProcessed(command, result);
       }
     } catch (error) {
-      console.error('Error processing command:', error);
+      logger.error('Error processing command:', error);
       provideFeedback('Sorry, I couldn\'t process that command');
     }
   };
@@ -215,7 +216,7 @@ export const VoiceNavigationInterface: React.FC<VoiceNavigationInterfaceProps> =
         );
       }
     } catch (error) {
-      console.error('Error toggling voice recognition:', error);
+      logger.error('Error toggling voice recognition:', error);
     }
   };
 

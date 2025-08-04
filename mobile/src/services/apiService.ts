@@ -5,7 +5,9 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setupCSRFInterceptor } from '../utils/csrf';
+import { DevelopmentConfig, shouldUseMockData, getMockResponse } from '../config/development';
 
+import { logger } from '@/services/logger';
 class ApiService {
   private client: AxiosInstance;
   private baseURL: string;
@@ -43,19 +45,28 @@ class ApiService {
     // Setup CSRF protection
     setupCSRFInterceptor(this.client);
 
-    // Add response interceptor for error handling
+    // Add response interceptor for error handling and mock data
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
+      async (error) => {
+        // In development, return mock data if backend is unavailable
+        if (__DEV__ && shouldUseMockData() && error.code === 'ECONNREFUSED') {
+          const mockData = getMockResponse(error.config.url);
+          if (mockData) {
+            logger.warn('Backend unavailable, using mock data for:', error.config.url);
+            return { data: mockData, status: 200, config: error.config };
+          }
+        }
+        
         if (error.response) {
           // Server responded with error
-          console.error('API Error:', error.response.data);
+          logger.error('API Error:', error.response.data);
         } else if (error.request) {
           // Request made but no response
-          console.error('Network Error:', error.message);
+          logger.error('Network Error:', error.message);
         } else {
           // Something else happened
-          console.error('Error:', error.message);
+          logger.error('Error:', error.message);
         }
         return Promise.reject(error);
       }

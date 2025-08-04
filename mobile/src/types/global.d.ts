@@ -65,6 +65,6 @@ declare module 'react-native-vector-icons/*' {
 
 // Environment variables
 declare module '@env' {
-  export const EXPO_PUBLIC_CULTURAL_API_KEY: string;
-  export const EXPO_PUBLIC_WIKIPEDIA_API_KEY: string;
+  // No API keys should be declared here
+  // All API keys are handled by backend proxy
 } 

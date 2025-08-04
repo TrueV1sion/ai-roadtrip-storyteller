@@ -8,14 +8,14 @@ from datetime import datetime, timedelta
 from celery import Task
 from celery.exceptions import Retry
 
-from backend.app.core.celery_app import celery_app
-from backend.app.core.database_manager import DatabaseManager
-from backend.app.services.booking_service import BookingService
-from backend.app.services.commission_calculator import CommissionCalculator
-from backend.app.core.logger import get_logger
-from backend.app.tasks.notifications import send_booking_confirmation_email
-from backend.app.core.resilience import with_circuit_breaker
-from backend.app.models.booking import Booking, BookingStatus
+from app.core.celery_app import celery_app
+from app.core.database_manager import DatabaseManager
+from app.services.booking_service import BookingService
+from app.services.commission_calculator import CommissionCalculator
+from app.core.logger import get_logger
+from app.tasks.notifications import send_booking_confirmation_email
+from app.core.resilience import with_circuit_breaker
+from app.models.booking import Booking, BookingStatus
 
 logger = get_logger(__name__)
 

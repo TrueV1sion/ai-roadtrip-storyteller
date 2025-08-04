@@ -4,6 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from '../services/apiService';
 
+import { logger } from '@/services/logger';
 const CSRF_TOKEN_KEY = '@csrf_token';
 const CSRF_HEADER_NAME = 'X-CSRF-Token';
 
@@ -33,7 +34,7 @@ class CSRFManager {
         return storedToken;
       }
     } catch (error) {
-      console.error('Error reading CSRF token from storage:', error);
+      logger.error('Error reading CSRF token from storage:', error);
     }
 
     // Fetch new token from server
@@ -64,7 +65,7 @@ class CSRFManager {
 
       return csrf_token;
     } catch (error) {
-      console.error('Error fetching CSRF token:', error);
+      logger.error('Error fetching CSRF token:', error);
       throw error;
     }
   }
@@ -78,7 +79,7 @@ class CSRFManager {
     try {
       await AsyncStorage.removeItem(CSRF_TOKEN_KEY);
     } catch (error) {
-      console.error('Error clearing CSRF token:', error);
+      logger.error('Error clearing CSRF token:', error);
     }
   }
 
@@ -93,7 +94,7 @@ class CSRFManager {
         [CSRF_HEADER_NAME]: token,
       };
     } catch (error) {
-      console.error('Error adding CSRF token to headers:', error);
+      logger.error('Error adding CSRF token to headers:', error);
       // Return headers without CSRF token if fetch fails
       return headers;
     }

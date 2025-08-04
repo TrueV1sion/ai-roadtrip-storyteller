@@ -6,6 +6,7 @@
 import secureStorageService from './secureStorageService';
 import { API_CONFIG } from '../config/api';
 
+import { logger } from '@/services/logger';
 interface ApiKeyConfig {
   keyId: string;
   endpoint: string;
@@ -68,7 +69,7 @@ class SecureApiKeyManager {
 
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to initialize API key manager:', error);
+      logger.error('Failed to initialize API key manager:', error);
       // Continue with proxy fallback
       this.initialized = true;
     }
@@ -101,7 +102,7 @@ class SecureApiKeyManager {
         return storedKey;
       }
     } catch (error) {
-      console.error(`Failed to retrieve API key for ${serviceName}:`, error);
+      logger.error(`Failed to retrieve API key for ${serviceName}:`, error);
     }
 
     // Return null to indicate proxy should be used

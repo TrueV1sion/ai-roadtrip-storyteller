@@ -12,6 +12,7 @@ import { locationService } from '../locationService';
 import { tripMemoryService } from '../tripMemoryService';
 import { performanceMonitor } from '../performanceMonitor';
 
+import { logger } from '@/services/logger';
 export interface ARPhotoMetadata {
   id: string;
   timestamp: Date;
@@ -149,7 +150,7 @@ export class ARPhotoCaptureService {
         metadata,
       };
     } catch (error) {
-      console.error('AR photo capture failed:', error);
+      logger.error('AR photo capture failed:', error);
       throw error;
     }
   }

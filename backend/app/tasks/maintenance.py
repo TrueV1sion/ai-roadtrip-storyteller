@@ -14,11 +14,11 @@ from datetime import datetime, timedelta
 from celery import Task
 import redis
 
-from backend.app.core.celery_app import celery_app
-from backend.app.core.database_manager import DatabaseManager
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import get_logger
-from backend.app.monitoring.metrics import metrics_collector
+from app.core.celery_app import celery_app
+from app.core.database_manager import DatabaseManager
+from app.core.cache import cache_manager
+from app.core.logger import get_logger
+from app.monitoring.metrics import metrics_collector
 
 logger = get_logger(__name__)
 

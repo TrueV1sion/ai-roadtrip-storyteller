@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { InteractionManager, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
 /**
  * Hook to defer heavy operations until after interactions
  */
@@ -74,7 +75,7 @@ export function useLazyLoad<T>(
         }
       }
     } catch (err) {
-      console.warn('Cache read error:', err);
+      logger.warn('Cache read error:', err);
     }
     return null;
   }, [cacheKey, cacheDuration]);
@@ -88,7 +89,7 @@ export function useLazyLoad<T>(
         timestamp: Date.now()
       }));
     } catch (err) {
-      console.warn('Cache write error:', err);
+      logger.warn('Cache write error:', err);
     }
   }, [cacheKey]);
 
@@ -150,7 +151,7 @@ export function usePerformanceMonitor(componentName: string) {
       
       // Log performance metrics in development
       if (__DEV__) {
-        console.log(`[Performance] ${componentName}:`, {
+        logger.debug(`[Performance] ${componentName}:`, {
           renderCount: renderCount.current,
           lastRenderTime: `${renderTime.current}ms`,
           totalMountTime: `${Date.now() - mountTime.current}ms`
@@ -269,7 +270,7 @@ export function useMemoryManagement() {
 
         // Warn if memory usage is high
         if (usage.percentage > 90) {
-          console.warn('High memory usage detected:', usage);
+          logger.warn('High memory usage detected:', usage);
         }
       }
     };
@@ -304,7 +305,7 @@ export function useBatchOperation<T, R>(
     try {
       await operation(batch);
     } catch (error) {
-      console.error('Batch operation error:', error);
+      logger.error('Batch operation error:', error);
       // Re-add failed items to queue
       queue.current.unshift(...batch);
     } finally {

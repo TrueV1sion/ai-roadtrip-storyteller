@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
 
-from backend.app.db.base import Base
+from app.db.base import Base
 
 
 class Partner(Base):

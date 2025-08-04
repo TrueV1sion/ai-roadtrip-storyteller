@@ -144,7 +144,7 @@ class ServiceIntegrationConnector:
             req = urllib.request.Request("http://localhost:8000/api/health")
             with urllib.request.urlopen(req, timeout=2) as response:
                 return {"running": response.status == 200}
-        except:
+        except Exception as e:
             return {"running": False}
     
     async def _start_knowledge_graph(self) -> bool:
@@ -183,7 +183,7 @@ class ServiceIntegrationConnector:
                 req = urllib.request.Request(url)
                 with urllib.request.urlopen(req, timeout=5) as response:
                     return response.status == 200
-            except:
+            except Exception as e:
                 return False
         
         return False

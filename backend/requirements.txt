@@ -5,6 +5,7 @@ gunicorn==21.2.0
 pydantic==2.5.2
 pydantic-settings==2.1.0
 sqlalchemy==2.0.23
+asyncpg==0.29.0
 psycopg2-binary==2.9.9
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
@@ -43,6 +44,7 @@ spotipy==2.23.0
 redis==5.0.1
 aioredis==2.0.1
 slowapi==0.1.9
+tenacity==8.2.3
 # python-limiter removed - rate limiting handled by slowapi
 
 # Third-party integrations
@@ -52,7 +54,17 @@ sendgrid==6.11.0
 
 # Async support
 aiofiles==23.2.1
-aiohttp==3.9.1
+aiohttp==3.9.3
+
+# Task queue and background processing
+celery==5.3.4
+kombu==5.3.4
+billiard==4.2.0
+vine==5.1.0
+amqp==5.2.0
+
+# GraphQL
+strawberry-graphql==0.217.1
 
 # Security
 cryptography==41.0.7

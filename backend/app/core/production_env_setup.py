@@ -9,8 +9,8 @@ from typing import Dict, List, Tuple, Optional
 import secrets
 import string
 
-from backend.app.core.logger import logger
-from backend.app.core.config import settings
+from app.core.logger import logger
+from app.core.config import settings
 
 
 class ProductionEnvSetup:

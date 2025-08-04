@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -80,7 +81,7 @@ export const AirportAmenitiesScreen: React.FC = () => {
       setAmenities(amenitiesResponse.data);
       setRecommendations(recommendationsResponse.data);
     } catch (error) {
-      console.error('Failed to load amenities:', error);
+      logger.error('Failed to load amenities:', error);
       Alert.alert('Error', 'Failed to load airport amenities');
     } finally {
       setLoading(false);

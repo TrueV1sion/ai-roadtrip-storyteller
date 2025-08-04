@@ -1,0 +1,22 @@
+/**
+ * Temporary App.js for UI Preview
+ * Shows all your mobile app components in one place
+ */
+
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
+import ComponentShowcase from './UIShowcase';
+
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <ComponentShowcase />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

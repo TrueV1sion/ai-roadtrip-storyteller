@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -152,13 +153,13 @@ const GameLauncher: React.FC<GameLauncherProps> = ({
         false // Not one-time
       );
       
-      console.log('Added sample POI and game trigger at', nearbyLatitude, nearbyLongitude);
+      logger.debug('Added sample POI and game trigger at', nearbyLatitude, nearbyLongitude);
     }
   };
   
   // Handle location triggers
   const handleLocationTrigger = (event: TriggeredEvent) => {
-    console.log('Location trigger:', event);
+    logger.debug('Location trigger:', event);
     
     // Check if it's a game trigger
     if (event.action === 'start_game' && event.actionParams?.gameType) {
@@ -210,7 +211,7 @@ const GameLauncher: React.FC<GameLauncherProps> = ({
         setCurrentLocation(locationService.getSimulatedLocation());
       }
     } catch (error) {
-      console.error('Error getting location:', error);
+      logger.error('Error getting location:', error);
       // Use simulated location as fallback
       setCurrentLocation(locationService.getSimulatedLocation());
     }

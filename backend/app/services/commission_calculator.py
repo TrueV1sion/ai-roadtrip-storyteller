@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session
 
 from app.models.booking import Booking, BookingStatus
 from app.core.enums import BookingType
-from backend.app.models.commission import Commission, CommissionRate, CommissionStatus
-from backend.app.models.partner import Partner
-from backend.app.core.logger import logger
+from app.models.commission import Commission, CommissionRate, CommissionStatus
+from app.models.partner import Partner
+from app.core.logger import logger
+from app.core.transaction_manager import transactional
 
 
 class CommissionCalculator:
@@ -105,7 +106,11 @@ class CommissionCalculator:
         commission_amount: Decimal,
         commission_rate: Decimal
     ) -> Commission:
-        """Create a commission record for a booking."""
+        """Create a commission record for a booking.
+        
+        Note: This method should be called within an existing transaction
+        to ensure atomicity with booking creation.
+        """
         rate_record = self._get_applicable_rate(
             booking.partner_id,
             booking.booking_type,
@@ -121,8 +126,8 @@ class CommissionCalculator:
         )
         
         self.db.add(commission)
-        self.db.commit()
-        self.db.refresh(commission)
+        # Don't commit here - let the calling transaction handle it
+        self.db.flush()
         
         return commission
     
@@ -133,7 +138,11 @@ class CommissionCalculator:
         payment_reference: Optional[str] = None,
         notes: Optional[str] = None
     ) -> Commission:
-        """Update commission status."""
+        """Update commission status.
+        
+        Note: This method should be called within an existing transaction
+        when updating as part of a larger operation (e.g., booking cancellation).
+        """
         commission = self.db.query(Commission).filter(
             Commission.id == commission_id
         ).first()
@@ -151,8 +160,8 @@ class CommissionCalculator:
         if notes:
             commission.notes = notes
         
-        self.db.commit()
-        self.db.refresh(commission)
+        # Don't commit here - let the calling transaction handle it
+        self.db.flush()
         
         return commission
     
@@ -203,6 +212,58 @@ class CommissionCalculator:
         }
         
         return summary
+    
+    @transactional()
+    def process_commission_payment(
+        self,
+        commission_ids: List[int],
+        payment_reference: str,
+        payment_method: str = "bank_transfer"
+    ) -> Dict[str, Any]:
+        """Process payment for multiple commissions in a single transaction.
+        
+        This ensures all commissions are marked as paid atomically.
+        """
+        processed = []
+        total_amount = Decimal("0")
+        
+        for commission_id in commission_ids:
+            commission = self.db.query(Commission).filter(
+                Commission.id == commission_id
+            ).first()
+            
+            if not commission:
+                raise ValueError(f"Commission {commission_id} not found")
+            
+            if commission.commission_status != CommissionStatus.APPROVED:
+                raise ValueError(
+                    f"Commission {commission_id} is not approved for payment"
+                )
+            
+            # Update commission status
+            commission.commission_status = CommissionStatus.PAID
+            commission.payment_date = datetime.utcnow()
+            commission.payment_reference = payment_reference
+            commission.notes = f"Paid via {payment_method}"
+            
+            processed.append(commission_id)
+            total_amount += commission.commission_amount
+        
+        # All updates happen atomically when transaction commits
+        self.db.flush()
+        
+        logger.info(
+            f"Processed payment for {len(processed)} commissions, "
+            f"total amount: {total_amount}, reference: {payment_reference}"
+        )
+        
+        return {
+            "processed_count": len(processed),
+            "commission_ids": processed,
+            "total_amount": float(total_amount),
+            "payment_reference": payment_reference,
+            "payment_date": datetime.utcnow().isoformat()
+        }
     
     def calculate_monthly_revenue_share(
         self,

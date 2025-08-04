@@ -9,6 +9,7 @@ import { cacheService } from '../cacheService';
 import { voiceOrchestrationService } from '../voiceOrchestrationService';
 import { performanceMonitor } from '../performanceMonitor';
 
+import { logger } from '@/services/logger';
 export interface ARLandmark {
   id: string;
   name: string;
@@ -168,7 +169,7 @@ export class ARLandmarkService {
       
       return limitedLandmarks;
     } catch (error) {
-      console.error('Failed to update landmarks:', error);
+      logger.error('Failed to update landmarks:', error);
       return Array.from(this.landmarks.values());
     } finally {
       this.isProcessing = false;
@@ -458,7 +459,7 @@ export class ARLandmarkService {
     try {
       await this.fetchNearbyLandmarks(latitude, longitude);
     } catch (error) {
-      console.error('Failed to preload landmarks:', error);
+      logger.error('Failed to preload landmarks:', error);
     }
   }
   

@@ -202,7 +202,7 @@ class SecurityHardening:
         try:
             salt, hash_part = hashed_value.split('$')
             return SecurityHardening.hash_sensitive_data(data, salt) == hashed_value
-        except:
+        except Exception as e:
             return False
     
     @staticmethod

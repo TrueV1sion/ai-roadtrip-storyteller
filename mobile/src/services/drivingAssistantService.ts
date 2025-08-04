@@ -1,4 +1,5 @@
 import { ApiClient } from './api/ApiClient';
+import { logger } from '@/services/logger';
 import {
   RestStopType,
   FuelStationType,
@@ -18,7 +19,7 @@ class DrivingAssistantService {
     try {
       return await ApiClient.post<RestStopType[]>('/driving-assistant/rest-breaks', request);
     } catch (error) {
-      console.error('Error getting rest breaks:', error);
+      logger.error('Error getting rest breaks:', error);
       throw error;
     }
   }
@@ -30,7 +31,7 @@ class DrivingAssistantService {
     try {
       return await ApiClient.post<FuelStationType[]>('/driving-assistant/fuel-stations', request);
     } catch (error) {
-      console.error('Error getting fuel stations:', error);
+      logger.error('Error getting fuel stations:', error);
       throw error;
     }
   }
@@ -42,7 +43,7 @@ class DrivingAssistantService {
     try {
       return await ApiClient.post<TrafficInfoType>('/driving-assistant/traffic-info', request);
     } catch (error) {
-      console.error('Error getting traffic information:', error);
+      logger.error('Error getting traffic information:', error);
       throw error;
     }
   }
@@ -54,7 +55,7 @@ class DrivingAssistantService {
     try {
       return await ApiClient.post<DrivingStatusType>('/driving-assistant/driving-status', request);
     } catch (error) {
-      console.error('Error getting driving status:', error);
+      logger.error('Error getting driving status:', error);
       throw error;
     }
   }
@@ -74,7 +75,7 @@ class DrivingAssistantService {
       );
       return response;
     } catch (error) {
-      console.error('Error estimating fuel efficiency:', error);
+      logger.error('Error estimating fuel efficiency:', error);
       throw error;
     }
   }

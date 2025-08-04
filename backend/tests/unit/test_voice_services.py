@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
 import base64
 from typing import Dict, Any
 
-from backend.app.services.voice_services import (
+from app.services.voice_services import (
     VoiceService,
     VoicePersonality,
     VoiceSafetyChecker,
@@ -18,8 +18,8 @@ from backend.app.services.voice_services import (
     SafetyViolationType,
     VoiceMetrics
 )
-from backend.app.models.user import User
-from backend.app.core.config import settings
+from app.models.user import User
+from app.core.config import settings
 
 
 @pytest.fixture

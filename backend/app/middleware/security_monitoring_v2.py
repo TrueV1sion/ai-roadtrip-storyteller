@@ -158,7 +158,8 @@ class SecurityMonitoringMiddlewareV2(BaseHTTPMiddleware):
                 body_bytes = await request.body()
                 request._body = body_bytes
                 body = body_bytes.decode('utf-8', errors='ignore')[:1000]  # Limit size
-            except:
+            except Exception as e:
+                logger.error(f"Failed to read request body for security monitoring: {e}")
                 pass
         
         # Extract query parameters
@@ -211,7 +212,7 @@ class SecurityMonitoringMiddlewareV2(BaseHTTPMiddleware):
                 if hasattr(request, '_body'):
                     body = json.loads(request._body)
                     username = body.get('email') or body.get('username')
-            except:
+            except Exception as e:
                 pass
             
             await self.security_monitor.log_event(

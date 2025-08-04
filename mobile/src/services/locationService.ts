@@ -5,6 +5,7 @@
 import * as Location from 'expo-location';
 import { Alert } from 'react-native';
 
+import { logger } from '@/services/logger';
 // Define our internal LocationData interface
 export interface LocationData {
   latitude: number;
@@ -42,13 +43,13 @@ class LocationService {
       return this.locationPermissionGranted;
     }
 
-    console.log('Initializing Location Service...');
+    logger.debug('Initializing Location Service...');
     try {
       // Request foreground location permission
       const { status } = await Location.requestForegroundPermissionsAsync();
       
       if (status !== 'granted') {
-        console.warn('Location permission denied');
+        logger.warn('Location permission denied');
         Alert.alert(
           'Location Permission Required',
           'This app needs location access to provide navigation and location-based stories.',
@@ -59,7 +60,7 @@ class LocationService {
         return false;
       }
 
-      console.log('Location permission granted');
+      logger.debug('Location permission granted');
       this.locationPermissionGranted = true;
       
       // Get initial location
@@ -68,7 +69,7 @@ class LocationService {
       this.initialized = true;
       return true;
     } catch (error: any) {
-      console.error('Error initializing location service:', error);
+      logger.error('Error initializing location service:', error);
       this.initialized = true;
       this.locationPermissionGranted = false;
       return false;
@@ -88,9 +89,9 @@ class LocationService {
 
       const location = await Location.getCurrentPositionAsync(locationOptions);
       this.currentLocation = this.mapExpoLocation(location);
-      console.log('Updated current location:', this.currentLocation?.latitude, this.currentLocation?.longitude);
+      logger.debug('Updated current location:', this.currentLocation?.latitude, this.currentLocation?.longitude);
     } catch (error) {
-      console.error('Error updating current location:', error);
+      logger.error('Error updating current location:', error);
     }
   }
 
@@ -103,7 +104,7 @@ class LocationService {
     }
 
     if (!this.locationPermissionGranted) {
-      console.warn('Location permission not granted');
+      logger.warn('Location permission not granted');
       return null;
     }
 
@@ -118,7 +119,7 @@ class LocationService {
       this.currentLocation = this.mapExpoLocation(location);
       return this.currentLocation;
     } catch (error) {
-      console.error('Error getting current location:', error);
+      logger.error('Error getting current location:', error);
       return null;
     }
   }
@@ -135,7 +136,7 @@ class LocationService {
     }
     
     if (!this.locationPermissionGranted) {
-      console.warn('Cannot watch location: permission not granted.');
+      logger.warn('Cannot watch location: permission not granted.');
       return -1;
     }
 
@@ -143,7 +144,7 @@ class LocationService {
 
     // If this is the first callback, start watching location
     if (this.locationUpdateCallbacks.filter(cb => cb !== null).length === 1 && !this.watchSubscription) {
-      console.log('Starting location watch...');
+      logger.debug('Starting location watch...');
       
       const watchOptions: Location.LocationTaskOptions = {
         accuracy: options?.accuracy || Location.LocationAccuracy.High,
@@ -164,14 +165,14 @@ class LocationService {
               try {
                 cb(mappedLocation);
               } catch (error) {
-                console.error(`Error in location update callback ${index}:`, error);
+                logger.error(`Error in location update callback ${index}:`, error);
               }
             }
           });
         }
       );
       
-      console.log('Location watch started.');
+      logger.debug('Location watch started.');
     }
 
     return callbackIndex;
@@ -183,19 +184,19 @@ class LocationService {
   clearWatch(watchId: number): void {
     if (watchId >= 0 && watchId < this.locationUpdateCallbacks.length) {
       this.locationUpdateCallbacks[watchId] = null as any;
-      console.log(`Cleared location watch for ID: ${watchId}`);
+      logger.debug(`Cleared location watch for ID: ${watchId}`);
 
       const activeCallbacks = this.locationUpdateCallbacks.filter(cb => cb !== null);
 
       // If no more active callbacks, stop the location watch
       if (activeCallbacks.length === 0 && this.watchSubscription) {
-        console.log('Stopping location watch...');
+        logger.debug('Stopping location watch...');
         this.watchSubscription.remove();
         this.watchSubscription = null;
         this.locationUpdateCallbacks = [];
       }
     } else {
-      console.warn(`Attempted to clear invalid watchId: ${watchId}`);
+      logger.warn(`Attempted to clear invalid watchId: ${watchId}`);
     }
   }
 
@@ -261,7 +262,7 @@ class LocationService {
       
       return null;
     } catch (error) {
-      console.error('Error getting address for location:', error);
+      logger.error('Error getting address for location:', error);
       return null;
     }
   }
@@ -288,7 +289,7 @@ class LocationService {
       const { status } = await Location.requestBackgroundPermissionsAsync();
       return status === 'granted';
     } catch (error) {
-      console.error('Error requesting background location permission:', error);
+      logger.error('Error requesting background location permission:', error);
       return false;
     }
   }

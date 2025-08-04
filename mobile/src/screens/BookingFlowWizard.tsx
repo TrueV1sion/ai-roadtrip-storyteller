@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -149,7 +150,7 @@ export const BookingFlowWizard: React.FC = () => {
         venue: venue,
       });
     } catch (error) {
-      console.error('Booking error:', error);
+      logger.error('Booking error:', error);
       Alert.alert(
         'Booking Failed',
         'Unable to complete your reservation. Please try again or contact the restaurant directly.'

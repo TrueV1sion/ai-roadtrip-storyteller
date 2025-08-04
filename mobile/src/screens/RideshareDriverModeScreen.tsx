@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -61,7 +62,7 @@ export const RideshareDriverModeScreen = () => {
       const statsResponse = await api.get('/rideshare/driver/stats');
       setStats(statsResponse.data);
     } catch (error) {
-      console.error('Error loading driver data:', error);
+      logger.error('Error loading driver data:', error);
     } finally {
       setLoading(false);
     }

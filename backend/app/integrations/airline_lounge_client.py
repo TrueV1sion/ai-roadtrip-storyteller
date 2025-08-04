@@ -11,9 +11,9 @@ from datetime import datetime, timedelta
 import aiohttp
 from urllib.parse import urljoin
 
-from backend.app.core.config import settings
-from backend.app.core.logger import get_logger
-from backend.app.core.cache import get_cache
+from app.core.config import settings
+from app.core.logger import get_logger
+from app.core.cache import get_cache
 
 logger = get_logger(__name__)
 

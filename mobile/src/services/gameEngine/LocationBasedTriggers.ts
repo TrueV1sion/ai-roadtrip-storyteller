@@ -1,5 +1,6 @@
 import { LocationData, locationService } from '../locationService'; // Import locationService
 import { GameType, GameDifficulty } from './GameStateManager';
+import { logger } from '@/services/logger';
 import { apiClient } from '../api/ApiClient'; // Import apiClient
 import * as Location from 'expo-location'; // Keep for Accuracy enum if needed
 
@@ -61,12 +62,12 @@ class LocationBasedTriggers {
     if (this.initialized) {
       return;
     }
-    console.log("Initializing LocationBasedTriggers...");
+    logger.debug("Initializing LocationBasedTriggers...");
     // Ensure location service is ready and permissions are granted
     // Use the temporarily simulated location service
     const locationReady = await locationService.initialize();
     if (!locationReady) {
-        console.warn("Location service failed to initialize or permissions denied. Cannot initialize triggers.");
+        logger.warn("Location service failed to initialize or permissions denied. Cannot initialize triggers.");
         // Mark as initialized but without data/monitoring capability
         this.initialized = true;
         return;
@@ -76,7 +77,7 @@ class LocationBasedTriggers {
     await this.loadTriggersForCurrentLocation();
 
     this.initialized = true;
-    console.log("LocationBasedTriggers initialized.");
+    logger.debug("LocationBasedTriggers initialized.");
   }
 
   /**
@@ -84,13 +85,13 @@ class LocationBasedTriggers {
    */
   async loadTriggersForCurrentLocation(forceReload: boolean = false): Promise<void> {
       if (this.isLoading) {
-          console.log("Trigger load already in progress.");
+          logger.debug("Trigger load already in progress.");
           return;
       }
 
       const currentLoc = await locationService.getCurrentLocation();
       if (!currentLoc) {
-          console.warn("Cannot load triggers: Current location unknown.");
+          logger.warn("Cannot load triggers: Current location unknown.");
           return;
       }
 
@@ -99,13 +100,13 @@ class LocationBasedTriggers {
           currentLoc.latitude, currentLoc.longitude,
           this.lastLoadLocation.latitude, this.lastLoadLocation.longitude
       ) < this.loadRadius / 2) { // e.g., don't reload if moved less than half the radius
-          console.log("Skipping trigger reload: Still within the previous load radius.");
+          logger.debug("Skipping trigger reload: Still within the previous load radius.");
           return;
       }
 
 
       this.isLoading = true;
-      console.log(`Loading triggers for location: ${currentLoc.latitude}, ${currentLoc.longitude}`);
+      logger.debug(`Loading triggers for location: ${currentLoc.latitude}, ${currentLoc.longitude}`);
       try {
           const params = {
               latitude: currentLoc.latitude,
@@ -129,10 +130,10 @@ class LocationBasedTriggers {
           });
 
           this.lastLoadLocation = currentLoc; // Update location of last successful load
-          console.log(`Loaded ${this.pointsOfInterest.length} POIs and ${this.triggers.length} triggers.`);
+          logger.debug(`Loaded ${this.pointsOfInterest.length} POIs and ${this.triggers.length} triggers.`);
 
       } catch (error) {
-          console.error("Error loading location triggers from API:", error);
+          logger.error("Error loading location triggers from API:", error);
           // Keep existing triggers on error? Or clear them? Decide based on desired behavior.
           // this.pointsOfInterest = [];
           // this.triggers = [];
@@ -147,17 +148,17 @@ class LocationBasedTriggers {
    */
   async startMonitoring(): Promise<void> {
     if (!this.initialized) {
-      console.warn('LocationBasedTriggers not initialized, initializing now...');
+      logger.warn('LocationBasedTriggers not initialized, initializing now...');
       await this.initialize();
       // If initialization failed or permissions denied, don't start monitoring
       if (!this.initialized || !locationService.hasPermission()) return;
     }
     if (this.isMonitoring) {
-        console.log("Already monitoring location triggers.");
+        logger.debug("Already monitoring location triggers.");
         return;
     }
 
-    console.log("Starting location trigger monitoring...");
+    logger.debug("Starting location trigger monitoring...");
     // Start watching location updates via locationService
     // Use a higher frequency or lower distance interval for trigger checking if needed
     this.locationWatchId = await locationService.watchLocation(
@@ -168,9 +169,9 @@ class LocationBasedTriggers {
 
     if (this.locationWatchId !== null && this.locationWatchId >= 0) {
         this.isMonitoring = true;
-        console.log("Location trigger monitoring started.");
+        logger.debug("Location trigger monitoring started.");
     } else {
-         console.error("Failed to start location watch for triggers.");
+         logger.error("Failed to start location watch for triggers.");
          this.isMonitoring = false;
     }
   }
@@ -181,13 +182,13 @@ class LocationBasedTriggers {
   stopMonitoring(): void {
     if (!this.isMonitoring) return;
 
-    console.log("Stopping location trigger monitoring...");
+    logger.debug("Stopping location trigger monitoring...");
     if (this.locationWatchId !== null) {
         locationService.clearWatch(this.locationWatchId);
         this.locationWatchId = null;
     }
     this.isMonitoring = false;
-    console.log("Location trigger monitoring stopped.");
+    logger.debug("Location trigger monitoring stopped.");
   }
 
   // addCallback, removeCallback remain the same
@@ -209,14 +210,14 @@ class LocationBasedTriggers {
     if (!this.isMonitoring) return; // Ensure we should be checking
 
     this.currentLocation = location;
-    // console.log("Location update received for trigger check:", location.latitude, location.longitude); // Can be noisy
+    // logger.debug("Location update received for trigger check:", location.latitude, location.longitude); // Can be noisy
 
     // Potentially reload triggers if moved significantly far from last load point
     if (this.lastLoadLocation && locationService.calculateDistance(
         location.latitude, location.longitude,
         this.lastLoadLocation.latitude, this.lastLoadLocation.longitude
     ) > this.loadRadius) { // If moved outside load radius
-        console.log("Moved significantly, reloading triggers...");
+        logger.debug("Moved significantly, reloading triggers...");
         this.loadTriggersForCurrentLocation(); // Async, runs in background
     }
 
@@ -231,7 +232,7 @@ class LocationBasedTriggers {
       return;
     }
 
-    // console.log(`Checking ${this.triggers.length} triggers against ${this.pointsOfInterest.length} POIs`);
+    // logger.debug(`Checking ${this.triggers.length} triggers against ${this.pointsOfInterest.length} POIs`);
     this.pointsOfInterest.forEach(poi => {
       const distance = locationService.calculateDistance( // Use locationService's method
         this.currentLocation!.latitude,
@@ -241,14 +242,14 @@ class LocationBasedTriggers {
       );
 
       if (distance <= poi.radius) {
-        // console.log(`Inside radius for POI: ${poi.name} (Dist: ${distance.toFixed(1)}m)`);
+        // logger.debug(`Inside radius for POI: ${poi.name} (Dist: ${distance.toFixed(1)}m)`);
         const matchingTriggers = this.triggers.filter(
           trigger => trigger.pointOfInterestId === poi.id &&
                     (!trigger.oneTime || !trigger.triggered)
         );
 
         matchingTriggers.forEach(trigger => {
-          console.log(`Firing trigger for POI ${poi.id}: Action=${trigger.action}`);
+          logger.debug(`Firing trigger for POI ${poi.id}: Action=${trigger.action}`);
           // Mark as triggered *before* calling back
           trigger.triggered = true;
           trigger.triggeredTimestamp = Date.now();
@@ -266,7 +267,7 @@ class LocationBasedTriggers {
             try {
               callback(event);
             } catch (error) {
-              console.error('Error in trigger callback:', error);
+              logger.error('Error in trigger callback:', error);
             }
           });
         });
@@ -296,7 +297,7 @@ class LocationBasedTriggers {
               trigger.triggeredTimestamp = undefined;
           }
       });
-      console.log("Reset one-time triggers.");
+      logger.debug("Reset one-time triggers.");
   }
 }
 

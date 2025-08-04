@@ -6,10 +6,11 @@ import hashlib
 import hmac
 from urllib.parse import urlencode, quote
 
-from backend.app.core.config import settings
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import logger
-from backend.app.core.circuit_breaker import with_circuit_breaker, CircuitOpenError
+from app.core.config import settings
+from app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.circuit_breaker import with_circuit_breaker, CircuitOpenError
+from app.core.http_client import AsyncHTTPClient, TimeoutProfile, TimeoutError
 
 
 class TicketmasterClient:
@@ -19,7 +20,8 @@ class TicketmasterClient:
     
     def __init__(self):
         self.api_key = settings.TICKETMASTER_API_KEY
-        self.client = httpx.AsyncClient(timeout=30.0)
+        # Use standard timeout profile (10s connect, 30s read)
+        self.client = AsyncHTTPClient(timeout_profile=TimeoutProfile.STANDARD)
         
     @with_circuit_breaker("ticketmaster-api", failure_threshold=3, recovery_timeout=60, timeout=15.0)
     async def search_events(
@@ -62,13 +64,18 @@ class TicketmasterClient:
                 f"{self.BASE_URL}/events.json",
                 params=params
             )
-            response.raise_for_status()
             data = response.json()
             
             # Cache for 1 hour
             await cache_manager.set(cache_key, data, ttl=3600)
             return data
             
+        except TimeoutError as e:
+            logger.error(f"Ticketmaster API timeout: {e}")
+            return {"_embedded": {"events": []}}
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Ticketmaster API HTTP error {e.response.status_code}: {e}")
+            return {"_embedded": {"events": []}}
         except Exception as e:
             logger.error(f"Error searching Ticketmaster events: {e}")
             return {"_embedded": {"events": []}}
@@ -86,13 +93,18 @@ class TicketmasterClient:
                 f"{self.BASE_URL}/events/{event_id}.json",
                 params={"apikey": self.api_key}
             )
-            response.raise_for_status()
             data = response.json()
             
             # Cache for 2 hours
             await cache_manager.set(cache_key, data, ttl=7200)
             return data
             
+        except TimeoutError as e:
+            logger.error(f"Ticketmaster API timeout getting event {event_id}: {e}")
+            return None
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Ticketmaster API HTTP error {e.response.status_code} for event {event_id}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Error getting event details: {e}")
             return None
@@ -110,13 +122,18 @@ class TicketmasterClient:
                 f"{self.BASE_URL}/venues/{venue_id}.json",
                 params={"apikey": self.api_key}
             )
-            response.raise_for_status()
             data = response.json()
             
             # Cache for 24 hours (venues don't change often)
             await cache_manager.set(cache_key, data, ttl=86400)
             return data
             
+        except TimeoutError as e:
+            logger.error(f"Ticketmaster API timeout getting venue {venue_id}: {e}")
+            return None
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Ticketmaster API HTTP error {e.response.status_code} for venue {venue_id}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Error getting venue details: {e}")
             return None
@@ -134,13 +151,18 @@ class TicketmasterClient:
                 f"{self.BASE_URL}/attractions/{attraction_id}.json",
                 params={"apikey": self.api_key}
             )
-            response.raise_for_status()
             data = response.json()
             
             # Cache for 12 hours
             await cache_manager.set(cache_key, data, ttl=43200)
             return data
             
+        except TimeoutError as e:
+            logger.error(f"Ticketmaster API timeout getting attraction {attraction_id}: {e}")
+            return None
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Ticketmaster API HTTP error {e.response.status_code} for attraction {attraction_id}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Error getting attraction details: {e}")
             return None
@@ -169,7 +191,6 @@ class TicketmasterClient:
                     "size": 50
                 }
             )
-            response.raise_for_status()
             data = response.json()
             
             venues = data.get("_embedded", {}).get("venues", [])
@@ -178,6 +199,12 @@ class TicketmasterClient:
             await cache_manager.set(cache_key, venues, ttl=21600)
             return venues
             
+        except TimeoutError as e:
+            logger.error(f"Ticketmaster API timeout searching venues: {e}")
+            return []
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Ticketmaster API HTTP error {e.response.status_code} searching venues: {e}")
+            return []
         except Exception as e:
             logger.error(f"Error searching venues: {e}")
             return []
@@ -250,7 +277,7 @@ class TicketmasterClient:
     
     async def close(self):
         """Close the HTTP client."""
-        await self.client.aclose()
+        await self.client.close()
 
 
 # Singleton instance

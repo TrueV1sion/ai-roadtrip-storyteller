@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   Image,
   ImageProps,
@@ -73,7 +74,7 @@ async function initImageCache() {
       await cleanupImageCache();
     }
   } catch (error) {
-    console.warn('Failed to initialize image cache:', error);
+    logger.warn('Failed to initialize image cache:', error);
     // Reset the cache registry if there was an error
     cacheRegistry = {
       entries: {},
@@ -91,7 +92,7 @@ async function saveCacheRegistry() {
       JSON.stringify(cacheRegistry)
     );
   } catch (error) {
-    console.warn('Failed to save image cache registry:', error);
+    logger.warn('Failed to save image cache registry:', error);
   }
 }
 
@@ -124,14 +125,14 @@ async function cleanupImageCache() {
       }
       delete cacheRegistry.entries[key];
     } catch (error) {
-      console.warn(`Failed to delete cached image ${key}:`, error);
+      logger.warn(`Failed to delete cached image ${key}:`, error);
     }
   }
   
   // Save the updated registry
   await saveCacheRegistry();
   
-  console.log(`Cleaned up ${keysToRemove.length} expired images from cache`);
+  logger.debug(`Cleaned up ${keysToRemove.length} expired images from cache`);
 }
 
 // Get a cached image or download and cache it
@@ -163,7 +164,7 @@ async function getCachedImage(
         return entry.uri;
       }
     } catch (error) {
-      console.warn(`Cached file not found for ${cacheKey}:`, error);
+      logger.warn(`Cached file not found for ${cacheKey}:`, error);
     }
   }
   
@@ -220,7 +221,7 @@ async function getCachedImage(
           }
         }
       } catch (error) {
-        console.warn('Image optimization failed:', error);
+        logger.warn('Image optimization failed:', error);
         // Continue with the original downloaded image
       }
     }
@@ -243,7 +244,7 @@ async function getCachedImage(
     
     return finalUri;
   } catch (error) {
-    console.error(`Failed to download and cache image ${sourceUri}:`, error);
+    logger.error(`Failed to download and cache image ${sourceUri}:`, error);
     throw error;
   }
 }
@@ -319,7 +320,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       setImageUri(cachedUri);
       setError(false);
     } catch (error) {
-      console.error('Failed to load image:', error);
+      logger.error('Failed to load image:', error);
       setError(true);
       if (onLoadEnd) onLoadEnd(false);
     }
@@ -338,7 +339,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       
       setLowQualityUri(lowQualityCachedUri);
     } catch (error) {
-      console.warn('Failed to load low-quality image:', error);
+      logger.warn('Failed to load low-quality image:', error);
       // Continue without the low-quality image
     }
   }, [lowQualitySource]);
@@ -490,7 +491,7 @@ export const ImageCacheManager = {
       
       return true;
     } catch (error) {
-      console.error('Failed to clear image cache:', error);
+      logger.error('Failed to clear image cache:', error);
       return false;
     }
   },
@@ -515,7 +516,7 @@ export const ImageCacheManager = {
       await getCachedImage({ uri }, options);
       return true;
     } catch (error) {
-      console.warn(`Failed to prefetch image ${uri}:`, error);
+      logger.warn(`Failed to prefetch image ${uri}:`, error);
       return false;
     }
   },
@@ -556,7 +557,7 @@ export const ImageCacheManager = {
         // Remove from registry
         delete cacheRegistry.entries[key];
       } catch (error) {
-        console.warn(`Failed to delete cached image ${key}:`, error);
+        logger.warn(`Failed to delete cached image ${key}:`, error);
       }
     }
     

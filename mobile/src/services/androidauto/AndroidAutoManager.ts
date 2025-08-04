@@ -10,6 +10,7 @@ import { navigationService } from '../navigation/NavigationService';
 import { storyService } from '../story/StoryService';
 import { performanceMonitor } from '../performanceMonitor';
 
+import { logger } from '@/services/logger';
 const { RNAndroidAuto } = NativeModules;
 const androidAutoEventEmitter = RNAndroidAuto ? new NativeEventEmitter(RNAndroidAuto) : null;
 
@@ -110,7 +111,7 @@ class AndroidAutoManager {
       return status;
       
     } catch (error) {
-      console.error('Failed to initialize Android Auto:', error);
+      logger.error('Failed to initialize Android Auto:', error);
       return { available: false, connected: false };
     }
   }
@@ -155,7 +156,7 @@ class AndroidAutoManager {
       });
       
     } catch (error) {
-      console.error('Failed to start Android Auto navigation:', error);
+      logger.error('Failed to start Android Auto navigation:', error);
       throw error;
     }
   }
@@ -180,7 +181,7 @@ class AndroidAutoManager {
       performanceMonitor.logEvent('android_auto_navigation_ended');
       
     } catch (error) {
-      console.error('Failed to end Android Auto navigation:', error);
+      logger.error('Failed to end Android Auto navigation:', error);
     }
   }
   
@@ -201,7 +202,7 @@ class AndroidAutoManager {
       });
       
     } catch (error) {
-      console.error('Failed to update maneuver:', error);
+      logger.error('Failed to update maneuver:', error);
     }
   }
   
@@ -242,7 +243,7 @@ class AndroidAutoManager {
     try {
       await RNAndroidAuto.startVoiceRecognition();
     } catch (error) {
-      console.error('Failed to start voice recognition:', error);
+      logger.error('Failed to start voice recognition:', error);
     }
   }
   
@@ -261,7 +262,7 @@ class AndroidAutoManager {
       });
       
     } catch (error) {
-      console.error('Failed to play story:', error);
+      logger.error('Failed to play story:', error);
     }
   }
   
@@ -280,7 +281,7 @@ class AndroidAutoManager {
       performanceMonitor.logEvent('android_auto_game_started', { gameType });
       
     } catch (error) {
-      console.error('Failed to start game:', error);
+      logger.error('Failed to start game:', error);
     }
   }
   
@@ -295,7 +296,7 @@ class AndroidAutoManager {
     try {
       return await RNAndroidAuto.getConnectionStatus();
     } catch (error) {
-      console.error('Failed to get connection status:', error);
+      logger.error('Failed to get connection status:', error);
       return { available: false, connected: false };
     }
   }
@@ -304,7 +305,7 @@ class AndroidAutoManager {
    * Handle connected event
    */
   private async handleConnected(): Promise<void> {
-    console.log('Android Auto connected');
+    logger.debug('Android Auto connected');
     this.isConnected = true;
     
     // Initialize voice for Android Auto
@@ -326,7 +327,7 @@ class AndroidAutoManager {
    * Handle disconnected event
    */
   private handleDisconnected(): void {
-    console.log('Android Auto disconnected');
+    logger.debug('Android Auto disconnected');
     this.isConnected = false;
     this.currentRoute = null;
     

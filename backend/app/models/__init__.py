@@ -32,6 +32,10 @@ from .commission import Commission, CommissionRate, CommissionStatus
 from .partner import Partner
 from .revenue_analytics import RevenueAnalytics
 from .parking_reservation import ParkingReservation
+from .progress_tracking import (
+    ProgressNote, TeamMember, TaskProgress, ProgressReaction, Team, Task,
+    NoteType, task_progress_notes
+)
 
 __all__ = [
     "User", 
@@ -66,5 +70,13 @@ __all__ = [
     "CommissionStatus",
     "Partner",
     "RevenueAnalytics",
-    "ParkingReservation"
+    "ParkingReservation",
+    "ProgressNote",
+    "TeamMember",
+    "TaskProgress",
+    "ProgressReaction",
+    "Team",
+    "Task",
+    "NoteType",
+    "task_progress_notes"
 ]

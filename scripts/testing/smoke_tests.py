@@ -256,7 +256,7 @@ class SmokeTests:
             data = resp.json()
             if "detail" not in data:
                 return False, "Error response not properly formatted"
-        except:
+        except Exception as e:
             return False, "Error response not JSON"
         
         return True, "Error handling working"

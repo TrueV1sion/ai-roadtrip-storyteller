@@ -4,6 +4,7 @@ import * as Localization from 'expo-localization';
 
 import i18n, { LocalizationContext } from './index';
 
+import { logger } from '@/services/logger';
 interface LocalizationProviderProps {
   children: React.ReactNode;
 }
@@ -21,7 +22,7 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ chil
           setLocale(savedLocale);
         }
       } catch (error) {
-        console.error('Failed to load locale preference:', error);
+        logger.error('Failed to load locale preference:', error);
       }
     };
     
@@ -34,7 +35,7 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ chil
       setLocale(newLocale);
       await AsyncStorage.setItem('user_locale', newLocale);
     } catch (error) {
-      console.error('Failed to save locale preference:', error);
+      logger.error('Failed to save locale preference:', error);
     }
   };
   

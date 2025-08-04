@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -136,7 +137,7 @@ export const SoundSettingsModal: React.FC<SoundSettingsModalProps> = ({
       await sound.loadAsync(require('../../../assets/sounds/audio_preview.mp3'));
       setPreviewSound(sound);
     } catch (error) {
-      console.error('Error loading preview sounds:', error);
+      logger.error('Error loading preview sounds:', error);
     }
   };
 
@@ -158,7 +159,7 @@ export const SoundSettingsModal: React.FC<SoundSettingsModalProps> = ({
         require('../../../assets/sounds/success.mp3')
       );
     } catch (error) {
-      console.error('Error loading ambient sounds:', error);
+      logger.error('Error loading ambient sounds:', error);
     }
   };
 
@@ -168,7 +169,7 @@ export const SoundSettingsModal: React.FC<SoundSettingsModalProps> = ({
         Object.values(ambientSounds).map(sound => sound.unloadAsync())
       );
     } catch (error) {
-      console.error('Error cleaning up ambient sounds:', error);
+      logger.error('Error cleaning up ambient sounds:', error);
     }
   };
 
@@ -186,7 +187,7 @@ export const SoundSettingsModal: React.FC<SoundSettingsModalProps> = ({
         }, 5000);
       }
     } catch (error) {
-      console.error('Error playing preview:', error);
+      logger.error('Error playing preview:', error);
     }
   };
 
@@ -196,7 +197,7 @@ export const SoundSettingsModal: React.FC<SoundSettingsModalProps> = ({
       await sound.setPositionAsync(0);
       await sound.playAsync();
     } catch (error) {
-      console.error('Error playing ambient sound:', error);
+      logger.error('Error playing ambient sound:', error);
     }
   };
 

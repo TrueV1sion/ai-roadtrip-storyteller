@@ -416,7 +416,7 @@ def main():
     try:
         subprocess.run(["gcloud", "config", "get-value", "project"], 
                       check=True, capture_output=True)
-    except:
+    except Exception as e:
         print("ERROR: gcloud CLI not configured. Run: gcloud auth login")
         sys.exit(1)
     

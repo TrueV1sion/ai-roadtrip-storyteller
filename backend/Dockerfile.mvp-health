@@ -1,0 +1,27 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install only required dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install minimal requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn==0.24.0 \
+    aiohttp==3.9.1 \
+    google-cloud-aiplatform==1.38.1
+
+# Copy only the MVP health file
+COPY mvp_health.py .
+
+# Set environment variables
+ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+
+# Run the MVP health app directly with uvicorn
+CMD ["uvicorn", "mvp_health:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { logger } from '@/services/logger';
 import {
   ScrollView,
   View,
@@ -86,7 +87,7 @@ export const DesignShowcaseScreen: React.FC = () => {
               narrator="Mickey Mouse"
               isPlaying={true}
               progress={0.3}
-              onPress={() => console.log('Story 1 pressed')}
+              onPress={() => logger.debug('Story 1 pressed')}
               style={styles.storyCard}
             />
             
@@ -96,7 +97,7 @@ export const DesignShowcaseScreen: React.FC = () => {
               duration="8:45"
               imageUrl="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400"
               narrator="Local Historian"
-              onPress={() => console.log('Story 2 pressed')}
+              onPress={() => logger.debug('Story 2 pressed')}
               style={styles.storyCard}
             />
             
@@ -106,7 +107,7 @@ export const DesignShowcaseScreen: React.FC = () => {
               duration="6:12"
               imageUrl="https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400"
               narrator="Nature Guide"
-              onPress={() => console.log('Story 3 pressed')}
+              onPress={() => logger.debug('Story 3 pressed')}
               style={styles.storyCard}
             />
           </ScrollView>

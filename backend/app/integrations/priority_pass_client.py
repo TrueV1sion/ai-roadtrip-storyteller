@@ -11,10 +11,10 @@ from datetime import datetime, timedelta
 import aiohttp
 from urllib.parse import urljoin
 
-from backend.app.core.config import settings
-from backend.app.core.logger import get_logger
-from backend.app.core.cache import get_cache
-from backend.app.core.circuit_breaker import get_booking_circuit_breaker, CircuitOpenError
+from app.core.config import settings
+from app.core.logger import get_logger
+from app.core.cache import get_cache
+from app.core.circuit_breaker import get_booking_circuit_breaker, CircuitOpenError
 
 logger = get_logger(__name__)
 

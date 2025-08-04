@@ -11,11 +11,11 @@ import hashlib
 import json
 from datetime import datetime
 
-from backend.app.core.logger import logger
-from backend.app.core.config import settings
-from backend.app.services.mobile_dev_notifications import mobile_dev_service
-from backend.app.core.auth import get_current_admin_user
-from backend.app.models.user import User
+from app.core.logger import logger
+from app.core.config import settings
+from app.services.mobile_dev_notifications import mobile_dev_service
+from app.core.auth import get_current_admin_user
+from app.models.user import User
 
 
 router = APIRouter(prefix="/api/mobile-dev", tags=["Mobile Development"])

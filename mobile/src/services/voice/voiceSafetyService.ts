@@ -9,6 +9,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+import { logger } from '@/services/logger';
 export enum SafetyLevel {
   PARKED = 'parked',
   LOW_SPEED = 'low_speed',
@@ -319,7 +320,7 @@ class VoiceSafetyService {
     
     // Log critical events
     if (event.type === 'emergency_stop' || event.type === 'safety_violation') {
-      console.warn('Safety event:', event);
+      logger.warn('Safety event:', event);
     }
   }
 
@@ -463,7 +464,7 @@ class VoiceSafetyService {
         this.safetyEvents = JSON.parse(events);
       }
     } catch (error) {
-      console.error('Failed to load safety history:', error);
+      logger.error('Failed to load safety history:', error);
     }
   }
 
@@ -471,7 +472,7 @@ class VoiceSafetyService {
     try {
       await AsyncStorage.setItem('voiceSafetyEvents', JSON.stringify(this.safetyEvents));
     } catch (error) {
-      console.error('Failed to save safety history:', error);
+      logger.error('Failed to save safety history:', error);
     }
   }
 }

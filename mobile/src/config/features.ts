@@ -1,3 +1,5 @@
+import { logger } from '@/services/logger';
+
 /**
  * Feature flags for MVP mode
  * Set these based on environment variables or build configuration
@@ -31,7 +33,7 @@ export const FEATURES = {
 
 // Log active features in development
 if (__DEV__) {
-  console.log('🚀 Active Features:', Object.entries(FEATURES)
+  logger.debug('🚀 Active Features:', Object.entries(FEATURES)
     .filter(([_, enabled]) => enabled)
     .map(([feature]) => feature)
     .join(', '));

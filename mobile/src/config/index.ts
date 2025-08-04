@@ -1,7 +1,8 @@
-// API Configuration
-export const API_URL = __DEV__
-  ? 'http://localhost:8000'  // Development
-  : 'https://api.roadtripstoryteller.com';  // Production
+// Import secure configuration
+import { SecureConfig, getAPIUrl, APIProxyEndpoints } from './secure-config';
+
+// API Configuration - Use secure config
+export const API_URL = getAPIUrl();
 
 // Auth Configuration
 export const ACCESS_TOKEN_KEY = 'access_token';
@@ -9,8 +10,9 @@ export const REFRESH_TOKEN_KEY = 'refresh_token';
 export const TOKEN_EXPIRY_KEY = 'token_expiry';
 export const AUTH_USER_KEY = 'auth_user';
 
-// Map Configuration
-export const MAPS_API_KEY = process.env.MAPS_API_KEY || 'your_google_maps_api_key';
+// Map Configuration - NO API KEY HERE
+// Maps API calls go through backend proxy
+export const MAPS_PROXY_ENDPOINTS = APIProxyEndpoints.MAPS;
 export const DEFAULT_LATITUDE = 37.7749;  // San Francisco
 export const DEFAULT_LONGITUDE = -122.4194;
 export const DEFAULT_ZOOM = 12;
@@ -19,8 +21,9 @@ export const DEFAULT_ZOOM = 12;
 export const STORY_TRIGGER_DISTANCE = 1000;  // meters
 export const STORY_MIN_INTERVAL = 5 * 60;  // 5 minutes in seconds
 
-// Spotify Configuration
-export const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'your_spotify_client_id';
+// Spotify Configuration - NO CLIENT ID HERE
+// OAuth handled through backend proxy
+export const SPOTIFY_PROXY_ENDPOINTS = APIProxyEndpoints.SPOTIFY;
 export const SPOTIFY_REDIRECT_URI = __DEV__ 
   ? 'exp://localhost:19000/--/spotify-auth-callback'
   : 'roadtripstoryteller://spotify-auth-callback';

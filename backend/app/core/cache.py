@@ -385,3 +385,17 @@ def cacheable(
             return response
         return wrapper
     return decorator
+
+
+# Create singleton instance
+_redis_client = None
+
+def get_cache() -> RedisClient:
+    """Get or create the Redis client singleton instance."""
+    global _redis_client
+    if _redis_client is None:
+        _redis_client = RedisClient()
+    return _redis_client
+
+# Create a default cache manager instance for backward compatibility
+cache_manager = RedisClient()

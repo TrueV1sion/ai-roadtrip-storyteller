@@ -6,6 +6,7 @@ import { ToastAndroid, Platform, Alert, AppState, AppStateStatus } from 'react-n
 import { Location, Route, Region } from '../types/location';
 import { API_BASE_URL } from '../config';
 
+import { logger } from '@/services/logger';
 // Define offline storage paths
 const OFFLINE_ROOT_DIR = `${FileSystem.documentDirectory}offline/`;
 const OFFLINE_MAPS_DIR = `${OFFLINE_ROOT_DIR}maps/`;
@@ -166,9 +167,9 @@ class OfflineManager {
       );
 
       this.isInitialized = true;
-      console.log('OfflineManager initialized successfully');
+      logger.debug('OfflineManager initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize OfflineManager:', error);
+      logger.error('Failed to initialize OfflineManager:', error);
       this.showNotification('Failed to initialize offline storage');
       throw error;
     }
@@ -203,11 +204,11 @@ class OfflineManager {
                (netInfo.type !== 'cellular' || this.shouldSyncOnCellular())
     };
 
-    console.log('Network state updated:', this.networkState);
+    logger.debug('Network state updated:', this.networkState);
 
     // If we just came back online, attempt to sync
     if (!wasConnected && this.networkState.canSync && this.syncQueue.length > 0) {
-      console.log('Network reconnected, triggering sync');
+      logger.debug('Network reconnected, triggering sync');
       this.processSyncQueue();
     }
   }
@@ -335,14 +336,14 @@ class OfflineManager {
           
           // Success - remove from queue
           this.syncQueue = this.syncQueue.filter(queueItem => queueItem.id !== item.id);
-          console.log(`Successfully synced item ${item.id}`);
+          logger.debug(`Successfully synced item ${item.id}`);
         } catch (error) {
-          console.error(`Failed to sync item ${item.id}:`, error);
+          logger.error(`Failed to sync item ${item.id}:`, error);
           
           // Increment attempts and calculate next retry time
           item.attempts++;
           if (item.attempts >= item.maxAttempts) {
-            console.warn(`Max attempts reached for item ${item.id}, removing from queue`);
+            logger.warn(`Max attempts reached for item ${item.id}, removing from queue`);
             this.syncQueue = this.syncQueue.filter(queueItem => queueItem.id !== item.id);
           } else {
             // Exponential backoff
@@ -405,7 +406,7 @@ class OfflineManager {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      console.log(`Successfully synced ${item.type} item`);
+      logger.debug(`Successfully synced ${item.type} item`);
     } finally {
       clearTimeout(timeoutId);
     }
@@ -441,11 +442,11 @@ class OfflineManager {
                 createdAt: row.created_at
               });
             }
-            console.log(`Loaded ${this.syncQueue.length} items from sync queue`);
+            logger.debug(`Loaded ${this.syncQueue.length} items from sync queue`);
             resolve();
           },
           (_, error) => {
-            console.error('Failed to load sync queue:', error);
+            logger.error('Failed to load sync queue:', error);
             this.syncQueue = [];
             resolve(); // Don't reject, just start with empty queue
             return false;
@@ -489,7 +490,7 @@ class OfflineManager {
         });
       }, 
       (error) => {
-        console.error('Failed to save sync queue:', error);
+        logger.error('Failed to save sync queue:', error);
         resolve(); // Don't fail the whole operation
       },
       () => {
@@ -682,7 +683,7 @@ class OfflineManager {
         );
       }, 
       (error) => {
-        console.error('Error initializing database:', error);
+        logger.error('Error initializing database:', error);
         reject(error);
       },
       () => {
@@ -748,7 +749,7 @@ class OfflineManager {
 
       return regionId;
     } catch (error) {
-      console.error('Error downloading map region:', error);
+      logger.error('Error downloading map region:', error);
       throw error;
     }
   }
@@ -822,7 +823,7 @@ class OfflineManager {
       this.showNotification('Route downloaded for offline use');
       return routeId;
     } catch (error) {
-      console.error('Error downloading route:', error);
+      logger.error('Error downloading route:', error);
       throw error;
     }
   }
@@ -1025,7 +1026,7 @@ class OfflineManager {
         percentUsed: (totalSize / this.maxStorageBytes) * 100
       };
     } catch (error) {
-      console.error('Error getting storage stats:', error);
+      logger.error('Error getting storage stats:', error);
       throw error;
     }
   }

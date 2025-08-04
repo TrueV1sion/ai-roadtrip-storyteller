@@ -12,7 +12,7 @@ from app.core.config import settings
 from app.core.logger import get_logger
 from app.schemas.user import UserPreferencesBase
 from app.schemas.story import StoryCreate, StoryResponse, StoryAnalysisResponse
-from app.db.base import get_db
+from app.database import get_db
 # Import specific CRUD functions
 from app.crud.crud_preferences import get_preferences_dict
 from app.crud.crud_story import create_story, get_story, update_story_rating

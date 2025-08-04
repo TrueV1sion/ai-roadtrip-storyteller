@@ -80,7 +80,7 @@ def get_gcp_project_id() -> Optional[str]:
             check=True
         )
         return result.stdout.strip()
-    except:
+    except Exception as e:
         return None
 
 

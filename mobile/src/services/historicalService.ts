@@ -1,9 +1,8 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { LocationData } from '@services/locationService';
 import { withRetry } from '@utils/async';
 import { memoizeAsync } from '@utils/cache';
-import { EXPO_PUBLIC_CULTURAL_API_KEY, EXPO_PUBLIC_WIKIPEDIA_API_KEY } from '@env';
-
+import { ApiClient } from '@/services/api/ApiClient';
+import { logger } from '@/services/logger';
 export interface HistoricalEvent {
   date: string;
   description: string;
@@ -127,26 +126,16 @@ interface EnrichmentContext {
 }
 
 class HistoricalService {
-  private readonly WIKIPEDIA_API_URL = 'https://en.wikipedia.org/w/api.php';
-  private readonly CULTURAL_API_KEY = EXPO_PUBLIC_CULTURAL_API_KEY;
-  private readonly api: AxiosInstance;
-  private readonly RATE_LIMIT = {
-    maxRequests: 100,
-    timeWindow: 60000, // 1 minute
-    currentRequests: 0,
-    windowStart: Date.now(),
-  };
+  // No API keys needed - all calls go through backend proxy
+  private readonly apiClient: ApiClient;
 
   constructor() {
-    this.api = axios.create({
-      timeout: 10000,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
+    this.apiClient = new ApiClient({
+      enableTokenRefresh: true,
+      enableRetry: true,
     });
-
-    // Add request interceptor for rate limiting
+    
+    // Historical and cultural data is fetched through backend
     this.api.interceptors.request.use(async (config: AxiosRequestConfig) => {
       await this.checkRateLimit();
       return config;
@@ -318,7 +307,7 @@ class HistoricalService {
         tags: event.tags || []
       }));
     } catch (error) {
-      console.error('Error fetching cultural events:', error);
+      logger.error('Error fetching cultural events:', error);
       return [];
     }
   }
@@ -337,7 +326,7 @@ class HistoricalService {
 
       return [...nationalArchives, ...localArchives];
     } catch (error) {
-      console.error('Error fetching archival events:', error);
+      logger.error('Error fetching archival events:', error);
       return [];
     }
   }
@@ -378,7 +367,7 @@ class HistoricalService {
         tags: item.subjects || []
       }));
     } catch (error) {
-      console.error('Error fetching from national archives:', error);
+      logger.error('Error fetching from national archives:', error);
       return [];
     }
   }
@@ -393,7 +382,7 @@ class HistoricalService {
       // For now, returning an empty array as implementation depends on specific local archives
       return [];
     } catch (error) {
-      console.error('Error fetching from local archives:', error);
+      logger.error('Error fetching from local archives:', error);
       return [];
     }
   }
@@ -423,7 +412,7 @@ class HistoricalService {
             verified: verificationResult.verified,
           };
         } catch (error) {
-          console.error(`Error processing historical event: ${error}`);
+          logger.error(`Error processing historical event: ${error}`);
           return event;
         }
       })
@@ -460,7 +449,7 @@ class HistoricalService {
         media: enhancedMedia,
       };
     } catch (error) {
-      console.error(`Error enriching event details: ${error}`);
+      logger.error(`Error enriching event details: ${error}`);
       return event;
     }
   }
@@ -485,7 +474,7 @@ class HistoricalService {
         kidFriendlyDescription,
       };
     } catch (error) {
-      console.error(`Error generating story elements: ${error}`);
+      logger.error(`Error generating story elements: ${error}`);
       return {
         funFacts: [],
         trivia: [],
@@ -599,7 +588,7 @@ class HistoricalService {
 
       return response.data.prompts || [];
     } catch (error) {
-      console.error('Error generating interactive prompts:', error);
+      logger.error('Error generating interactive prompts:', error);
       return [];
     }
   }
@@ -614,7 +603,7 @@ class HistoricalService {
 
       return response.data.description || event.description;
     } catch (error) {
-      console.error('Error generating kid-friendly description:', error);
+      logger.error('Error generating kid-friendly description:', error);
       return event.description;
     }
   }
@@ -642,7 +631,7 @@ class HistoricalService {
         },
       }));
     } catch (error) {
-      console.error('Error fetching traditional culture:', error);
+      logger.error('Error fetching traditional culture:', error);
       return [];
     }
   }
@@ -671,7 +660,7 @@ class HistoricalService {
         },
       }));
     } catch (error) {
-      console.error('Error fetching local cuisine:', error);
+      logger.error('Error fetching local cuisine:', error);
       return [];
     }
   }
@@ -699,7 +688,7 @@ class HistoricalService {
         },
       }));
     } catch (error) {
-      console.error('Error fetching local music:', error);
+      logger.error('Error fetching local music:', error);
       return [];
     }
   }
@@ -726,7 +715,7 @@ class HistoricalService {
         })) || [],
       };
     } catch (error) {
-      console.error('Error fetching demographics:', error);
+      logger.error('Error fetching demographics:', error);
       return {
         languages: [],
         ethnicities: [],
@@ -771,7 +760,7 @@ class HistoricalService {
         visitDuration: metrics.visit_duration,
       };
     } catch (error) {
-      console.error('Error fetching engagement metrics:', error);
+      logger.error('Error fetching engagement metrics:', error);
       return {
         popularity: 0,
         userRatings: 0,
@@ -794,7 +783,7 @@ class HistoricalService {
         };
       }));
     } catch (error) {
-      console.error('Error enhancing media:', error);
+      logger.error('Error enhancing media:', error);
       return media;
     }
   }

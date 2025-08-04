@@ -21,10 +21,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.dialects.postgresql import UUID
 
-from backend.app.core.logger import get_logger
-from backend.app.core.database_manager import DatabaseManager
-from backend.app.middleware.correlation_id import get_correlation_id
-from backend.app.core.tracing import get_current_trace_id, trace_method
+from app.core.logger import get_logger
+from app.core.database_manager import DatabaseManager
+from app.middleware.correlation_id import get_correlation_id
+from app.core.tracing import get_current_trace_id, trace_method
 
 logger = get_logger(__name__)
 

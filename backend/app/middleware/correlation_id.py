@@ -12,8 +12,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from backend.app.core.logger import get_logger
-from backend.app.core.tracing import add_span_attributes, get_current_trace_id
+from app.core.logger import get_logger
+from app.core.tracing import add_span_attributes, get_current_trace_id
 
 logger = get_logger(__name__)
 

@@ -1,6 +1,7 @@
 import { LocationData } from './locationService';
 import { memoizeAsync } from '@utils/cache';
-import { APIClient } from '@utils/apiUtils';
+import { mapsProxy } from '@/services/api/mapsProxy';
+import { logger } from '@/services/logger';
 
 export interface WeatherData {
   temperature: number;
@@ -19,123 +20,52 @@ export interface WeatherData {
 }
 
 class WeatherService {
-  private readonly OPEN_WEATHER_API_KEY = process.env.EXPO_PUBLIC_OPEN_WEATHER_KEY;
-  private readonly AIR_QUALITY_API_KEY = process.env.EXPO_PUBLIC_AIR_QUALITY_API_KEY;
+  // No API keys needed - all calls go through backend proxy
   
-  private readonly weatherClient: APIClient;
-  private readonly airQualityClient: APIClient;
-
   constructor() {
-    this.weatherClient = new APIClient({
-      baseURL: 'https://api.openweathermap.org/data/3.0',
-      timeout: 5000,
-      rateLimit: {
-        maxRequests: 60,
-        windowMs: 60000, // 1 minute
-      },
-      retry: {
-        maxAttempts: 3,
-        baseDelay: 1000,
-        maxDelay: 5000,
-        retryableStatuses: [408, 429, 500, 502, 503, 504],
-      },
-    });
-
-    this.airQualityClient = new APIClient({
-      baseURL: 'https://api.airquality.com/v1',
-      timeout: 5000,
-      rateLimit: {
-        maxRequests: 30,
-        windowMs: 60000, // 1 minute
-      },
-      retry: {
-        maxAttempts: 2,
-        baseDelay: 1000,
-        maxDelay: 3000,
-        retryableStatuses: [408, 429, 500, 502, 503, 504],
-      },
-    });
+    // Weather API calls are handled through the backend proxy
   }
 
   getWeatherData = memoizeAsync(
     async (location: LocationData): Promise<WeatherData> => {
-      // Fetch weather and air quality data in parallel
-      const [weatherData, airQualityData] = await Promise.all([
-        this.fetchWeatherData(location),
-        this.fetchAirQualityData(location),
-      ]);
-
-      return {
-        ...weatherData,
-        airQuality: airQualityData.airQuality,
-      };
+      try {
+        // Use backend proxy to get weather data - API key is handled server-side
+        const weatherData = await mapsProxy.getWeather(location);
+        
+        // Convert the backend response to our expected format
+        return {
+          temperature: weatherData.main.temp,
+          description: weatherData.weather[0].description,
+          sunrise: new Date(weatherData.sys.sunrise * 1000).toISOString(),
+          sunset: new Date(weatherData.sys.sunset * 1000).toISOString(),
+          humidity: weatherData.main.humidity,
+          windSpeed: weatherData.wind.speed,
+          windDirection: this.getWindDirection(weatherData.wind.deg),
+          precipitation: weatherData.rain?.['1h'] || 0,
+          uvIndex: weatherData.uvi || 0,
+          visibility: weatherData.visibility,
+          pressure: weatherData.main.pressure,
+          feelsLike: weatherData.main.feels_like,
+          airQuality: 'Good', // Backend can implement air quality API later
+        };
+      } catch (error) {
+        logger.error('Failed to fetch weather data', error as Error);
+        throw error;
+      }
     },
     100, // Cache size
     300  // TTL: 5 minutes
   );
 
-  private async fetchWeatherData(location: LocationData): Promise<Omit<WeatherData, 'airQuality'>> {
-    interface OpenWeatherResponse {
-      current: {
-        temp: number;
-        weather: Array<{ description: string }>;
-        sunrise: number;
-        sunset: number;
-        humidity: number;
-        wind_speed: number;
-        wind_deg: number;
-        rain?: { '1h': number };
-        uvi: number;
-        visibility: number;
-        pressure: number;
-        feels_like: number;
-      };
+  // Weather forecast method using backend proxy
+  async getWeatherForecast(location: LocationData, days: number = 5): Promise<any> {
+    try {
+      const forecast = await mapsProxy.getWeatherForecast(location, days);
+      return forecast;
+    } catch (error) {
+      logger.error('Failed to fetch weather forecast', error as Error);
+      throw error;
     }
-
-    const response = await this.weatherClient.get<OpenWeatherResponse>('/onecall', {
-      params: {
-        lat: location.latitude,
-        lon: location.longitude,
-        appid: this.OPEN_WEATHER_API_KEY,
-        units: 'metric',
-        exclude: 'minutely,hourly,daily,alerts',
-      },
-    });
-
-    return {
-      temperature: response.current.temp,
-      description: response.current.weather[0].description,
-      sunrise: new Date(response.current.sunrise * 1000).toISOString(),
-      sunset: new Date(response.current.sunset * 1000).toISOString(),
-      humidity: response.current.humidity,
-      windSpeed: response.current.wind_speed,
-      windDirection: this.getWindDirection(response.current.wind_deg),
-      precipitation: response.current.rain?.['1h'] || 0,
-      uvIndex: response.current.uvi,
-      visibility: response.current.visibility,
-      pressure: response.current.pressure,
-      feelsLike: response.current.feels_like,
-    };
-  }
-
-  private async fetchAirQualityData(location: LocationData): Promise<{ airQuality: string }> {
-    interface AirQualityResponse {
-      data: {
-        aqi: number;
-      };
-    }
-
-    const response = await this.airQualityClient.get<AirQualityResponse>('/air-quality', {
-      params: {
-        lat: location.latitude,
-        lon: location.longitude,
-        token: this.AIR_QUALITY_API_KEY,
-      },
-    });
-
-    return {
-      airQuality: this.getAirQualityDescription(response.data.aqi),
-    };
   }
 
   private getWindDirection(degrees: number): string {

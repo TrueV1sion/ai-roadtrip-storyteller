@@ -7,10 +7,10 @@ This shows how the booking service emits events for complete audit trail.
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from backend.app.services.booking_service import BookingService
-from backend.app.core.event_store import EventStore, EventType, Event
-from backend.app.core.logger import get_logger
-from backend.app.core.tracing import trace_method
+from app.services.booking_service import BookingService
+from app.core.event_store import EventStore, EventType, Event
+from app.core.logger import get_logger
+from app.core.tracing import trace_method
 
 logger = get_logger(__name__)
 

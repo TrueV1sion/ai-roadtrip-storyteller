@@ -1,3 +1,5 @@
+import { logger } from '@/services/logger';
+
 /**
  * Memory management utilities for mobile app
  */
@@ -47,7 +49,7 @@ export class MemoryManager {
   }
   
   performMemoryCleanup(): void {
-    console.log('Performing memory cleanup...');
+    logger.debug('Performing memory cleanup...');
     
     // Clear non-critical caches
     this.clearCache('images', 0.5); // Keep 50% of images

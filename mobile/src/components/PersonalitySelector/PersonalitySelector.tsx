@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -110,7 +111,7 @@ export const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
         onComplete: () => setPreviewingPersonality(null),
       });
     } catch (error) {
-      console.error('Preview failed:', error);
+      logger.error('Preview failed:', error);
       setPreviewingPersonality(null);
     }
   }, [previewingPersonality]);

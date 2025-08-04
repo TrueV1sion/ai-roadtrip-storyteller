@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { logger } from '@/services/logger';
 import { 
   View, 
   Text, 
@@ -77,7 +78,7 @@ const SafeVoiceCommandListener: React.FC<SafeVoiceCommandListenerProps> = ({
       );
       emergencySound.current = sound;
     } catch (error) {
-      console.error('Failed to load emergency sound:', error);
+      logger.error('Failed to load emergency sound:', error);
     }
   };
 

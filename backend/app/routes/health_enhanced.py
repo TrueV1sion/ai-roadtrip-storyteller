@@ -21,7 +21,7 @@ from app.core.config import settings
 from app.core.logger import get_logger
 from app.core.cache import get_cache
 from app.core.token_blacklist import token_blacklist
-from app.db.base import get_db
+from app.database import get_db
 from app.middleware.performance_middleware import PerformanceOptimizationMiddleware
 from app.monitoring.metrics_collector import metrics_collector
 
@@ -560,7 +560,8 @@ async def system_diagnostics():
                 "total": engine.pool._created
             }
         db.close()
-    except:
-        pass
+    except Exception as e:
+        logger.error(f"Error in database diagnostics: {e}")
+        diagnostics["errors"] = [str(e)]
     
     return diagnostics

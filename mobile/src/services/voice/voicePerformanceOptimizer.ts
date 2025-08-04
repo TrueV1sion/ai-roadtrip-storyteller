@@ -9,6 +9,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { EventEmitter } from 'events';
 import * as Crypto from 'expo-crypto';
 
+import { logger } from '@/services/logger';
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
@@ -231,7 +232,7 @@ class VoicePerformanceOptimizer extends EventEmitter {
         // Process based on operation type
         await this.processOfflineOperation(item);
       } catch (error) {
-        console.error('Failed to process offline item:', error);
+        logger.error('Failed to process offline item:', error);
         // Re-queue if still offline
         const netState = await NetInfo.fetch();
         if (!netState.isConnected) {
@@ -367,7 +368,7 @@ class VoicePerformanceOptimizer extends EventEmitter {
         }
       }
     } catch (error) {
-      console.error('Cache retrieval error:', error);
+      logger.error('Cache retrieval error:', error);
     }
     
     return null;
@@ -396,7 +397,7 @@ class VoicePerformanceOptimizer extends EventEmitter {
           JSON.stringify(entry)
         );
       } catch (error) {
-        console.error('Cache persistence error:', error);
+        logger.error('Cache persistence error:', error);
       }
     }
   }
@@ -535,7 +536,7 @@ class VoicePerformanceOptimizer extends EventEmitter {
         this.offlineQueue = JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Failed to load offline queue:', error);
+      logger.error('Failed to load offline queue:', error);
     }
     
     // Monitor network state
@@ -567,7 +568,7 @@ class VoicePerformanceOptimizer extends EventEmitter {
         }
       }
     } catch (error) {
-      console.error('Failed to load persisted cache:', error);
+      logger.error('Failed to load persisted cache:', error);
     }
   }
 
@@ -625,7 +626,7 @@ class VoicePerformanceOptimizer extends EventEmitter {
   private async processOfflineOperation(item: any): Promise<void> {
     // Implementation depends on operation type
     // This is a placeholder for specific offline operation handling
-    console.log('Processing offline operation:', item);
+    logger.debug('Processing offline operation:', item);
   }
 }
 

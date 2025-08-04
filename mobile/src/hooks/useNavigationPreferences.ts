@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationPreferences, TravelMode } from '../types/navigation';
 
+import { logger } from '@/services/logger';
 const DEFAULT_PREFERENCES: NavigationPreferences = {
   defaultMode: 'driving' as TravelMode,
   avoidTolls: false,
@@ -44,7 +45,7 @@ export const useNavigationPreferences = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading navigation preferences:', error);
+        logger.error('Error loading navigation preferences:', error);
       } finally {
         setLoading(false);
       }
@@ -68,7 +69,7 @@ export const useNavigationPreferences = () => {
           JSON.stringify(newPreferences)
         );
       } catch (error) {
-        console.error('Error saving navigation preferences:', error);
+        logger.error('Error saving navigation preferences:', error);
       }
     },
     [preferences]
@@ -80,7 +81,7 @@ export const useNavigationPreferences = () => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-      console.error('Error resetting navigation preferences:', error);
+      logger.error('Error resetting navigation preferences:', error);
     }
   }, []);
 

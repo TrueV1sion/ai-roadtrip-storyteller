@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
 export enum GameType {
   TRIVIA = 'trivia',
   SCAVENGER_HUNT = 'scavenger_hunt',
@@ -111,7 +112,7 @@ class GameStateManager {
       
       this.initialized = true;
     } catch (error) {
-      console.error('Error initializing game state:', error);
+      logger.error('Error initializing game state:', error);
       
       // Generate fallback state
       this.state = {
@@ -178,7 +179,7 @@ class GameStateManager {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
     } catch (error) {
-      console.error('Error saving game state:', error);
+      logger.error('Error saving game state:', error);
     }
   }
   

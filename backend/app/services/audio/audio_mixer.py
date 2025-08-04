@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from scipy import signal
 import asyncio
 
-from backend.app.core.logger import logger
+from app.core.logger import logger
 
 
 class AudioMixer:

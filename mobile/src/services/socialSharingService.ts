@@ -1,5 +1,6 @@
 import { apiManager } from './api/apiManager';
 
+import { logger } from '@/services/logger';
 interface VideoOptions {
   duration?: number;
   includeMap?: boolean;
@@ -41,7 +42,7 @@ class SocialSharingService {
       });
       return response.data;
     } catch (error) {
-      console.error('Error creating journey video:', error);
+      logger.error('Error creating journey video:', error);
       throw error;
     }
   }
@@ -53,7 +54,7 @@ class SocialSharingService {
       const response = await apiManager.get(`/api/social/journey-video/status/${tripId}`);
       return response.data;
     } catch (error) {
-      console.error('Error getting video status:', error);
+      logger.error('Error getting video status:', error);
       throw error;
     }
   }
@@ -71,7 +72,7 @@ class SocialSharingService {
       });
       return response.data;
     } catch (error) {
-      console.error('Error preparing share content:', error);
+      logger.error('Error preparing share content:', error);
       throw error;
     }
   }
@@ -89,7 +90,7 @@ class SocialSharingService {
       });
       return response.data;
     } catch (error) {
-      console.error('Error tracking share:', error);
+      logger.error('Error tracking share:', error);
       // Don't throw - tracking shouldn't break sharing
       return { status: 'error', message: 'Tracking failed' };
     }
@@ -100,7 +101,7 @@ class SocialSharingService {
       const response = await apiManager.get('/api/social/templates');
       return response.data.templates;
     } catch (error) {
-      console.error('Error getting share templates:', error);
+      logger.error('Error getting share templates:', error);
       throw error;
     }
   }
@@ -110,7 +111,7 @@ class SocialSharingService {
       const response = await apiManager.get('/api/social/trending');
       return response.data;
     } catch (error) {
-      console.error('Error getting trending content:', error);
+      logger.error('Error getting trending content:', error);
       throw error;
     }
   }
@@ -171,14 +172,14 @@ class SocialSharingService {
   async shareToInstagramStories(videoPath: string, stickerImage?: string): Promise<void> {
     // This would use Instagram's sharing SDK
     // Requires native module implementation
-    console.log('Sharing to Instagram Stories:', videoPath);
+    logger.debug('Sharing to Instagram Stories:', videoPath);
   }
 
   // Share to TikTok (requires special handling)
   async shareToTikTok(videoPath: string): Promise<void> {
     // This would use TikTok's sharing SDK
     // Requires native module implementation
-    console.log('Sharing to TikTok:', videoPath);
+    logger.debug('Sharing to TikTok:', videoPath);
   }
 }
 

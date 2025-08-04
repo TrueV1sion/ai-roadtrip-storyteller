@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import validate_token, ACCESS_TOKEN_TYPE
 from app.core.logger import get_logger
-from app.db.base import get_db
+from app.database import get_db
 from app.crud.crud_user import get_user, update_user_last_login
 from app.models.user import User
 

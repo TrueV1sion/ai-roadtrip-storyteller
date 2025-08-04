@@ -9,6 +9,7 @@ import StorageManager from '@utils/storage';
 import SessionManager from './sessionManager';
 import APIManager from '../api/apiManager';
 
+import { logger } from '@/services/logger';
 interface Voice {
   id: string;
   name: string;
@@ -69,7 +70,7 @@ class VoiceService {
         this.currentTheme = VoicePersonalityManager.getThemeById('adventure-explorer') || null;
       }
     } catch (error) {
-      console.error('Failed to load personality and theme:', error);
+      logger.error('Failed to load personality and theme:', error);
       // Set defaults on error
       this.currentPersonality = VoicePersonalityManager.getPersonalityById('adventurous-explorer') || null;
       this.currentTheme = VoicePersonalityManager.getThemeById('adventure-explorer') || null;
@@ -134,7 +135,7 @@ class VoiceService {
     } catch (error) {
       // APIManager will automatically try fallback services
       // If all fail, throw the error
-      console.error('Failed to synthesize speech:', error);
+      logger.error('Failed to synthesize speech:', error);
       throw error;
     }
   }
@@ -380,7 +381,7 @@ class VoiceService {
 
       return segments;
     } catch (error) {
-      console.error('Failed to prepare audio segments:', error);
+      logger.error('Failed to prepare audio segments:', error);
       throw error;
     }
   }
@@ -489,7 +490,7 @@ class VoiceService {
         this.currentState = state;
       }
     } catch (error) {
-      console.error('Failed to load conversation state:', error);
+      logger.error('Failed to load conversation state:', error);
     }
   }
 

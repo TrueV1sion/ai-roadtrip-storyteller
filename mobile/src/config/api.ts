@@ -5,29 +5,13 @@
 
 import { FEATURES } from './features';
 
+import { logger } from '@/services/logger';
+// Import secure configuration
+import { SecureConfig, getAPIUrl } from './secure-config';
+
 // Determine API URL based on environment
 const getApiUrl = () => {
-  // Production Cloud Run URL (update this after deployment)
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
-  
-  // Development defaults
-  if (__DEV__) {
-    // Use localhost for iOS simulator
-    if (process.env.EXPO_PUBLIC_PLATFORM === 'ios') {
-      return 'http://localhost:8000';
-    }
-    // Use 10.0.2.2 for Android emulator
-    if (process.env.EXPO_PUBLIC_PLATFORM === 'android') {
-      return 'http://10.0.2.2:8000';
-    }
-    // Default for physical devices (update with your computer's IP)
-    return 'http://192.168.1.100:8000';
-  }
-  
-  // Production default (update after deployment)
-  return 'https://roadtrip-mvp-792001900150.us-central1.run.app';
+  return getAPIUrl();
 };
 
 const API_BASE_URL = getApiUrl();
@@ -90,7 +74,7 @@ export const buildWsUrl = (endpoint: string): string => {
 
 // Log configuration in development
 if (__DEV__) {
-  console.log('📡 API Configuration:', {
+  logger.debug('📡 API Configuration:', {
     BASE_URL: API_CONFIG.BASE_URL,
     WS_URL: API_CONFIG.WS_URL,
     AVAILABLE_ENDPOINTS: Object.keys(API_CONFIG.ENDPOINTS).length,

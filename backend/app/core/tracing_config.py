@@ -6,21 +6,45 @@ Production setup for OpenTelemetry with Jaeger
 import os
 from typing import Optional
 
-from opentelemetry import trace
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-from opentelemetry.instrumentation.asyncio import AsyncioInstrumentor
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from opentelemetry.propagate import set_global_textmap
+try:
+    from opentelemetry import trace
+    from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+    from opentelemetry.instrumentation.redis import RedisInstrumentor
+    from opentelemetry.instrumentation.celery import CeleryInstrumentor
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+    HAS_OPENTELEMETRY = True
+except ImportError:
+    HAS_OPENTELEMETRY = False
+    trace = None
+    TracerProvider = None
+    Resource = None
+    SERVICE_NAME = None
+    SERVICE_VERSION = None
+    JaegerExporter = None
+    OTLPSpanExporter = None
+    BatchSpanProcessor = None
+    ConsoleSpanExporter = None
+    FastAPIInstrumentor = None
+    SQLAlchemyInstrumentor = None
+    RedisInstrumentor = None
+    CeleryInstrumentor = None
+    RequestsInstrumentor = None
+    HTTPXClientInstrumentor = None
+    AsyncioInstrumentor = None
+    TraceContextTextMapPropagator = None
+    set_global_textmap = None
+
+if HAS_OPENTELEMETRY:
+    from opentelemetry.instrumentation.asyncio import AsyncioInstrumentor
+    from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+    from opentelemetry.propagate import set_global_textmap
 
 from app.core.logger import get_logger
 
@@ -168,17 +192,24 @@ class TracingConfig:
             from urllib.parse import urlparse
             parsed = urlparse(url)
             return parsed.hostname or 'localhost'
-        except:
+        except Exception as e:
             return 'localhost'
     
-    def create_span(self, name: str, kind=trace.SpanKind.INTERNAL):
+    def create_span(self, name: str, kind=None):
         """Create a new span."""
+        if kind is None and HAS_OPENTELEMETRY:
+            kind = trace.SpanKind.INTERNAL
+            
         if not self.enabled or not self.tracer:
-            return trace.get_tracer(__name__).start_span(name)  # No-op span
+            if HAS_OPENTELEMETRY:
+                return trace.get_tracer(__name__).start_span(name)  # No-op span
+            else:
+                from contextlib import nullcontext
+                return nullcontext()
         
         return self.tracer.start_span(name, kind=kind)
     
-    def get_current_span(self) -> trace.Span:
+    def get_current_span(self):
         """Get the current active span."""
         return trace.get_current_span()
     
@@ -190,23 +221,39 @@ class TracingConfig:
 
 
 # Global tracing configuration
-tracing_config = TracingConfig()
+if HAS_OPENTELEMETRY:
+    tracing_config = TracingConfig()
+else:
+    tracing_config = None
 
 
 # Convenience functions
 def init_tracing(app=None):
     """Initialize tracing system."""
-    tracing_config.setup_tracing(app)
+    if HAS_OPENTELEMETRY and tracing_config:
+        tracing_config.setup_tracing(app)
+    else:
+        logger.info("OpenTelemetry not available, tracing disabled")
 
 
-def create_span(name: str, kind=trace.SpanKind.INTERNAL):
+def create_span(name: str, kind=None):
     """Create a new span."""
-    return tracing_config.create_span(name, kind)
+    if HAS_OPENTELEMETRY and tracing_config:
+        if kind is None:
+            kind = trace.SpanKind.INTERNAL
+        return tracing_config.create_span(name, kind)
+    else:
+        # Return a no-op context manager
+        from contextlib import nullcontext
+        return nullcontext()
 
 
-def get_current_span() -> trace.Span:
+def get_current_span():
     """Get current span."""
-    return tracing_config.get_current_span()
+    if HAS_OPENTELEMETRY and tracing_config:
+        return tracing_config.get_current_span()
+    else:
+        return None
 
 
 # Export components

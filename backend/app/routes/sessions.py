@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_active_user
 from app.core.logger import get_logger
-from app.db.base import get_db
+from app.database import get_db
 from app.models.user import User
 from app.services.session_manager import session_manager, DeviceInfo
 from app.monitoring.audit_logger import audit_logger, AuditEventType

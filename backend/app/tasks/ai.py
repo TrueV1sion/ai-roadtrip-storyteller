@@ -7,13 +7,13 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from celery import Task, group, chord
 
-from backend.app.core.celery_app import celery_app
-from backend.app.core.database_manager import DatabaseManager
-from backend.app.services.master_orchestration_agent import MasterOrchestrationAgent
-from backend.app.services.personality_engine import PersonalityEngine
-from backend.app.services.event_journey_service import EventJourneyService
-from backend.app.core.logger import get_logger
-from backend.app.core.enhanced_cache import EnhancedCache
+from app.core.celery_app import celery_app
+from app.core.database_manager import DatabaseManager
+from app.services.master_orchestration_agent import MasterOrchestrationAgent
+from app.services.personality_engine import PersonalityEngine
+from app.services.event_journey_service import EventJourneyService
+from app.core.logger import get_logger
+from app.core.enhanced_cache import EnhancedCache
 
 logger = get_logger(__name__)
 

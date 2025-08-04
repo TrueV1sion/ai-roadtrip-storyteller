@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.logger import get_logger
 from app.core.auth import get_current_user
 from app.core.auth_rate_limiter import get_auth_rate_limiter
-from app.db.base import get_db
+from app.database import get_db
 from app.models.user import User
 from app.schemas.password import (
     PasswordChangeRequest,

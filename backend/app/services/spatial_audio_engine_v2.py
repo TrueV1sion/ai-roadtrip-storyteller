@@ -8,13 +8,13 @@ import asyncio
 import numpy as np
 from sqlalchemy.orm import Session
 
-from backend.app.services.audio.sound_library import SoundLibrary
-from backend.app.services.audio.binaural_processor import BinauralProcessor
-from backend.app.services.audio.ambient_generator import AmbientGenerator
-from backend.app.services.audio.audio_mixer import AudioMixer
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.standardized_errors import (
+from app.services.audio.sound_library import SoundLibrary
+from app.services.audio.binaural_processor import BinauralProcessor
+from app.services.audio.ambient_generator import AmbientGenerator
+from app.services.audio.audio_mixer import AudioMixer
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.standardized_errors import (
     handle_errors,
     ExternalServiceError,
     ValidationError

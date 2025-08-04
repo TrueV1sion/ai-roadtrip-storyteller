@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -103,7 +104,7 @@ export const TriviaGameScreen: React.FC = () => {
       // Get first question
       await loadNextQuestion(sessionData.session_id);
     } catch (error) {
-      console.error('Error initializing game:', error);
+      logger.error('Error initializing game:', error);
       Alert.alert('Error', 'Failed to start game');
       navigation.goBack();
     } finally {
@@ -144,7 +145,7 @@ export const TriviaGameScreen: React.FC = () => {
         }),
       ]).start();
     } catch (error) {
-      console.error('Error loading question:', error);
+      logger.error('Error loading question:', error);
       Alert.alert('Error', 'Failed to load question');
     }
   };
@@ -180,7 +181,7 @@ export const TriviaGameScreen: React.FC = () => {
         loadNextQuestion(session!.session_id);
       }, 2000);
     } catch (error) {
-      console.error('Error submitting answer:', error);
+      logger.error('Error submitting answer:', error);
       Alert.alert('Error', 'Failed to submit answer');
     } finally {
       setAnswering(false);
@@ -205,7 +206,7 @@ export const TriviaGameScreen: React.FC = () => {
         achievements,
       });
     } catch (error) {
-      console.error('Error ending game:', error);
+      logger.error('Error ending game:', error);
       navigation.goBack();
     }
   };

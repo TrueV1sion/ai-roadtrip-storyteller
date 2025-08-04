@@ -9,6 +9,7 @@ import apiClient from './apiClient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 
+import { logger } from '@/services/logger';
 export interface BookingItem {
   id: string;
   type: 'hotel' | 'restaurant' | 'activity';
@@ -105,7 +106,7 @@ class BookingService {
       const response = await apiClient.get('/api/booking/search', { params });
       return response.data.results;
     } catch (error) {
-      console.error('Search bookings failed:', error);
+      logger.error('Search bookings failed:', error);
       throw error;
     }
   }
@@ -127,7 +128,7 @@ class BookingService {
       });
       return response.data.items;
     } catch (error) {
-      console.error('Get recommendations failed:', error);
+      logger.error('Get recommendations failed:', error);
       throw error;
     }
   }
@@ -148,7 +149,7 @@ class BookingService {
       });
       return response.data;
     } catch (error) {
-      console.error('Check availability failed:', error);
+      logger.error('Check availability failed:', error);
       throw error;
     }
   }
@@ -174,7 +175,7 @@ class BookingService {
         throw new Error(response.data.message || 'Booking failed');
       }
     } catch (error) {
-      console.error('Create booking failed:', error);
+      logger.error('Create booking failed:', error);
       throw error;
     }
   }
@@ -199,7 +200,7 @@ class BookingService {
       
       return bookings;
     } catch (error) {
-      console.error('Get my bookings failed:', error);
+      logger.error('Get my bookings failed:', error);
       
       // Fallback to local storage
       return this.getLocalBookings(filter);
@@ -224,7 +225,7 @@ class BookingService {
       
       return booking;
     } catch (error) {
-      console.error('Get booking failed:', error);
+      logger.error('Get booking failed:', error);
       return null;
     }
   }
@@ -251,7 +252,7 @@ class BookingService {
       
       return false;
     } catch (error) {
-      console.error('Cancel booking failed:', error);
+      logger.error('Cancel booking failed:', error);
       throw error;
     }
   }
@@ -278,7 +279,7 @@ class BookingService {
         throw new Error(response.data.message || 'Modification failed');
       }
     } catch (error) {
-      console.error('Modify booking failed:', error);
+      logger.error('Modify booking failed:', error);
       throw error;
     }
   }
@@ -289,7 +290,7 @@ class BookingService {
   async addToCalendar(booking: Booking): Promise<boolean> {
     // This would integrate with the device calendar
     // Implementation depends on platform-specific calendar APIs
-    console.log('Adding to calendar:', booking);
+    logger.debug('Adding to calendar:', booking);
     return true;
   }
 
@@ -349,7 +350,7 @@ class BookingService {
       
       return response.data.suggestions;
     } catch (error) {
-      console.error('Get contextual suggestions failed:', error);
+      logger.error('Get contextual suggestions failed:', error);
       return [];
     }
   }
@@ -370,7 +371,7 @@ class BookingService {
       
       await AsyncStorage.setItem('@bookings', JSON.stringify(bookings));
     } catch (error) {
-      console.error('Save booking locally failed:', error);
+      logger.error('Save booking locally failed:', error);
     }
   }
 
@@ -392,7 +393,7 @@ class BookingService {
           return bookings;
       }
     } catch (error) {
-      console.error('Get local bookings failed:', error);
+      logger.error('Get local bookings failed:', error);
       return [];
     }
   }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -81,7 +82,7 @@ export const ScavengerHuntScreen: React.FC = () => {
       const found = huntItems.filter(item => item.found).length;
       setFoundCount(found);
     } catch (error) {
-      console.error('Error initializing hunt:', error);
+      logger.error('Error initializing hunt:', error);
       Alert.alert('Error', 'Failed to start scavenger hunt');
       navigation.goBack();
     } finally {
@@ -155,7 +156,7 @@ export const ScavengerHuntScreen: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Error submitting find:', error);
+      logger.error('Error submitting find:', error);
       Alert.alert('Error', 'Failed to submit find');
     } finally {
       setSubmitting(false);
@@ -179,7 +180,7 @@ export const ScavengerHuntScreen: React.FC = () => {
         totalItems: items.length,
       });
     } catch (error) {
-      console.error('Error ending hunt:', error);
+      logger.error('Error ending hunt:', error);
       navigation.goBack();
     }
   };

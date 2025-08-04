@@ -12,9 +12,9 @@ from enum import Enum
 import logging
 from dataclasses import dataclass, field
 
-from backend.app.core.config import get_settings
-from backend.app.services.driving_assistant import DrivingContext
-from backend.app.services.navigation.navigationService import NavigationService
+from app.core.config import get_settings
+from app.services.driving_assistant import DrivingContext
+from app.services.navigation.navigationService import NavigationService
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

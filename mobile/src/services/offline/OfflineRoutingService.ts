@@ -9,6 +9,7 @@ import { mapTileManager } from './MapTileManager';
 import { performanceMonitor } from '../performanceMonitor';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
 interface RoutingNode {
   id: string;
   location: Location;
@@ -277,7 +278,7 @@ class OfflineRoutingService {
     try {
       const exists = await RNFS.exists(this.graphPath);
       if (!exists) {
-        console.log('No offline routing graph found');
+        logger.debug('No offline routing graph found');
         return;
       }
       
@@ -307,10 +308,10 @@ class OfflineRoutingService {
         this.routingGraph.quadTree.insert(node);
       }
       
-      console.log(`Loaded routing graph with ${this.routingGraph.nodes.size} nodes`);
+      logger.debug(`Loaded routing graph with ${this.routingGraph.nodes.size} nodes`);
       
     } catch (error) {
-      console.error('Failed to load routing graph:', error);
+      logger.error('Failed to load routing graph:', error);
     }
   }
   
@@ -329,7 +330,7 @@ class OfflineRoutingService {
     }
     
     if (!this.routingGraph) {
-      console.error('No routing graph available');
+      logger.error('No routing graph available');
       return null;
     }
     
@@ -339,7 +340,7 @@ class OfflineRoutingService {
       const endNode = this.routingGraph.quadTree.findNearestNode(request.end);
       
       if (!startNode || !endNode) {
-        console.error('Could not find route nodes');
+        logger.error('Could not find route nodes');
         return null;
       }
       
@@ -381,7 +382,7 @@ class OfflineRoutingService {
       return result;
       
     } catch (error) {
-      console.error('Route calculation failed:', error);
+      logger.error('Route calculation failed:', error);
       return null;
     }
   }
@@ -709,7 +710,7 @@ class OfflineRoutingService {
         }
       }
       
-      console.log(`Added ${addedCount} new routing nodes`);
+      logger.debug(`Added ${addedCount} new routing nodes`);
       
       // Persist to storage
       await this.saveRoutingGraph();
@@ -718,7 +719,7 @@ class OfflineRoutingService {
       this.routeCache.clear();
       
     } catch (error) {
-      console.error('Failed to update routing graph:', error);
+      logger.error('Failed to update routing graph:', error);
     }
   }
   
@@ -740,10 +741,10 @@ class OfflineRoutingService {
       
       await RNFS.writeFile(this.graphPath, JSON.stringify(graphData), 'utf8');
       
-      console.log(`Saved routing graph with ${this.routingGraph.nodes.size} nodes`);
+      logger.debug(`Saved routing graph with ${this.routingGraph.nodes.size} nodes`);
       
     } catch (error) {
-      console.error('Failed to save routing graph:', error);
+      logger.error('Failed to save routing graph:', error);
     }
   }
   

@@ -9,7 +9,7 @@ This module configures Celery for handling background tasks with:
 """
 
 import os
-from backend.app.core.celery_config import create_celery_app, CELERY_CONFIG
+from app.core.celery_config import create_celery_app, CELERY_CONFIG
 
 # Create enhanced Celery instance with Six Sigma controls
 celery_app = create_celery_app()

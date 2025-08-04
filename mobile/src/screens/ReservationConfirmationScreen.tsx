@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -95,7 +96,7 @@ export const ReservationConfirmationScreen: React.FC = () => {
 
       Alert.alert('Success', 'Reservation added to your calendar!');
     } catch (error) {
-      console.error('Calendar error:', error);
+      logger.error('Calendar error:', error);
       Alert.alert('Error', 'Unable to add to calendar.');
     }
   };
@@ -113,7 +114,7 @@ export const ReservationConfirmationScreen: React.FC = () => {
         title: 'Restaurant Reservation',
       });
     } catch (error) {
-      console.error('Share error:', error);
+      logger.error('Share error:', error);
     }
   };
 
@@ -165,7 +166,7 @@ export const ReservationConfirmationScreen: React.FC = () => {
                 ]
               );
             } catch (error) {
-              console.error('Cancellation error:', error);
+              logger.error('Cancellation error:', error);
               Alert.alert(
                 'Cancellation Failed',
                 'Unable to cancel reservation. Please contact the restaurant directly.'

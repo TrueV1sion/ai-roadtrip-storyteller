@@ -10,6 +10,7 @@ import { useTranslation } from '../i18n';
 
 import { COLORS, SPACING } from '../theme';
 
+import { logger } from '@/services/logger';
 const PermissionsScreen: React.FC<{
   navigation: any;
 }> = ({ navigation }) => {
@@ -24,7 +25,7 @@ const PermissionsScreen: React.FC<{
         setLocationPermissionGranted(true);
       }
     } catch (error) {
-      console.error('Error requesting location permission:', error);
+      logger.error('Error requesting location permission:', error);
     }
   };
 
@@ -41,7 +42,7 @@ const PermissionsScreen: React.FC<{
         setNotificationPermissionGranted(true);
       }
     } catch (error) {
-      console.error('Error requesting notification permission:', error);
+      logger.error('Error requesting notification permission:', error);
     }
   };
 
@@ -50,7 +51,7 @@ const PermissionsScreen: React.FC<{
       await AsyncStorage.setItem('hasCompletedPermissions', 'true');
       navigation.replace('Main');
     } catch (error) {
-      console.error('Error saving permissions status:', error);
+      logger.error('Error saving permissions status:', error);
       navigation.replace('Main');
     }
   };

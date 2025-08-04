@@ -1,120 +1,320 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+.pnp
 .pnp.js
 
-# testing
-/coverage
+# Testing
+coverage/
+*.lcov
+.nyc_output
 
-# production
-/build
+# Production
+build/
+dist/
+*.production.local
 
-# misc
+# Misc
 .DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
 # Environment files - CRITICAL SECURITY
 .env
-.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
 !.env.example
 
-# Secrets and credentials - CRITICAL SECURITY
-**/secrets/
-**/credentials/
-**/credentials_backup/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.cursor/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.egg-info/
+.eggs/
+*.egg
+MANIFEST
+celerybeat-schedule
+celerybeat.pid
+*.sage.py
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+cython_debug/
+
+# Backend specific
+backend/instance/
+backend/*.db
+backend/*.sqlite
+backend/.env
+backend/.env.*
+backend/logs/
+backend/*.log
+backend/temp/
+backend/uploads/
+backend/keys/
+backend/jwt_keys/
+
+# Mobile/React Native
+mobile/.expo/
+mobile/.expo-shared/
+mobile/dist/
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.key
+mobile/*.mobileprovision
+mobile/*.orig.*
+mobile/web-build/
+mobile/.env
+mobile/.env.*
+
+# Android
+mobile/android/app/debug/
+mobile/android/app/release/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/.idea/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/*.iml
+mobile/android/.DS_Store
+mobile/android/captures/
+mobile/android/.externalNativeBuild/
+mobile/android/.cxx/
+
+# iOS
+mobile/ios/Pods/
+mobile/ios/*.xcworkspace/
+mobile/ios/*.xcodeproj/xcuserdata/
+mobile/ios/*.xcodeproj/project.xcworkspace/
+mobile/ios/.DS_Store
+
+# Expo
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+
+# Google Cloud
+.gcloudignore
+gcloud-key.json
+service-account-key.json
+*.serviceaccount.json
+*-sa.json
+*service-account*.json
+*serviceaccount*.json
+
+# Monitoring
+grafana/data/
+prometheus/data/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+service_status.json
+agent.log
+
+# Cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.bak
+*.backup
+tmp/
+temp/
+
+# Security - NEVER commit these
 *.pem
 *.key
+*.cert
 *.crt
 *.p12
+*.pfx
+private/
+secrets/
+credentials/
+jwt_keys/
+jwt_key_backup/
 *_rsa
 *_rsa.pub
-credentials/
 credentials_backup/
+api_keys/
+tokens/
+
+# MCP Credentials
+.credentials/
+.env.mcp
+.mcp-servers/
+
+# Build artifacts
+*.tsbuildinfo
+.eslintcache
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Project specific ignores
+nul
+*.pid
+.preview_pid
+.preview_log
+.console-backup/
+__mocks__/
+scripts/deployment/secrets/
+backend/deploy-test.yaml
+backend/deploy-simple.yaml
+mobile/debug.html
+mobile/test-startup.js
+mobile/start-preview.js
+knowledge_graph/test.html
+
+# Temporary deployment files
+backend/cloudbuild-*.yaml
+backend/deploy-*.sh
+backend/deploy-*.bat
+backend/test-*.py
+backend/fix-*.py
+backend/fix-*.bat
+backend/fix-*.ps1
+mobile/fix-*.bat
+mobile/fix-*.ps1
+mobile/restart-*.bat
+mobile/run-*.js
+mobile/switch_*.sh
+mobile/start-*.js
+mobile/setup-*.sh
+mobile/setup-*.ps1
+
+# Old backup files
+*.old
+*.backup
+*.orig
+App.*.backup
+App.*.old
+metro.config.*.js
+
+# Claude/AI assistant files
+.claude/
+agent_taskforce/
+
+# Test and mock files
+test_*.py
+*_test_report.md
+*_dmaic_report.py
+*_dmaic_report.md
+*_SIX_SIGMA_*.md
+
+# Deployment status files
+*_DEPLOYMENT_*.md
+*_STATUS.md
+*_READY.md
+DEPLOY_NOW.md
+
+# Documentation that should be tracked
+!README.md
+!CLAUDE.md
+!docs/**/*.md
+!mobile/docs/**/*.md
+!backend/docs/**/*.md
+
+# Database files
+*.sql
+!alembic/versions/*.sql
+
+# Secrets files but allow examples
 *.json
 !package.json
 !package-lock.json
 !tsconfig.json
 !app.json
 !jest.config.json
-
-# Service account keys
-*-sa.json
-*service-account*.json
-*serviceaccount*.json
-
-# Database credentials
-*.sql
-!alembic/versions/*.sql
-
-# API keys and tokens
-api_keys/
-tokens/
-.env.production
-.env.staging
-.env.development
-.env.local
-.env.*.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# MCP Credentials - NEVER COMMIT
-.credentials/
-.env.mcp
-.mcp-servers/
-
-# Python virtual environments
-venv/
-*/venv/
-knowledge_graph/venv/
-backend/venv/
-agent_taskforce/venv/
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-env/
-ENV/
-env.bak/
-venv.bak/
-.pytest_cache/
-
-# Node modules
-node_modules/
-mobile/node_modules/
-
-# Logs
-logs/
-*.log
-service_status.json
-agent.log
-
-# IDEs
-.idea/
-.vscode/
-*.swp
-*.swo
-.cursor/
-
-# OS files
-Thumbs.db
-ehthumbs.db
-
-# Terraform
-*.tfstate
-*.tfstate.backup
-.terraform/
-.terraform.lock.hcl
-
-# Build artifacts
-build/
-dist/
-*.egg-info/
-
-# Temporary files
-*.tmp
-*.temp
-tmp/
-temp/
+!app.config.js
+!babel.config.js
+!metro.config.js
+!eas.json
+!app.production.json

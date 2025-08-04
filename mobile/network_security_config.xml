@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Default configuration for all connections -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Production API domain with certificate pinning -->
+    <domain-config>
+        <domain includeSubdomains="true">api.roadtripai.com</domain>
+        <pin-set expiration="2025-12-31">
+            <!-- Add your certificate SHA-256 pins here -->
+            <!-- To get the pin: openssl s_client -servername api.roadtripai.com -connect api.roadtripai.com:443 | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64 -->
+            <pin digest="SHA-256">YOUR_CERTIFICATE_PIN_HERE</pin>
+            <!-- Backup pin (required) -->
+            <pin digest="SHA-256">YOUR_BACKUP_CERTIFICATE_PIN_HERE</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Staging API domain (optional certificate pinning) -->
+    <domain-config>
+        <domain includeSubdomains="true">staging-api.roadtripai.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Debug configuration (only in debug builds) -->
+    <debug-overrides>
+        <trust-anchors>
+            <!-- Allow user-installed certificates for debugging -->
+            <certificates src="user" />
+            <certificates src="system" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

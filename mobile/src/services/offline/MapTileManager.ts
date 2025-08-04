@@ -10,6 +10,7 @@ import MapLibreGL from '@maplibre/maplibre-react-native';
 import { performanceMonitor } from '../performanceMonitor';
 import { offlineManager } from '../OfflineManager';
 
+import { logger } from '@/services/logger';
 export interface TileCoordinate {
   z: number; // zoom level
   x: number; // tile column
@@ -49,8 +50,6 @@ class MapTileManager {
   private downloadQueue: Map<string, TileDownloadProgress> = new Map();
   private isDownloading: boolean = false;
   private readonly maxConcurrentDownloads = 3;
-  private readonly tileServerUrl = 'https://api.maptiler.com/tiles/v3';
-  private readonly apiKey = process.env.MAPTILER_API_KEY || '';
   
   // Storage paths
   private readonly tilesDirectory = `${RNFS.DocumentDirectoryPath}/offline_tiles`;
@@ -88,7 +87,7 @@ class MapTileManager {
       await this.initializeMBTilesSchema();
       
     } catch (error) {
-      console.error('Failed to initialize map tile storage:', error);
+      logger.error('Failed to initialize map tile storage:', error);
     }
   }
   
@@ -258,7 +257,7 @@ class MapTileManager {
               this.notifyProgress(progress);
             }
           } catch (error) {
-            console.error(`Failed to download tile ${tile.z}/${tile.x}/${tile.y}:`, error);
+            logger.error(`Failed to download tile ${tile.z}/${tile.x}/${tile.y}:`, error);
           }
         })
       );
@@ -289,28 +288,31 @@ class MapTileManager {
   }
   
   /**
-   * Download a single tile
+   * Download a single tile through backend proxy
    */
   private async downloadTile(
     tile: TileCoordinate,
     style: string
   ): Promise<ArrayBuffer | null> {
-    const url = `${this.tileServerUrl}/${tile.z}/${tile.x}/${tile.y}.pbf?key=${this.apiKey}`;
-    
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+      // Import the maps proxy service
+      const { mapsProxy } = await import('@/services/api/mapsProxy');
       
-      const data = await response.arrayBuffer();
+      // Download through backend proxy - no API key needed
+      const tileData = await mapsProxy.downloadMapTile({
+        z: tile.z,
+        x: tile.x,
+        y: tile.y,
+        style: style,
+        provider: 'maptiler'
+      });
       
       // Compress tile data
-      const compressed = await this.compressTile(data);
+      const compressed = await this.compressTile(tileData);
       return compressed;
       
     } catch (error) {
-      console.error('Tile download failed:', error);
+      logger.error('Tile download failed:', error);
       return null;
     }
   }

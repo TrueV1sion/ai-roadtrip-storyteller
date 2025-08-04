@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -52,7 +53,7 @@ const VoiceCharacterScreen: React.FC = () => {
         
         setLoadingCharacters(false);
       } catch (error) {
-        console.error('Error fetching characters:', error);
+        logger.error('Error fetching characters:', error);
         setLoadingCharacters(false);
         Alert.alert('Error', 'Failed to load voice characters');
       }
@@ -103,7 +104,7 @@ const VoiceCharacterScreen: React.FC = () => {
       
       setIsGenerating(false);
     } catch (error) {
-      console.error('Error playing sample:', error);
+      logger.error('Error playing sample:', error);
       setIsGenerating(false);
       Alert.alert('Error', 'Failed to play voice sample');
     }
@@ -136,7 +137,7 @@ const VoiceCharacterScreen: React.FC = () => {
       
       setIsGenerating(false);
     } catch (error) {
-      console.error('Error generating speech:', error);
+      logger.error('Error generating speech:', error);
       setIsGenerating(false);
       Alert.alert('Error', 'Failed to generate speech');
     }
@@ -167,7 +168,7 @@ const VoiceCharacterScreen: React.FC = () => {
           startProgressTimer();
         }
       } catch (error) {
-        console.error('Error playing speech:', error);
+        logger.error('Error playing speech:', error);
         Alert.alert('Error', 'Failed to play speech');
       }
     }
@@ -190,7 +191,7 @@ const VoiceCharacterScreen: React.FC = () => {
       await voiceCharacterService.seekToPosition(position * 1000); // Convert to milliseconds
       setPlaybackProgress(position);
     } catch (error) {
-      console.error('Error seeking:', error);
+      logger.error('Error seeking:', error);
     }
   };
   
@@ -260,8 +261,8 @@ const VoiceCharacterScreen: React.FC = () => {
           onSelectCharacter={handleSelectCharacter}
           onPlaySample={handlePlaySample}
           loading={loadingCharacters}
-          onSearch={(query) => console.log('Search:', query)}
-          onFilterByTheme={(theme) => console.log('Filter by theme:', theme)}
+          onSearch={(query) => logger.debug('Search:', query)}
+          onFilterByTheme={(theme) => logger.debug('Filter by theme:', theme)}
         />
       </ScrollView>
       

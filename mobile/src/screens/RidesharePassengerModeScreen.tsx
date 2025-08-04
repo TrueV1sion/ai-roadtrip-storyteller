@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -44,7 +45,7 @@ export const RidesharePassengerModeScreen = () => {
       });
       setEntertainment(response.data);
     } catch (error) {
-      console.error('Error loading entertainment:', error);
+      logger.error('Error loading entertainment:', error);
     } finally {
       setLoading(false);
     }

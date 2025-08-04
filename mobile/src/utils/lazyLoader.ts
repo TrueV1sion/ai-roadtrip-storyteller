@@ -5,6 +5,7 @@
 import React, { lazy, Suspense, ComponentType } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 
+import { logger } from '@/services/logger';
 // Loading component
 const LoadingFallback = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -36,7 +37,7 @@ export async function preloadComponent(
   try {
     await importFunc();
   } catch (error) {
-    console.error('Failed to preload component:', error);
+    logger.error('Failed to preload component:', error);
   }
 }
 

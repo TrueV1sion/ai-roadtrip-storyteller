@@ -12,6 +12,7 @@ import { locationService } from '../services/locationService';
 import { navigationService } from '../services/navigation/navigationService';
 import { weatherService } from '../services/weatherService';
 
+import { logger } from '@/services/logger';
 export interface DrivingContext {
   speed: number; // mph
   isNavigating: boolean;
@@ -80,7 +81,7 @@ export const useDrivingContext = () => {
       // Request location permissions
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.error('Location permission denied');
+        logger.error('Location permission denied');
         return;
       }
 
@@ -99,7 +100,7 @@ export const useDrivingContext = () => {
       
       return () => clearInterval(contextInterval);
     } catch (error) {
-      console.error('Failed to start location tracking:', error);
+      logger.error('Failed to start location tracking:', error);
     }
   };
 
@@ -195,7 +196,7 @@ export const useDrivingContext = () => {
         roadType
       }));
     } catch (error) {
-      console.error('Failed to update driving context:', error);
+      logger.error('Failed to update driving context:', error);
     }
   };
 

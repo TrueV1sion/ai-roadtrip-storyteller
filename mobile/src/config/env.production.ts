@@ -1,3 +1,5 @@
+import { logger } from '@/services/logger';
+
 /**
  * Production Environment Configuration
  * These values should be injected during the build process
@@ -26,9 +28,8 @@ export const ENV = {
     PREMIUM_VOICES: true,
   },
   
-  // Google Services
-  GOOGLE_MAPS_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '',
-  GOOGLE_PLACES_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY || '',
+  // Google Services - API keys are handled by backend proxy
+  // No API keys should be stored in the mobile app
   
   // Voice Services (keys should be on backend only)
   VOICE_RECOGNITION_ENABLED: true,
@@ -37,7 +38,7 @@ export const ENV = {
   
   // Analytics
   ANALYTICS_ENABLED: true,
-  ANALYTICS_KEY: process.env.EXPO_PUBLIC_ANALYTICS_KEY || '',
+  // Analytics key is handled by backend proxy
   
   // Sentry Error Tracking
   SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
@@ -77,10 +78,8 @@ export const ENV = {
   SUPPORT_URL: 'https://roadtripai.com/support',
   WEBSITE_URL: 'https://roadtripai.com',
   
-  // Social Media
-  FACEBOOK_APP_ID: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || '',
-  TWITTER_CONSUMER_KEY: process.env.EXPO_PUBLIC_TWITTER_KEY || '',
-  INSTAGRAM_CLIENT_ID: process.env.EXPO_PUBLIC_INSTAGRAM_ID || '',
+  // Social Media - OAuth handled by backend
+  // No social media API keys should be stored in the mobile app
   
   // Deep Linking
   DEEP_LINK_SCHEME: 'roadtripai',
@@ -106,7 +105,6 @@ export type Environment = typeof ENV;
 // Validate required environment variables
 const requiredVars = [
   'EXPO_PUBLIC_API_URL',
-  'EXPO_PUBLIC_GOOGLE_MAPS_KEY',
 ];
 
 // Check required variables in production
@@ -116,7 +114,7 @@ if (ENV.APP_ENV === 'production') {
   );
   
   if (missing.length > 0) {
-    console.error('Missing required environment variables:', missing);
+    logger.error('Missing required environment variables:', missing);
     // In production, this should fail the build
     if (process.env.CI) {
       throw new Error(`Missing required environment variables: ${missing.join(', ')}`);

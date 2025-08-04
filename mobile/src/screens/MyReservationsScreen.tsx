@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -53,7 +54,7 @@ export const MyReservationsScreen: React.FC = () => {
       const response = await apiClient.get('/api/reservations/my-reservations');
       setReservations(response.data.reservations);
     } catch (error) {
-      console.error('Error fetching reservations:', error);
+      logger.error('Error fetching reservations:', error);
       Alert.alert('Error', 'Unable to load reservations. Please try again.');
     } finally {
       setLoading(false);
@@ -150,7 +151,7 @@ export const MyReservationsScreen: React.FC = () => {
               Alert.alert('Success', 'Your reservation has been cancelled.');
               fetchReservations(false);
             } catch (error) {
-              console.error('Cancellation error:', error);
+              logger.error('Cancellation error:', error);
               Alert.alert(
                 'Cancellation Failed',
                 'Unable to cancel reservation. Please try again.'

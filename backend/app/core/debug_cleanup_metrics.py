@@ -193,7 +193,7 @@ class DebugCleanupMetrics:
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     total_lines += len(f.readlines())
-            except:
+            except Exception as e:
                 pass
                 
         return total_lines

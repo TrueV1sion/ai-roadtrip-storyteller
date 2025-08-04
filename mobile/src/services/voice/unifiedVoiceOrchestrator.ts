@@ -16,6 +16,7 @@ import * as Permissions from 'expo-permissions';
 import { Platform } from 'react-native';
 import { voicePerformanceOptimizer } from './voicePerformanceOptimizer';
 
+import { logger } from '@/services/logger';
 interface VoiceResponse {
   voice_audio: string; // Base64 encoded audio
   transcript: string;
@@ -96,7 +97,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
     
     // Listen for performance events
     voicePerformanceOptimizer.on('performanceThresholdExceeded', (data) => {
-      console.warn('Performance threshold exceeded:', data);
+      logger.warn('Performance threshold exceeded:', data);
       this.emit('performanceWarning', data);
     });
     
@@ -151,7 +152,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
       }, 10000);
       
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      logger.error('Failed to start recording:', error);
       this.emit('error', 'Failed to start recording');
     }
   }
@@ -182,7 +183,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
       this.recording = undefined;
       
     } catch (error) {
-      console.error('Failed to stop recording:', error);
+      logger.error('Failed to stop recording:', error);
       this.emit('error', 'Failed to process recording');
     }
   }
@@ -243,7 +244,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
       }
       
     } catch (error) {
-      console.error('Failed to process voice input:', error);
+      logger.error('Failed to process voice input:', error);
       
       // Check if we can handle offline
       const isOffline = error.message?.includes('Network') || error.code === 'NETWORK_ERROR';
@@ -292,7 +293,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
       });
       
     } catch (error) {
-      console.error('Failed to play audio:', error);
+      logger.error('Failed to play audio:', error);
       // Fallback to text-to-speech
       await this.speakLocally(audioBase64);
     }
@@ -328,7 +329,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.log('Location permission not granted');
+        logger.debug('Location permission not granted');
         return;
       }
 
@@ -360,7 +361,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
         }
       );
     } catch (error) {
-      console.error('Failed to start location tracking:', error);
+      logger.error('Failed to start location tracking:', error);
     }
   }
 
@@ -400,7 +401,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
           await this.playVoiceResponse(response.data.voice_audio);
         }
       } catch (error) {
-        console.error('Failed to get proactive suggestion:', error);
+        logger.error('Failed to get proactive suggestion:', error);
       }
     }, 30000);
   }
@@ -445,7 +446,7 @@ class UnifiedVoiceOrchestrator extends EventEmitter {
         this.conversationContext = JSON.parse(saved);
       }
     } catch (error) {
-      console.error('Failed to load preferences:', error);
+      logger.error('Failed to load preferences:', error);
     }
   }
 

@@ -38,6 +38,7 @@ class Reservation(Base):
     
     # Relationships
     user = relationship("User", back_populates="reservations")
+    parking_details = relationship("ParkingReservation", back_populates="reservation", uselist=False)
     
     def __repr__(self):
         return f"<Reservation {self.id} - {self.venue_name} at {self.reservation_time}>"

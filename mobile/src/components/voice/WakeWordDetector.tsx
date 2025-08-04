@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -76,7 +77,7 @@ const WakeWordDetector: React.FC<WakeWordDetectorProps> = ({ onWakeWordDetected 
         setWakeWords(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Failed to load wake words:', error);
+      logger.error('Failed to load wake words:', error);
     }
   };
 
@@ -85,7 +86,7 @@ const WakeWordDetector: React.FC<WakeWordDetectorProps> = ({ onWakeWordDetected 
       await AsyncStorage.setItem('@wake_words', JSON.stringify(words));
       setWakeWords(words);
     } catch (error) {
-      console.error('Failed to save wake words:', error);
+      logger.error('Failed to save wake words:', error);
     }
   };
 
@@ -110,7 +111,7 @@ const WakeWordDetector: React.FC<WakeWordDetectorProps> = ({ onWakeWordDetected 
       // Start continuous detection
       startContinuousDetection();
     } catch (error) {
-      console.error('Failed to start listening:', error);
+      logger.error('Failed to start listening:', error);
       setIsListening(false);
     }
   };
@@ -126,7 +127,7 @@ const WakeWordDetector: React.FC<WakeWordDetectorProps> = ({ onWakeWordDetected 
         await recording.current.stopAndUnloadAsync();
         recording.current = null;
       } catch (error) {
-        console.error('Failed to stop recording:', error);
+        logger.error('Failed to stop recording:', error);
       }
     }
   };
@@ -165,7 +166,7 @@ const WakeWordDetector: React.FC<WakeWordDetectorProps> = ({ onWakeWordDetected 
     onWakeWordDetected();
 
     // Log detection
-    console.log(`Wake word detected: ${wakeWord.phrase}`);
+    logger.debug(`Wake word detected: ${wakeWord.phrase}`);
   };
 
   const startPulseAnimation = () => {
@@ -247,7 +248,7 @@ const WakeWordDetector: React.FC<WakeWordDetectorProps> = ({ onWakeWordDetected 
         }
       }, 2000);
     } catch (error) {
-      console.error('Failed to record training sample:', error);
+      logger.error('Failed to record training sample:', error);
       setIsTraining(false);
     }
   };

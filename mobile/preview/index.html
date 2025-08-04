@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoadTrip App Preview</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: white;
+            border-radius: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            display: none;
+            padding: 60px 20px 20px;
+        }
+        .screen.active {
+            display: block;
+        }
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .button {
+            width: 100%;
+            padding: 15px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .button.outline {
+            background: transparent;
+            border: 1px solid #007AFF;
+            color: #007AFF;
+        }
+        .story-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .story-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .story-card h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+        .story-card p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .player-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .nav-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <!-- Login Screen -->
+        <div class="screen active" id="login-screen">
+            <h2>Welcome Back</h2>
+            <input type="email" placeholder="Email" class="input-field">
+            <input type="password" placeholder="Password" class="input-field">
+            <button class="button">Login</button>
+            <button class="button outline">Register</button>
+            <button class="button outline">Forgot Password?</button>
+        </div>
+
+        <!-- Main Player Screen -->
+        <div class="screen" id="player-screen">
+            <div class="story-card">
+                <img src="https://picsum.photos/400/200" alt="Story thumbnail">
+                <h3>The Mystery of Route 66</h3>
+                <p>A fascinating tale of America's most iconic highway...</p>
+            </div>
+            <div class="player-controls">
+                <button class="button">Previous</button>
+                <button class="button">Play</button>
+                <button class="button">Next</button>
+            </div>
+        </div>
+
+        <!-- Interest Selection Screen -->
+        <div class="screen" id="interests-screen">
+            <h2>Select Your Interests</h2>
+            <button class="button outline">Historical Sites</button>
+            <button class="button outline">Natural Wonders</button>
+            <button class="button outline">Local Culture</button>
+            <button class="button outline">Food & Cuisine</button>
+            <button class="button outline">Architecture</button>
+            <button class="button">Save Preferences</button>
+        </div>
+    </div>
+
+    <script>
+        // Simple navigation
+        const screens = document.querySelectorAll('.screen');
+        let currentScreen = 0;
+
+        function showScreen(index) {
+            screens.forEach(screen => screen.classList.remove('active'));
+            screens[index].classList.add('active');
+        }
+
+        // Add navigation buttons
+        const nav = document.createElement('div');
+        nav.className = 'nav-buttons';
+        nav.innerHTML = `
+            <button class="button" onclick="showScreen(0)">Login</button>
+            <button class="button" onclick="showScreen(1)">Player</button>
+            <button class="button" onclick="showScreen(2)">Interests</button>
+        `;
+        document.body.appendChild(nav);
+    </script>
+</body>
+</html>

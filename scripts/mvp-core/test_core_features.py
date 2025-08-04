@@ -201,7 +201,7 @@ class CoreFeatureTester:
                         self.test_results["safety"]["tests"].append(
                             f"❌ Auto-pause response {elapsed:.0f}ms (>100ms)"
                         )
-        except:
+        except Exception as e:
             self.test_results["safety"]["passed"] += 1
             self.test_results["safety"]["tests"].append("✅ Safety pause simulation")
     

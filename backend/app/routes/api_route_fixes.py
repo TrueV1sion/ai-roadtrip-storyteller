@@ -248,7 +248,7 @@ class ReservationValidationFixes:
 # Apply fixes to routes
 def apply_route_fixes(app):
     """Apply all fixes to the FastAPI routes"""
-    from backend.app.routes import games, reservations_v2
+    from app.routes import games, reservations_v2
     
     # Add rate limiting middleware
     app.middleware("http")(RateLimitingFixes.create_rate_limit_middleware())

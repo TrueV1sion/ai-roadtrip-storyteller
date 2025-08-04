@@ -6,8 +6,8 @@ Uses the weather client with proper encoding support.
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from backend.app.integrations.weather_client import weather_client
-from backend.app.core.logger import logger
+from app.integrations.weather_client import weather_client
+from app.core.logger import logger
 
 
 class WeatherService:

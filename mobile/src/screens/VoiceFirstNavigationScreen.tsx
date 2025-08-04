@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -239,7 +240,7 @@ export const VoiceFirstNavigationScreen: React.FC = () => {
         break;
 
       default:
-        console.log('Unhandled command:', action, params);
+        logger.debug('Unhandled command:', action, params);
     }
   };
 
@@ -282,7 +283,7 @@ export const VoiceFirstNavigationScreen: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Navigation error:', error);
+      logger.error('Navigation error:', error);
       voiceInteractionManager.speak('Sorry, I couldn\'t find a route to that destination.');
     }
   };
@@ -314,7 +315,7 @@ export const VoiceFirstNavigationScreen: React.FC = () => {
         voiceInteractionManager.speak(`No ${spokenType} found nearby.`);
       }
     } catch (error) {
-      console.error('Place search error:', error);
+      logger.error('Place search error:', error);
       voiceInteractionManager.speak(`Sorry, I couldn't search for ${spokenType}.`);
     }
   };

@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -89,7 +90,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       });
       setSearchResults(response.data.results);
     } catch (error) {
-      console.error('Search failed:', error);
+      logger.error('Search failed:', error);
     } finally {
       setLoading(false);
     }
@@ -118,7 +119,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
 
   const announceStep = async (stepName: string) => {
     // In a real app, this would use TTS
-    console.log(`Now at ${stepName} step`);
+    logger.debug(`Now at ${stepName} step`);
   };
 
   const confirmBooking = async () => {
@@ -141,7 +142,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error('Booking failed:', error);
+      logger.error('Booking failed:', error);
     } finally {
       setLoading(false);
     }
@@ -345,7 +346,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
             style={styles.specialRequestsInput}
             onPress={() => {
               // In real app, open text input modal
-              console.log('Open special requests input');
+              logger.debug('Open special requests input');
             }}
           >
             <Text style={styles.specialRequestsText}>

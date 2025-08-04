@@ -21,7 +21,7 @@ def check_docker():
     try:
         result = subprocess.run(['docker', 'info'], capture_output=True)
         return result.returncode == 0
-    except:
+    except Exception as e:
         return False
 
 

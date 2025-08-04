@@ -8,6 +8,7 @@ import { SharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-nat
 import { ARLandmark } from './ARLandmarkService';
 import { performanceMonitor } from '../performanceMonitor';
 
+import { logger } from '@/services/logger';
 export interface AROverlay {
   id: string;
   type: 'landmark' | 'navigation' | 'game' | 'photo';
@@ -469,7 +470,7 @@ export class AROverlayRenderer {
       // Switch to balanced mode
       this.renderConfig.performanceMode = 'balanced';
       this.optimizeForPerformanceMode();
-      console.log('AR: Switching to balanced performance mode');
+      logger.debug('AR: Switching to balanced performance mode');
     }
   }
   

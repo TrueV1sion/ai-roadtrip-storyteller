@@ -8,6 +8,7 @@ import { initPerformanceMonitoring } from '@/utils/performance';
 import { optimizedApiClient } from '@/services/api/OptimizedApiClient';
 import { ImageCacheManager } from '@/utils/optimizedImage';
 
+import { logger } from '@/services/logger';
 // Types
 interface PerformanceMetrics {
   memoryUsage: number;
@@ -74,7 +75,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Start metrics collection
         startMetricsCollection();
       } catch (error) {
-        console.error('Error setting up app:', error);
+        logger.error('Error setting up app:', error);
         
         // Fall back to completing startup even with errors
         await completeStartup();
@@ -148,7 +149,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         },
       });
     } catch (error) {
-      console.error('Error updating performance metrics:', error);
+      logger.error('Error updating performance metrics:', error);
     }
   };
   
@@ -162,7 +163,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       return success;
     } catch (error) {
-      console.error('Error clearing image cache:', error);
+      logger.error('Error clearing image cache:', error);
       return false;
     }
   };
@@ -175,7 +176,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Update metrics after clearing
       updatePerformanceMetrics();
     } catch (error) {
-      console.error('Error clearing API cache:', error);
+      logger.error('Error clearing API cache:', error);
     }
   };
   

@@ -11,8 +11,8 @@ import numpy as np
 from datetime import datetime
 import json
 
-from backend.app.core.logger import get_logger
-from backend.app.services.persona_synthesis_service import VoiceCharacteristics
+from app.core.logger import get_logger
+from app.services.persona_synthesis_service import VoiceCharacteristics
 
 logger = get_logger(__name__)
 

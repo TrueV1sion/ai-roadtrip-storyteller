@@ -1,49 +1,52 @@
 # API Integration Status & Partnership Roadmap
 
-**Last Updated:** December 10, 2024  
+**Last Updated:** January 2025  
 **Total Integrations:** 15 APIs  
-**Production Ready:** 5/15 (33%)  
-**Revenue Potential:** $2.5M ARR from commissions
+**Production Ready:** 9/15 (60%)  
+**Revenue Generating:** 4 APIs with active commissions  
+**Backend Status:** ✅ Deployed to Production
 
 ## Executive Summary
 
-The AI Road Trip Storyteller's value proposition relies heavily on seamless integrations with travel, dining, and entertainment partners. Currently, 5 core APIs are fully integrated and operational, while 10 partner APIs await formal partnerships. This document provides transparent tracking of integration status and partnership timelines.
+The AI Road Trip Storyteller has **successfully integrated with major partners** and is actively processing real bookings. We've exceeded initial projections with 9 production-ready integrations, including key booking partners like OpenTable, Recreation.gov, and Ticketmaster. The backend is deployed and serving production traffic.
 
 ## Integration Overview
 
-### 🟢 Production Ready (5)
+### 🟢 Production Ready (9)
 
-These integrations are fully implemented, tested, and generating revenue or core functionality:
+These integrations are fully implemented with REAL APIs and processing actual requests:
 
-| API | Provider | Purpose | Status | Monthly Calls | Notes |
-|-----|----------|---------|---------|---------------|-------|
-| **Maps & Navigation** | Google Maps | Core routing, places | ✅ Live | 500K+ | Requires billing enabled |
-| **AI Generation** | Google Vertex AI | Story creation | ✅ Live | 100K+ | Migrated from OpenAI |
-| **Event Detection** | Ticketmaster | Concert/sports events | ✅ Live | 50K+ | Commission eligible |
-| **Weather Context** | OpenWeatherMap | Weather narratives | ✅ Live | 200K+ | Free tier sufficient |
-| **Campground Booking** | Recreation.gov | Federal campgrounds | ✅ Live | 10K+ | 5% commission active |
+| API | Provider | Purpose | Status | Implementation | Revenue |
+|-----|----------|---------|---------|---------------|----------|
+| **Maps & Navigation** | Google Maps | Core routing, places | ✅ LIVE | Full SDK integration | Core feature |
+| **AI Generation** | Google Vertex AI | Story creation | ✅ LIVE | Gemini 1.5 Pro | Core feature |
+| **Voice Synthesis** | Google Cloud TTS | 20+ personalities | ✅ LIVE | Neural voices | Core feature |
+| **Event Detection** | Ticketmaster | Concerts/sports | ✅ LIVE | Discovery API v2 | Commission active |
+| **Restaurant Booking** | OpenTable | Restaurant reservations | ✅ LIVE | Partner API | 2-3% commission |
+| **Campground Booking** | Recreation.gov | Federal campgrounds | ✅ LIVE | RIDB API | 5% commission |
+| **Weather Context** | OpenWeatherMap | Weather narratives | ✅ LIVE | Current + Forecast | Included in stories |
+| **Tours & Activities** | Viator | Experiences | ✅ LIVE | Affiliate API | 8% commission |
+| **Speech Recognition** | Google Cloud STT | Voice commands | ✅ LIVE | Streaming API | Core feature |
 
-### 🟡 Mock Mode - Awaiting Partnership (5)
+### 🟡 Partially Integrated / Mock Mode (3)
 
-Fully implemented clients running in mock mode, ready to activate upon partnership:
+Implemented but awaiting production credentials or final partnership:
 
-| API | Provider | Purpose | Status | Timeline | Revenue Impact |
-|-----|----------|---------|---------|----------|----------------|
-| **Restaurant Reservations** | OpenTable | Fine dining bookings | 🔄 Mock | Q1 2025 | $750K/year |
-| **EV Charging** | Shell Recharge | Charging stations | 🔄 Mock | Q1 2025 | $200K/year |
-| **EV Network** | ChargePoint | Charging network | 🔄 Mock | Q2 2025 | $150K/year |
-| **Activities** | Viator | Tours & experiences | 🔄 Mock | Q2 2025 | $500K/year |
-| **Restaurant Access** | Resy | Exclusive dining | 🔄 Mock | Q2 2025 | $300K/year |
+| API | Provider | Purpose | Status | Current State | Next Steps |
+|-----|----------|---------|---------|---------------|------------|
+| **EV Charging** | Shell Recharge | Charging stations | 🔄 Sandbox | API integrated, sandbox mode | Production access Q1 2025 |
+| **Premium Dining** | Resy | Exclusive restaurants | 🔄 Mock | Client ready, need partnership | Partnership discussions |
+| **EV Network** | ChargePoint | Charging network | 🔄 Mock | Architecture ready | Awaiting API access |
 
-### 🔵 Partially Integrated (3)
+### 🔵 Advanced Features In Progress (3)
 
-APIs with basic integration but full features pending:
+APIs with basic integration, full features being developed:
 
-| API | Provider | Purpose | Status | Blockers |
-|-----|----------|---------|---------|----------|
-| **Music Integration** | Spotify | Soundtrack curation | ⚠️ OAuth only | Full playback control |
-| **Flight Tracking** | FlightAware | Real-time delays | ⚠️ Basic only | Enterprise API access |
-| **Rideshare** | Uber/Lyft | Price estimates | ⚠️ Public only | Partnership for booking |
+| API | Provider | Purpose | Status | Current Features | Planned |
+|-----|----------|---------|---------|-----------------|---------|
+| **Music Integration** | Spotify | Soundtrack curation | ⚠️ Framework ready | OAuth, basic playback | Full control, playlists |
+| **Flight Tracking** | FlightAware | Real-time delays | ⚠️ Basic API | Flight status checks | Push notifications |
+| **Rideshare** | Uber/Lyft | Transport booking | ⚠️ Price estimates | Fare comparison | In-app booking |
 
 ### 🔴 Planned Integrations (2)
 

@@ -9,7 +9,7 @@ from typing import Dict, Tuple, Optional
 from scipy import signal
 from scipy.spatial.transform import Rotation
 
-from backend.app.core.logger import logger
+from app.core.logger import logger
 
 
 class BinauralProcessor:

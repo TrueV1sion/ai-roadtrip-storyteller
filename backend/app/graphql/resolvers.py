@@ -8,21 +8,21 @@ from datetime import datetime
 import strawberry
 from strawberry.types import Info
 
-from backend.app.graphql.types import (
+from app.graphql.types import (
     User, Journey, Story, Booking, VoiceResponse, AIResponse,
     EventJourney, RealtimeLocation, NavigationUpdate, BookingOpportunity,
     Revenue, SystemHealth, VoiceInteractionUpdate, JourneyUpdate, BookingUpdate,
     BookingResponse, JourneyResponse, VoiceInteractionResponse,
     JourneyContextInput, VoiceInteractionInput, BookingRequestInput
 )
-from backend.app.services.master_orchestration_agent import MasterOrchestrationAgent
-from backend.app.services.booking_service import BookingService
-from backend.app.services.event_journey_service import EventJourneyService
-from backend.app.core.database_manager import DatabaseManager
-from backend.app.core.auth import get_current_user
-from backend.app.core.logger import get_logger
-from backend.app.tasks.booking import process_reservation
-from backend.app.tasks.ai import generate_story_async
+from app.services.master_orchestration_agent import MasterOrchestrationAgent
+from app.services.booking_service import BookingService
+from app.services.event_journey_service import EventJourneyService
+from app.core.database_manager import DatabaseManager
+from app.core.auth import get_current_user
+from app.core.logger import get_logger
+from app.tasks.booking import process_reservation
+from app.tasks.ai import generate_story_async
 
 logger = get_logger(__name__)
 

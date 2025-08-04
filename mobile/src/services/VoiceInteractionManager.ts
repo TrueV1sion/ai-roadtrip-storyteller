@@ -1,6 +1,7 @@
 import Voice, { SpeechResultsEvent } from '@react-native-voice/voice';
 import { useVoiceGuidance } from '../hooks/useVoiceGuidance';
 
+import { logger } from '@/services/logger';
 interface VoiceCommand {
   command: string;
   action: () => void;
@@ -32,7 +33,7 @@ class VoiceInteractionManager {
       Voice.onSpeechResults = this.handleSpeechResults.bind(this);
       Voice.onSpeechError = this.handleSpeechError.bind(this);
     } catch (error) {
-      console.error('Voice recognition not available:', error);
+      logger.error('Voice recognition not available:', error);
     }
   }
 
@@ -70,7 +71,7 @@ class VoiceInteractionManager {
   }
 
   private handleSpeechError(error: any) {
-    console.error('Speech recognition error:', error);
+    logger.error('Speech recognition error:', error);
     this.voiceGuidance.speak(
       "I'm having trouble understanding. Please try again."
     );
@@ -95,7 +96,7 @@ class VoiceInteractionManager {
         }
       };
     } catch (error) {
-      console.error('Error listening for confirmation:', error);
+      logger.error('Error listening for confirmation:', error);
     }
   }
 
@@ -107,7 +108,7 @@ class VoiceInteractionManager {
       this.isListening = true;
       this.voiceGuidance.speak('Listening for commands.');
     } catch (error) {
-      console.error('Error starting voice recognition:', error);
+      logger.error('Error starting voice recognition:', error);
       this.voiceGuidance.speak(
         'Unable to start voice recognition. Please try again.'
       );
@@ -122,7 +123,7 @@ class VoiceInteractionManager {
       this.isListening = false;
       this.voiceGuidance.speak('Voice commands disabled.');
     } catch (error) {
-      console.error('Error stopping voice recognition:', error);
+      logger.error('Error stopping voice recognition:', error);
     }
   }
 

@@ -235,7 +235,7 @@ async def analyze_impact(query: ImpactQuery):
                 "impact_score": impact_score,
                 "depth": distance
             })
-    except:
+    except Exception as e:
         pass
     
     # Sort by impact score
@@ -291,7 +291,7 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             # Echo back for now
             await websocket.send_text(f"Echo: {data}")
-    except:
+    except Exception as e:
         active_connections.remove(websocket)
 
 if __name__ == "__main__":

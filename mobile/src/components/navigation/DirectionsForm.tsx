@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -277,7 +278,7 @@ export const DirectionsForm: React.FC<DirectionsFormProps> = ({
       setPreviewRoute(routeData);
       setShowPreview(true);
     } catch (err) {
-      console.error('Failed to fetch route preview:', err);
+      logger.error('Failed to fetch route preview:', err);
       // Don't show error to user, just silently fail preview
       setPreviewRoute(null);
       setShowPreview(false);
@@ -584,7 +585,7 @@ export const DirectionsForm: React.FC<DirectionsFormProps> = ({
       });
     } catch (error) {
       // Handle error
-      console.error('Failed to get directions:', error);
+      logger.error('Failed to get directions:', error);
     }
   }, [
     origin,

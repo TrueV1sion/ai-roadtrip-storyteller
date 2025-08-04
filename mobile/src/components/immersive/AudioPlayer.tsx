@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 
+import { logger } from '@/services/logger';
 interface AudioPlayerProps {
   audioBase64?: string;
   onPlaybackStatusUpdate?: (isPlaying: boolean) => void;
@@ -97,7 +98,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       await newSound.playAsync();
       
     } catch (error) {
-      console.error('Error playing audio:', error);
+      logger.error('Error playing audio:', error);
       if (onError) onError('Failed to play audio. Please try again.');
     } finally {
       setIsLoading(false);

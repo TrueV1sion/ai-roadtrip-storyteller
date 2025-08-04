@@ -1,6 +1,7 @@
 import * as Speech from 'expo-speech';
 import { Platform } from 'react-native';
 
+import { logger } from '@/services/logger';
 interface SpeechOptions {
   language?: string;
   pitch?: number;
@@ -34,7 +35,7 @@ class VoiceService {
         this.defaultOptions.voice = storytellerVoice.identifier;
       }
     } catch (error) {
-      console.error('Error initializing voice service:', error);
+      logger.error('Error initializing voice service:', error);
     }
   }
 
@@ -58,7 +59,7 @@ class VoiceService {
         onError: (error) => this.handleSpeechError(error),
       });
     } catch (error) {
-      console.error('Error speaking:', error);
+      logger.error('Error speaking:', error);
       this.isSpeaking = false;
       this.processQueue();
     }
@@ -70,7 +71,7 @@ class VoiceService {
   }
 
   private handleSpeechError(error: any): void {
-    console.error('Speech error:', error);
+    logger.error('Speech error:', error);
     this.isSpeaking = false;
     this.processQueue();
   }
@@ -90,7 +91,7 @@ class VoiceService {
       this.isSpeaking = false;
       this.queue = [];  // Clear queue
     } catch (error) {
-      console.error('Error stopping speech:', error);
+      logger.error('Error stopping speech:', error);
     }
   }
 
@@ -98,7 +99,7 @@ class VoiceService {
     try {
       await Speech.pause();
     } catch (error) {
-      console.error('Error pausing speech:', error);
+      logger.error('Error pausing speech:', error);
     }
   }
 
@@ -106,7 +107,7 @@ class VoiceService {
     try {
       await Speech.resume();
     } catch (error) {
-      console.error('Error resuming speech:', error);
+      logger.error('Error resuming speech:', error);
     }
   }
 
@@ -114,7 +115,7 @@ class VoiceService {
     try {
       return await Speech.isSpeakingAsync();
     } catch (error) {
-      console.error('Error checking speech status:', error);
+      logger.error('Error checking speech status:', error);
       return false;
     }
   }

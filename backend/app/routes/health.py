@@ -17,7 +17,7 @@ from app.core.config import settings
 from app.core.logger import get_logger
 from app.core.cache import get_cache
 from app.core.token_blacklist import token_blacklist
-from app.db.base import get_db
+from app.database import get_db
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/health", tags=["monitoring"])

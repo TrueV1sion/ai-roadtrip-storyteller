@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -63,7 +64,7 @@ const InteractiveStoryScreen: React.FC = () => {
         try {
           narrativeResponse = await ApiClient.get<NarrativeGraphType>(`/interactive-narrative/narratives/${narrativeId}`);
         } catch (error) {
-          console.error('Failed to fetch narrative:', error);
+          logger.error('Failed to fetch narrative:', error);
           Alert.alert('Error', 'Failed to load the story. Please try again.');
           navigation.goBack();
           return;
@@ -78,7 +79,7 @@ const InteractiveStoryScreen: React.FC = () => {
           try {
             stateResponse = await ApiClient.get<NarrativeStateType>(`/interactive-narrative/states/${initialStateId}`);
           } catch (error) {
-            console.error('Failed to fetch state, creating new one:', error);
+            logger.error('Failed to fetch state, creating new one:', error);
             stateResponse = await ApiClient.post<NarrativeStateType>(`/interactive-narrative/initialize-state?narrative_id=${narrativeId}`);
           }
         } else {
@@ -95,7 +96,7 @@ const InteractiveStoryScreen: React.FC = () => {
         
         setLoading(false);
       } catch (error) {
-        console.error('Error initializing interactive story:', error);
+        logger.error('Error initializing interactive story:', error);
         setLoading(false);
         Alert.alert('Error', 'Failed to load the story. Please try again.');
         navigation.goBack();
@@ -117,7 +118,7 @@ const InteractiveStoryScreen: React.FC = () => {
       // Fetch progress
       fetchProgress(narrativeId, stateId);
     } catch (error) {
-      console.error('Error fetching current node:', error);
+      logger.error('Error fetching current node:', error);
       Alert.alert('Error', 'Failed to load story content. Please try again.');
     }
   };
@@ -128,7 +129,7 @@ const InteractiveStoryScreen: React.FC = () => {
       const response = await ApiClient.get<{ completion_percentage: number }>(`/interactive-narrative/progress/${stateId}?narrative_id=${narrativeId}`);
       setProgress(response.completion_percentage);
     } catch (error) {
-      console.error('Error fetching progress:', error);
+      logger.error('Error fetching progress:', error);
     }
   };
   
@@ -153,7 +154,7 @@ const InteractiveStoryScreen: React.FC = () => {
       
       setLoading(false);
     } catch (error) {
-      console.error('Error making choice:', error);
+      logger.error('Error making choice:', error);
       setLoading(false);
       Alert.alert('Error', 'Failed to process your choice. Please try again.');
     }

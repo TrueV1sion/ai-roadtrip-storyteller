@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -74,7 +75,7 @@ export const TerminalNavigator: React.FC = () => {
       });
       setSecurityWaitTimes(response.data);
     } catch (error) {
-      console.error('Failed to load security wait times:', error);
+      logger.error('Failed to load security wait times:', error);
     }
   };
 
@@ -85,7 +86,7 @@ export const TerminalNavigator: React.FC = () => {
       });
       setNearbyAmenities(response.data);
     } catch (error) {
-      console.error('Failed to load nearby amenities:', error);
+      logger.error('Failed to load nearby amenities:', error);
     }
   };
 
@@ -106,7 +107,7 @@ export const TerminalNavigator: React.FC = () => {
       setRoute(response.data);
       setShowingMap(true);
     } catch (error) {
-      console.error('Failed to calculate route:', error);
+      logger.error('Failed to calculate route:', error);
       Alert.alert('Navigation Error', 'Unable to calculate route');
     } finally {
       setLoading(false);

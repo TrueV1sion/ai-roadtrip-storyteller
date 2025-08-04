@@ -4,6 +4,7 @@
 import { InteractionManager, NativeModules, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '@/services/logger';
 interface PerformanceMetrics {
   componentName: string;
   renderTime: number;
@@ -46,7 +47,7 @@ class PerformanceMonitor {
     
     // Warn about slow renders
     if (renderTime > this.slowRenderThreshold) {
-      console.warn(
+      logger.warn(
         `[Performance] Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`
       );
     }
@@ -112,7 +113,7 @@ class PerformanceMonitor {
         this.trimMetrics(interactionName);
         
         if (interactionTime > 100) {
-          console.warn(
+          logger.warn(
             `[Performance] Slow interaction detected: ${interactionName} took ${interactionTime}ms`
           );
         }
@@ -120,7 +121,7 @@ class PerformanceMonitor {
         return result;
       });
     } catch (error) {
-      console.error(`[Performance] Interaction error in ${interactionName}:`, error);
+      logger.error(`[Performance] Interaction error in ${interactionName}:`, error);
       throw error;
     }
   }
@@ -185,9 +186,9 @@ class PerformanceMonitor {
         })
       );
       
-      console.log('[Performance] Metrics exported successfully');
+      logger.debug('[Performance] Metrics exported successfully');
     } catch (error) {
-      console.error('[Performance] Failed to export metrics:', error);
+      logger.error('[Performance] Failed to export metrics:', error);
     }
   }
 
@@ -218,10 +219,10 @@ class PerformanceMonitor {
       const summary = this.getSummary();
       
       if (summary.size > 0) {
-        console.log('[Performance] Periodic Report:');
+        logger.debug('[Performance] Periodic Report:');
         summary.forEach((report, componentName) => {
           if (report.totalRenders > 0) {
-            console.log(`  ${componentName}:`, {
+            logger.debug(`  ${componentName}:`, {
               avgRender: `${report.averageRenderTime.toFixed(2)}ms`,
               slowRenders: `${report.slowRenders}/${report.totalRenders}`,
               avgMount: `${report.averageMountTime.toFixed(2)}ms`
@@ -240,7 +241,7 @@ class PerformanceMonitor {
           // This would require a native module implementation
           // NativeModules.DeviceInfo.getMemoryInfo((info) => {
           //   if (info.availMem < 50 * 1024 * 1024) { // Less than 50MB
-          //     console.warn('[Performance] Low memory warning:', info);
+          //     logger.warn('[Performance] Low memory warning:', info);
           //   }
           // });
         } catch (error) {
@@ -288,14 +289,14 @@ export function trackNavigationPerformance(routeName: string) {
   
   return {
     onTransitionStart: () => {
-      console.log(`[Navigation] Starting transition to ${routeName}`);
+      logger.debug(`[Navigation] Starting transition to ${routeName}`);
     },
     onTransitionEnd: () => {
       const duration = Date.now() - startTime;
-      console.log(`[Navigation] Completed transition to ${routeName} in ${duration}ms`);
+      logger.debug(`[Navigation] Completed transition to ${routeName} in ${duration}ms`);
       
       if (duration > 300) {
-        console.warn(`[Navigation] Slow transition detected: ${routeName} took ${duration}ms`);
+        logger.warn(`[Navigation] Slow transition detected: ${routeName} took ${duration}ms`);
       }
     }
   };

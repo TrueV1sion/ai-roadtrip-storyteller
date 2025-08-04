@@ -180,7 +180,7 @@ class SpotifyPlaylistBatchingFixes:
 # Apply fixes to SpotifyService
 def apply_spotify_fixes():
     """Apply all fixes to the Spotify service"""
-    from backend.app.services.spotify_service import SpotifyService, JourneyPlaylistGenerator
+    from app.services.spotify_service import SpotifyService, JourneyPlaylistGenerator
     
     # Add retry method to SpotifyService
     async def search_tracks_with_retry(self, query: str, limit: int = 20) -> List[Dict[str, Any]]:

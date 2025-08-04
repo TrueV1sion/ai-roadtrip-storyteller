@@ -2,6 +2,7 @@
  * Optimized list component with virtualization and performance enhancements
  */
 import React, { useCallback, useMemo, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   FlatList,
   FlatListProps,
@@ -68,7 +69,7 @@ export function OptimizedList<T>({
     changed: ViewToken[];
   }) => {
     if (debug) {
-      console.log(`[OptimizedList] Viewable items: ${info.viewableItems.length}`);
+      logger.debug(`[OptimizedList] Viewable items: ${info.viewableItems.length}`);
     }
     onViewableItemsChanged?.(info);
   }, [onViewableItemsChanged, debug]);
@@ -84,7 +85,7 @@ export function OptimizedList<T>({
       renderCount.current++;
       const now = Date.now();
       if (now - lastRenderTime.current > 1000) {
-        console.log(`[OptimizedList] Render rate: ${renderCount.current} items/sec`);
+        logger.debug(`[OptimizedList] Render rate: ${renderCount.current} items/sec`);
         renderCount.current = 0;
         lastRenderTime.current = now;
       }

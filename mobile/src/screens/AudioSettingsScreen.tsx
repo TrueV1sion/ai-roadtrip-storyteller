@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -60,7 +61,7 @@ const AudioSettingsScreen: React.FC = () => {
         setSettings(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      logger.error('Failed to load settings:', error);
     }
   };
 
@@ -81,7 +82,7 @@ const AudioSettingsScreen: React.FC = () => {
         proactive_suggestions: newSettings.proactiveSuggestionsEnabled
       });
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      logger.error('Failed to save settings:', error);
       Alert.alert('Error', 'Failed to save audio settings');
     }
   };
@@ -115,7 +116,7 @@ const AudioSettingsScreen: React.FC = () => {
       
       setTimeout(() => setTestingCategory(null), 2000);
     } catch (error) {
-      console.error('Failed to test audio:', error);
+      logger.error('Failed to test audio:', error);
       setTestingCategory(null);
     }
   };

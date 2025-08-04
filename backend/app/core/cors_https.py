@@ -18,31 +18,45 @@ def get_cors_origins() -> List[str]:
     env = os.getenv("ENVIRONMENT", "development").lower()
     
     if env == "development":
-        # Allow common development origins
-        return [
+        # Allow specific development origins only - no wildcards
+        origins = [
             "http://localhost:3000",
             "http://localhost:3001", 
+            "http://localhost:8000",
             "http://localhost:8080",
             "http://localhost:19006",  # Expo web
-            "http://192.168.*.*:*",    # Local network for mobile dev
-            "http://10.0.*.*:*",       # Local network variations
-            "exp://localhost:*",        # Expo development
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:8000",
+            "http://127.0.0.1:19006",
         ]
+        
+        # Add specific local network IPs if needed (no wildcards)
+        local_ips = os.getenv("LOCAL_DEV_IPS", "").split(",")
+        for ip in local_ips:
+            ip = ip.strip()
+            if ip:
+                origins.extend([
+                    f"http://{ip}:3000",
+                    f"http://{ip}:8000",
+                    f"http://{ip}:19006"
+                ])
+        
+        return origins
     
     elif env in ["staging", "production"]:
         # Production origins (HTTPS only)
         base_origins = [
-            "https://roadtrip.app",
-            "https://www.roadtrip.app",
-            "https://api.roadtrip.app",
-            "https://admin.roadtrip.app",
+            "https://app.roadtrip.ai",
+            "https://www.roadtrip.ai",
+            "https://api.roadtrip.ai",
+            "https://admin.roadtrip.ai",
         ]
         
         if env == "staging":
             # Add staging domains
             base_origins.extend([
-                "https://staging.roadtrip.app",
-                "https://api-staging.roadtrip.app",
+                "https://staging.roadtrip.ai",
+                "https://api-staging.roadtrip.ai",
             ])
         
         # Add any additional origins from environment
@@ -54,14 +68,15 @@ def get_cors_origins() -> List[str]:
         
         return base_origins
     
-    return ["*"]  # Fallback (not recommended)
+    # No wildcard fallback - fail safe by returning empty list
+    return []
 
 
 def configure_cors(app, 
                   allow_origins: Optional[List[str]] = None,
                   allow_credentials: bool = True,
-                  allow_methods: List[str] = ["*"],
-                  allow_headers: List[str] = ["*"],
+                  allow_methods: List[str] = None,
+                  allow_headers: List[str] = None,
                   expose_headers: Optional[List[str]] = None) -> None:
     """
     Configure CORS middleware for the FastAPI application.
@@ -77,6 +92,25 @@ def configure_cors(app,
     # Use provided origins or get from environment
     origins = allow_origins or get_cors_origins()
     
+    # Specific allowed methods - no wildcards
+    if allow_methods is None:
+        allow_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]
+    
+    # Specific allowed headers - no wildcards
+    if allow_headers is None:
+        allow_headers = [
+            "Accept",
+            "Accept-Language",
+            "Content-Language",
+            "Content-Type",
+            "Authorization",
+            "X-CSRF-Token",
+            "X-Request-ID",
+            "X-API-Key",
+            "Cache-Control",
+            "Pragma"
+        ]
+    
     # Default exposed headers
     if expose_headers is None:
         expose_headers = [
@@ -87,9 +121,11 @@ def configure_cors(app,
             "X-RateLimit-Limit",
             "X-RateLimit-Remaining",
             "X-RateLimit-Reset",
+            "X-Process-Time",
+            "X-API-Version"
         ]
     
-    # Add CORS middleware
+    # Add CORS middleware with strict configuration
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
@@ -97,7 +133,7 @@ def configure_cors(app,
         allow_methods=allow_methods,
         allow_headers=allow_headers,
         expose_headers=expose_headers,
-        max_age=86400,  # 24 hours
+        max_age=3600,  # 1 hour (reduced from 24 hours for security)
     )
 
 
@@ -117,20 +153,8 @@ def validate_origin(origin: str, allowed_origins: Optional[List[str]] = None) ->
     
     allowed = allowed_origins or get_cors_origins()
     
-    # Check exact matches
-    if origin in allowed:
-        return True
-    
-    # Check wildcard patterns
-    for allowed_origin in allowed:
-        if "*" in allowed_origin:
-            # Simple wildcard matching (e.g., "http://192.168.*.*:*")
-            pattern = allowed_origin.replace(".", r"\.").replace("*", ".*")
-            import re
-            if re.match(f"^{pattern}$", origin):
-                return True
-    
-    return False
+    # Only allow exact matches - no wildcards for security
+    return origin in allowed
 
 
 def get_origin_from_request(request) -> Optional[str]:

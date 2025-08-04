@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -54,7 +55,7 @@ export const PersonalitySelector: React.FC<PersonalitySelectorProps> = ({
         onPersonalitySelect(contextualPersonality);
       }
     } catch (error) {
-      console.error('Failed to load personalities:', error);
+      logger.error('Failed to load personalities:', error);
       Alert.alert('Error', 'Failed to load voice personalities');
     } finally {
       setLoading(false);

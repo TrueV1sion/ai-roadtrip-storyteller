@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -38,7 +39,7 @@ const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({ navigation })
       // locationService.getCurrentLocation() will handle initialization and simulated permissions.
       return await locationService.getCurrentLocation();
     } catch (error) {
-      console.error('Error getting location:', error);
+      logger.error('Error getting location:', error);
       setError('Failed to get location. Please enable location services.');
       return null;
     }
@@ -79,7 +80,7 @@ const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({ navigation })
       const data = await immersiveApi.getExperience(request);
       setExperience(data);
     } catch (error) {
-      console.error('Error fetching immersive experience:', error);
+      logger.error('Error fetching immersive experience:', error);
       setError(error instanceof Error ? error.message : 'Failed to load experience. Please try again.');
     } finally {
       setLoading(false);
@@ -132,13 +133,13 @@ const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({ navigation })
       setSound(newSound);
       setIsPlaying(true);
     } catch (error) {
-      console.error('Error playing TTS audio:', error);
+      logger.error('Error playing TTS audio:', error);
       setError('Failed to play audio. Please try again.');
     }
   };
 
   const handleVoiceCommand = (command: string, result: any) => {
-    console.log('Voice command:', command, result);
+    logger.debug('Voice command:', command, result);
     // Handle voice commands specific to this screen
     if (result.type === 'story' && result.action === 'play') {
       playTTS();
@@ -177,7 +178,7 @@ const ImmersiveExperience: React.FC<ImmersiveExperienceProps> = ({ navigation })
       await immersiveApi.saveExperience(experience);
       // Show success message or update UI
     } catch (error) {
-      console.error('Error saving experience:', error);
+      logger.error('Error saving experience:', error);
       setError('Failed to save experience. Please try again.');
     }
   };

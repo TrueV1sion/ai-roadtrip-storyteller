@@ -90,7 +90,7 @@ async def generate_api_key(
         
     except Exception as e:
         logger.error(f"Error generating API key: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate API key")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to generate API key")
 
 
 @router.get("/list", response_model=APIKeyListResponse)
@@ -131,7 +131,7 @@ async def list_api_keys(
         
     except Exception as e:
         logger.error(f"Error listing API keys: {e}")
-        raise HTTPException(status_code=500, detail="Failed to list API keys")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list API keys")
 
 
 @router.get("/{key_id}", response_model=APIKeyResponse)
@@ -144,7 +144,7 @@ async def get_api_key(
     key = db.query(APIKeyModel).filter(APIKeyModel.key_id == key_id).first()
     
     if not key:
-        raise HTTPException(status_code=404, detail="API key not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")
     
     return {
         "key_id": key.key_id,
@@ -170,7 +170,7 @@ async def revoke_api_key(
     success = await api_security.revoke_api_key(key_id, db)
     
     if not success:
-        raise HTTPException(status_code=404, detail="API key not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")
     
     logger.info(f"API key {key_id} revoked by {current_user.email}")
     
@@ -196,7 +196,7 @@ async def rotate_api_key(
     key = db.query(APIKeyModel).filter(APIKeyModel.key_id == key_id).first()
     
     if not key:
-        raise HTTPException(status_code=404, detail="API key not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")
     
     # Generate new secret
     import secrets
@@ -232,7 +232,7 @@ async def get_api_key_usage(
     key = db.query(APIKeyModel).filter(APIKeyModel.key_id == key_id).first()
     
     if not key:
-        raise HTTPException(status_code=404, detail="API key not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")
     
     # In production, this would query from time-series database
     # For now, return basic stats from the model

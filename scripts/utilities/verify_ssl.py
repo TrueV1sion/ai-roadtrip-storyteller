@@ -221,7 +221,7 @@ def check_ssl_configuration(hostname):
                     with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                         supported_versions.append(version_name)
                         print(f"✓ {version_name}: Supported")
-            except:
+            except Exception as e:
                 print(f"✗ {version_name}: Not supported")
         
         # Check for weak versions

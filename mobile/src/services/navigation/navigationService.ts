@@ -1,6 +1,7 @@
-import { APIClient } from '@utils/apiUtils';
 import { Location, Route, POI, GeoArea, HistoricalSite } from '@/types/location';
 import { memoizeAsync } from '@utils/cache';
+import { mapsProxy } from '@/services/api/mapsProxy';
+import { logger } from '@/services/logger';
 
 export type POICategory = 
   | 'historical'
@@ -12,42 +13,10 @@ export type POICategory =
   | 'services';
 
 class NavigationService {
-  private readonly googlePlacesClient: APIClient;
-  private readonly wazeClient: APIClient;
-  private readonly foursquareClient: APIClient;
-  private readonly npsClient: APIClient;
-
+  // No API keys needed - all calls go through backend proxy
+  
   constructor() {
-    this.googlePlacesClient = new APIClient({
-      baseURL: 'https://maps.googleapis.com/maps/api/place',
-      timeout: 10000,
-      rateLimit: {
-        maxRequests: 100,
-        windowMs: 60000,
-      },
-    });
-
-    this.wazeClient = new APIClient({
-      baseURL: 'https://www.waze.com/live-map/api',
-      timeout: 8000,
-      rateLimit: {
-        maxRequests: 60,
-        windowMs: 60000,
-      },
-    });
-
-    this.foursquareClient = new APIClient({
-      baseURL: 'https://api.foursquare.com/v3',
-      timeout: 8000,
-      rateLimit: {
-        maxRequests: 50,
-        windowMs: 60000,
-      },
-    });
-
-    this.npsClient = new APIClient({
-      baseURL: 'https://developer.nps.gov/api/v1',
-      timeout: 10000,
+    // Navigation API calls are handled through the backend proxy
       rateLimit: {
         maxRequests: 30,
         windowMs: 60000,
@@ -108,14 +77,19 @@ class NavigationService {
   }
 
   private async getGoogleRoutes(start: Location, end: Location): Promise<Route[]> {
-    return this.googlePlacesClient.get('/directions/json', {
-      params: {
-        origin: `${start.latitude},${start.longitude}`,
-        destination: `${end.latitude},${end.longitude}`,
+    try {
+      const response = await mapsProxy.getDirections({
+        origin: start,
+        destination: end,
         alternatives: true,
-        key: process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY,
-      },
-    });
+      });
+      
+      // Transform Google Directions API response to our Route format
+      return response.routes || [];
+    } catch (error) {
+      logger.error('Failed to get Google routes', error as Error);
+      throw error;
+    }
   }
 
   private async getGooglePlacesPOIs(route: Route, categories: POICategory[]): Promise<POI[]> {

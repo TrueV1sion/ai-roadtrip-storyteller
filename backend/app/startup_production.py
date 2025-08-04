@@ -13,7 +13,7 @@ from app.core.production_https_config import (
     ProductionSecurityConfig,
     validate_production_environment
 )
-from app.core.database import engine
+from app.database import engine
 from app.core.cache import cache_manager
 from sqlalchemy import text
 

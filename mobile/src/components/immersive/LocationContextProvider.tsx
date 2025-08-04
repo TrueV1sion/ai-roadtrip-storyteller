@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { locationService, LocationData } from '../../services/locationService';
 
+import { logger } from '@/services/logger';
 interface LocationContextType {
   location: LocationData | null;
   timeOfDay: string;
@@ -84,7 +85,7 @@ export const LocationContextProvider: React.FC<LocationContextProviderProps> = (
         setError('Unable to get location. Please check location permissions.');
       }
     } catch (err) {
-      console.error('Error initializing location:', err);
+      logger.error('Error initializing location:', err);
       setError('Failed to initialize location service. Please check permissions.');
     } finally {
       setLoading(false);
@@ -101,7 +102,7 @@ export const LocationContextProvider: React.FC<LocationContextProviderProps> = (
       setLocation(currentLocation);
       return currentLocation;
     } catch (err) {
-      console.error('Error refreshing location:', err);
+      logger.error('Error refreshing location:', err);
       setError('Failed to get current location.');
       return null;
     } finally {

@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from sqlalchemy import text, create_engine
 from sqlalchemy.engine import Engine
 
-from backend.app.core.celery_app import celery_app
-from backend.app.core.logger import get_logger
-from backend.app.core.database_replicas import db_manager
-from backend.app.core.tracing import trace_method
+from app.core.celery_app import celery_app
+from app.core.logger import get_logger
+from app.core.database_replicas import db_manager
+from app.core.tracing import trace_method
 
 logger = get_logger(__name__)
 

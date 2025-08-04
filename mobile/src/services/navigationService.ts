@@ -4,6 +4,7 @@
 
 import { LocationObject } from 'expo-location';
 import { apiClient } from './apiClient';
+import { logger } from '@/services/logger';
 import { 
   NavigationStartRequest, 
   NavigationUpdateRequest,
@@ -47,7 +48,7 @@ class NavigationService {
       
       return response.data;
     } catch (error) {
-      console.error('Failed to start navigation:', error);
+      logger.error('Failed to start navigation:', error);
       throw error;
     }
   }
@@ -97,7 +98,7 @@ class NavigationService {
       
       return response.data;
     } catch (error) {
-      console.error('Failed to update navigation:', error);
+      logger.error('Failed to update navigation:', error);
       // Return no instruction on error to avoid disruption
       return { has_instruction: false, next_check_seconds: 5 };
     }
@@ -111,7 +112,7 @@ class NavigationService {
       const response = await apiClient.get('/api/navigation/status');
       return response.data;
     } catch (error) {
-      console.error('Failed to get navigation status:', error);
+      logger.error('Failed to get navigation status:', error);
       throw error;
     }
   }
@@ -127,7 +128,7 @@ class NavigationService {
       this.currentStepIndex = 0;
       this.updateInterval = 2000;
     } catch (error) {
-      console.error('Failed to stop navigation:', error);
+      logger.error('Failed to stop navigation:', error);
       throw error;
     }
   }
@@ -145,7 +146,7 @@ class NavigationService {
         timestamp: position.timestamp
       });
     } catch (error) {
-      console.error('Failed to update background position:', error);
+      logger.error('Failed to update background position:', error);
     }
   }
   
@@ -167,7 +168,7 @@ class NavigationService {
       
       return response.data;
     } catch (error) {
-      console.error('Failed to check instruction:', error);
+      logger.error('Failed to check instruction:', error);
       return null;
     }
   }

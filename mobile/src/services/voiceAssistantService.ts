@@ -10,6 +10,7 @@ import { Audio } from 'expo-av';
 import * as Speech from 'expo-speech';
 import { ApiClient } from './api/ApiClient';
 
+import { logger } from '@/services/logger';
 export interface VoiceAssistantResponse {
   text: string;
   audioUrl?: string;
@@ -121,7 +122,7 @@ class VoiceAssistantService {
 
       return response;
     } catch (error) {
-      console.error('Voice assistant error:', error);
+      logger.error('Voice assistant error:', error);
       throw error;
     }
   }
@@ -143,7 +144,7 @@ class VoiceAssistantService {
       );
       await this.recording.startAsync();
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      logger.error('Failed to start recording:', error);
       throw error;
     }
   }
@@ -160,7 +161,7 @@ class VoiceAssistantService {
       this.recording = null;
       return recording;
     } catch (error) {
-      console.error('Failed to stop recording:', error);
+      logger.error('Failed to stop recording:', error);
       return null;
     }
   }
@@ -183,7 +184,7 @@ class VoiceAssistantService {
 
       return response;
     } catch (error) {
-      console.error('Booking action error:', error);
+      logger.error('Booking action error:', error);
       throw error;
     }
   }
@@ -198,7 +199,7 @@ class VoiceAssistantService {
       );
       return response;
     } catch (error) {
-      console.error('Failed to get session history:', error);
+      logger.error('Failed to get session history:', error);
       throw error;
     }
   }
@@ -212,7 +213,7 @@ class VoiceAssistantService {
       this.conversationHistory = [];
       this.sessionId = this.generateSessionId(); // Generate new session ID
     } catch (error) {
-      console.error('Failed to end session:', error);
+      logger.error('Failed to end session:', error);
     }
   }
 
@@ -296,7 +297,7 @@ class VoiceAssistantService {
       const { sound } = await Audio.Sound.createAsync({ uri: audioUrl });
       await sound.playAsync();
     } catch (error) {
-      console.error('Failed to play audio:', error);
+      logger.error('Failed to play audio:', error);
       // Fallback to text-to-speech handled by caller
     }
   }
@@ -309,7 +310,7 @@ class VoiceAssistantService {
         rate: 1.0
       });
     } catch (error) {
-      console.error('Failed to speak text:', error);
+      logger.error('Failed to speak text:', error);
     }
   }
 

@@ -158,7 +158,7 @@ class ResponseCache:
                 # Try JSON first, then pickle
                 try:
                     return json.loads(value)
-                except:
+                except Exception as e:
                     return pickle.loads(value)
             
             return value
@@ -187,7 +187,7 @@ class ResponseCache:
                 # Try JSON for better interoperability, fall back to pickle
                 try:
                     value = json.dumps(value)
-                except:
+                except Exception as e:
                     value = pickle.dumps(value)
             
             ttl = ttl or self.default_ttl
@@ -251,7 +251,7 @@ class ResponseCache:
                     "total_commands": info.get("total_commands_processed", 0),
                     "keyspace": info.get("db0", {})
                 }
-            except:
+            except Exception as e:
                 pass
         
         return {

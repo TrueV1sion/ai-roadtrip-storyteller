@@ -7,6 +7,7 @@ import { Animated, Platform, InteractionManager } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 
+import { logger } from '@/services/logger';
 /**
  * Fix for confetti animation performance on older devices
  */
@@ -124,12 +125,12 @@ export class OfflineCacheManager {
           try {
             this.cache.set(key, JSON.parse(value));
           } catch (e) {
-            console.error(`Failed to parse cache key ${key}:`, e);
+            logger.error(`Failed to parse cache key ${key}:`, e);
           }
         }
       });
     } catch (error) {
-      console.error('Failed to initialize cache:', error);
+      logger.error('Failed to initialize cache:', error);
     }
   }
   
@@ -148,7 +149,7 @@ export class OfflineCacheManager {
         return parsed;
       }
     } catch (error) {
-      console.error(`Failed to get cache key ${key}:`, error);
+      logger.error(`Failed to get cache key ${key}:`, error);
     }
     
     return null;
@@ -169,7 +170,7 @@ export class OfflineCacheManager {
     try {
       await AsyncStorage.setItem(cacheKey, JSON.stringify(cacheEntry));
     } catch (error) {
-      console.error(`Failed to set cache key ${key}:`, error);
+      logger.error(`Failed to set cache key ${key}:`, error);
     }
   }
   
@@ -191,7 +192,7 @@ export class OfflineCacheManager {
       const cacheKeys = keys.filter(key => key.startsWith('cache_'));
       await AsyncStorage.multiRemove(cacheKeys);
     } catch (error) {
-      console.error('Failed to clear cache:', error);
+      logger.error('Failed to clear cache:', error);
     }
   }
 }
@@ -231,7 +232,7 @@ export const useOfflineCache = (key: string, fetcher: () => Promise<any>) => {
         // Cache the data
         await cacheManager.set(key, freshData);
       } catch (error) {
-        console.error('Failed to fetch data:', error);
+        logger.error('Failed to fetch data:', error);
         
         // Fall back to cache even if expired
         const cachedData = await cacheManager.get(key);
@@ -276,11 +277,11 @@ export const withPerformanceMonitoring = <P extends object>(
       const renderDuration = renderEndTime - renderStartTime.current;
       
       // Log performance metrics
-      console.log(`${componentName} render time: ${renderDuration}ms`);
+      logger.debug(`${componentName} render time: ${renderDuration}ms`);
       
       // Report to analytics if render is slow
       if (renderDuration > 100) {
-        console.warn(`Slow render detected for ${componentName}: ${renderDuration}ms`);
+        logger.warn(`Slow render detected for ${componentName}: ${renderDuration}ms`);
       }
     });
     

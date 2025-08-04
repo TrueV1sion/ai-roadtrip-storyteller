@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -98,7 +99,7 @@ const TriviaModal: React.FC<TriviaModalProps> = ({
         );
         setSound(sound);
       } catch (error) {
-        console.error('Error loading sound:', error);
+        logger.error('Error loading sound:', error);
       }
     };
     
@@ -121,7 +122,7 @@ const TriviaModal: React.FC<TriviaModalProps> = ({
         await sound.playAsync();
       }
     } catch (error) {
-      console.error('Error playing sound:', error);
+      logger.error('Error playing sound:', error);
     }
   };
   

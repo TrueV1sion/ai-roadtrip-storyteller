@@ -280,7 +280,7 @@ class CloudBuildDeploymentAgent:
                     self.log(f"✓ {endpoint}", "SUCCESS")
                 else:
                     self.log(f"✗ {endpoint} ({response.status_code})", "WARNING")
-            except:
+            except Exception as e:
                 self.log(f"✗ {endpoint} (timeout)", "WARNING")
                 
         return self.deployment_metrics['success']

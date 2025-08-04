@@ -4,22 +4,32 @@ from pydantic_settings import BaseSettings
 from pydantic import Field, model_validator
 import logging
 
-# Use the existing logger setup if available, otherwise basic config
-try:
-    from app.core.logger import get_logger
-    logger = get_logger(__name__)
-except ImportError:
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+# Set up basic logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Import our new Secret Manager integration
-try:
-    from .secret_manager import secret_manager, secure_config
-    logger.info("Secret Manager integration loaded successfully")
-except ImportError:
-    logger.warning("Secret Manager not available, falling back to environment variables")
-    secret_manager = None
-    secure_config = None
+# Defer imports to avoid circular dependencies
+secret_manager = None
+secure_config = None
+
+
+def _get_secret(secret_id: str) -> Optional[str]:
+    """Helper function to get secret from Secret Manager."""
+    global secret_manager
+    
+    # Lazy load secret manager to avoid circular imports
+    if secret_manager is None:
+        try:
+            from .secret_manager import SecretManager
+            secret_manager = SecretManager()
+            logger.info("Secret Manager integration loaded successfully")
+        except ImportError as e:
+            logger.warning(f"Secret Manager not available: {e}")
+            return None
+    
+    if secret_manager:
+        return secret_manager.get_secret(secret_id)
+    return None
 
 
 class Settings(BaseSettings):
@@ -320,3 +330,8 @@ except Exception as e:
     logger.critical(f"CRITICAL: Failed to initialize settings: {e}")
     # Depending on the deployment, might want to exit or raise
     raise ValueError(f"Failed to initialize settings: {e}") from e
+
+
+def get_settings() -> Settings:
+    """Get the settings instance."""
+    return settings

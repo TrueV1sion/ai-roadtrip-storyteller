@@ -342,7 +342,7 @@ class ServiceOrchestrationAgent:
                         total_count += 1
                         if service.get("State") == "running":
                             running_count += 1
-                    except:
+                    except Exception as e:
                         pass
             
             healthy = running_count >= 2  # At least DB and Redis

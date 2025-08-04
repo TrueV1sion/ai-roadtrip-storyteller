@@ -2,8 +2,15 @@ import logging
 import sys
 from typing import Any, Dict
 from functools import lru_cache
-import google.cloud.logging # Import the library
-from google.cloud.logging.handlers import CloudLoggingHandler, setup_logging # Import handler and setup function
+
+# Try to import Google Cloud Logging, but make it optional
+try:
+    import google.cloud.logging
+    from google.cloud.logging.handlers import CloudLoggingHandler, setup_logging
+    HAS_CLOUD_LOGGING = True
+except ImportError:
+    HAS_CLOUD_LOGGING = False
+    CloudLoggingHandler = None
 
 # --- LoggerConfig can likely be simplified or removed ---
 # class LoggerConfig:
@@ -33,34 +40,40 @@ def get_logger(name: str) -> logging.Logger:
 
     # Check if the logger already has the CloudLoggingHandler
     # This prevents adding duplicate handlers if get_logger is called multiple times
-    if any(isinstance(h, CloudLoggingHandler) for h in logger.handlers):
+    if HAS_CLOUD_LOGGING and any(isinstance(h, CloudLoggingHandler) for h in logger.handlers):
         return logger
 
     # If no handlers (or no CloudLoggingHandler), configure it
     if not logger.handlers:
         try:
-            # Initialize the Cloud Logging client
-            client = google.cloud.logging.Client()
+            # Try to use Cloud Logging if available
+            if HAS_CLOUD_LOGGING:
+                # Initialize the Cloud Logging client
+                client = google.cloud.logging.Client()
 
-            # Create a handler that sends logs to Cloud Logging
-            # This handler automatically formats logs as JSON structured logs
-            handler = CloudLoggingHandler(client, name=logger_name)
+                # Create a handler that sends logs to Cloud Logging
+                # This handler automatically formats logs as JSON structured logs
+                handler = CloudLoggingHandler(client, name=logger_name)
 
-            # Attach the handler to the logger
-            # setup_logging(handler) # setup_logging attaches it to the root logger, we want specific loggers
-            logger.addHandler(handler)
+                # Attach the handler to the logger
+                # setup_logging(handler) # setup_logging attaches it to the root logger, we want specific loggers
+                logger.addHandler(handler)
 
-            # Set the logging level (e.g., INFO, DEBUG)
-            logger.setLevel(logging.INFO) # Or get from config if needed
+                # Set the logging level (e.g., INFO, DEBUG)
+                logger.setLevel(logging.INFO) # Or get from config if needed
 
-            # Prevent propagation to avoid duplicate logs if root logger is also configured
-            logger.propagate = False
+                # Prevent propagation to avoid duplicate logs if root logger is also configured
+                logger.propagate = False
 
-            logger.info(f"Cloud Logging handler configured for logger: {logger_name}")
+                logger.info(f"Cloud Logging handler configured for logger: {logger_name}")
+            else:
+                # Cloud Logging not available, use console handler
+                raise ImportError("Google Cloud Logging not available")
 
         except Exception as e:
             # Fallback to basic console logging if Cloud Logging setup fails
-            print(f"WARNING: Failed to set up Cloud Logging handler for {logger_name}: {e}. Falling back to basic console logging.", file=sys.stderr)
+            if HAS_CLOUD_LOGGING:
+                print(f"WARNING: Failed to set up Cloud Logging handler for {logger_name}: {e}. Falling back to basic console logging.", file=sys.stderr)
             if not logger.handlers: # Ensure fallback handler isn't added multiple times
                 console_handler = logging.StreamHandler(sys.stdout)
                 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -113,3 +126,7 @@ def get_logger(name: str) -> logging.Logger:
 #     logger = get_logger(name)
 #     for handler in logger.handlers[:]:
 #         logger.removeHandler(handler)
+
+
+# Create a default logger instance for backward compatibility
+logger = get_logger(__name__)

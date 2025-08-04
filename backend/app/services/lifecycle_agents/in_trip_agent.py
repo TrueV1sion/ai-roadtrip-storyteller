@@ -14,16 +14,16 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
-from backend.app.services.lifecycle_agents.base_lifecycle_agent import (
+from app.core.unified_ai_client import UnifiedAIClient
+from app.services.memory.trip_memory_system import TripMemorySystem, TripPhase
+from app.services.lifecycle_agents.base_lifecycle_agent import (
     BaseLifecycleAgent, LifecycleContext, LifecycleResponse, LifecycleState
 )
-from backend.app.services.navigation_agent import NavigationAgent
-from backend.app.services.contextual_awareness_agent import ContextualAwarenessAgent
-from backend.app.services.local_expert_agent import LocalExpertAgent
-from backend.app.services.weather_service import WeatherService
-from backend.app.services.location_service import LocationService
+from app.services.navigation_agent import NavigationAgent
+from app.services.contextual_awareness_agent import ContextualAwarenessAgent
+from app.services.local_expert_agent import LocalExpertAgent
+from app.services.weather_service import WeatherService
+from app.services.location_service import LocationService
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class InTripAgent(BaseLifecycleAgent):
         self.location_service = LocationService()
         
         # In-trip specific configuration
-        self.story_interval_minutes = 15  # Minimum time between stories
+        # Story timing now handled by master orchestration agent's dynamic timing system
         self.proactive_suggestion_interval = 30  # Minutes between proactive suggestions
         self.location_update_threshold = 1.0  # km before updating context
         self.max_concurrent_stories = 1  # Safety: one story at a time
@@ -234,6 +234,10 @@ class InTripAgent(BaseLifecycleAgent):
         try:
             # Update journey state
             await self._update_journey_state(context)
+            
+            # Note: Proactive story opportunities are now checked by the master orchestration agent
+            # using its dynamic timing system. This agent focuses on location-based triggers
+            # for immediate contextual responses (landmarks, POIs, etc.)
             
             # Check for location-based triggers
             triggers = await self._check_location_triggers(context)
@@ -407,22 +411,11 @@ class InTripAgent(BaseLifecycleAgent):
     async def _handle_story_request(self, request: str, context: LifecycleContext) -> LifecycleResponse:
         """Handle story requests during the journey."""
         try:
-            # Check if we can tell a story (not too soon after last one)
+            # Note: Story timing cooldown is now handled by the master orchestration agent's
+            # dynamic timing system. This method now focuses only on story generation
+            # when the orchestrator determines it's appropriate.
             user_id = context.user.id
             journey_state = self.journey_states.get(user_id)
-            
-            if journey_state and journey_state.last_story_time:
-                time_since_last = datetime.utcnow() - journey_state.last_story_time
-                if time_since_last.total_seconds() < self.story_interval_minutes * 60:
-                    return self.create_success_response(
-                        message="I just told you a story! Let me find something new for you in a few minutes.",
-                        data={"story_cooldown": True},
-                        suggestions=[
-                            "Tell me about upcoming attractions",
-                            "What's interesting about this area?",
-                            "Play some music instead"
-                        ]
-                    )
             
             # Extract story preferences from request
             story_preferences = await self._extract_story_preferences_from_request(request)

@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -76,7 +77,7 @@ export const ModificationFlow: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error('Availability check error:', error);
+      logger.error('Availability check error:', error);
       Alert.alert('Error', 'Unable to check availability. Please try again.');
     } finally {
       setCheckingAvailability(false);
@@ -127,7 +128,7 @@ export const ModificationFlow: React.FC = () => {
                 ]
               );
             } catch (error) {
-              console.error('Modification error:', error);
+              logger.error('Modification error:', error);
               Alert.alert(
                 'Modification Failed',
                 'Unable to modify your reservation. Please try again or contact the restaurant directly.'
@@ -165,7 +166,7 @@ export const ModificationFlow: React.FC = () => {
                 ]
               );
             } catch (error) {
-              console.error('Cancellation error:', error);
+              logger.error('Cancellation error:', error);
               Alert.alert(
                 'Cancellation Failed',
                 'Unable to cancel reservation. Please contact the restaurant directly.'

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -93,7 +94,7 @@ export const SpatialAudioController: React.FC = () => {
         setPresets(response.presets);
       }
     } catch (error) {
-      console.error('Error loading audio presets:', error);
+      logger.error('Error loading audio presets:', error);
     }
   };
 
@@ -104,7 +105,7 @@ export const SpatialAudioController: React.FC = () => {
       // For now, we'll simulate having a scene
       setCurrentSceneId('current-scene-id');
     } catch (error) {
-      console.error('Error checking current scene:', error);
+      logger.error('Error checking current scene:', error);
     } finally {
       setLoading(false);
     }
@@ -133,7 +134,7 @@ export const SpatialAudioController: React.FC = () => {
             token
           );
         } catch (error) {
-          console.error('Error updating layer volume:', error);
+          logger.error('Error updating layer volume:', error);
         }
       }
     },
@@ -175,7 +176,7 @@ export const SpatialAudioController: React.FC = () => {
             );
           }
         } catch (error) {
-          console.error('Error toggling layer:', error);
+          logger.error('Error toggling layer:', error);
         }
       }
     },
@@ -239,7 +240,7 @@ export const SpatialAudioController: React.FC = () => {
             token
           );
         } catch (error) {
-          console.error('Error enabling conversation mode:', error);
+          logger.error('Error enabling conversation mode:', error);
         }
       }
     } else {
@@ -257,7 +258,7 @@ export const SpatialAudioController: React.FC = () => {
             token
           );
         } catch (error) {
-          console.error('Error disabling conversation mode:', error);
+          logger.error('Error disabling conversation mode:', error);
         }
       }
     }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -64,7 +65,7 @@ const SpotifyAuthScreen: React.FC = () => {
         Alert.alert('Success', 'Spotify connected successfully!');
       }
     } catch (error) {
-      console.error('Spotify auth error:', error);
+      logger.error('Spotify auth error:', error);
       Alert.alert('Error', 'Failed to connect to Spotify');
     } finally {
       setIsConnecting(false);

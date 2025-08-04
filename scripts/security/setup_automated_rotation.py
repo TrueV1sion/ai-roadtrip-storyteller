@@ -392,7 +392,7 @@ def main():
             "--project", PROJECT_ID
         ], check=True)
         print("✅ Service account created")
-    except:
+    except Exception as e:
         print("⏭️  Service account already exists")
     
     # Grant necessary permissions
@@ -415,7 +415,7 @@ def main():
                 f"--role={role}"
             ], check=True, capture_output=True)
             print(f"✅ Granted {role}")
-        except:
+        except Exception as e:
             print(f"⏭️  {role} already granted")
     
     # Create Cloud Function

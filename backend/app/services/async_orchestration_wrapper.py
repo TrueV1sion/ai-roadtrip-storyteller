@@ -12,14 +12,14 @@ from datetime import datetime
 import hashlib
 import json
 
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import get_logger
-from backend.app.services.master_orchestration_agent import (
+from app.core.cache import cache_manager
+from app.core.logger import get_logger
+from app.services.master_orchestration_agent import (
     MasterOrchestrationAgent, JourneyContext, AgentResponse
 )
-from backend.app.models.user import User
-from backend.app.tasks.ai_enhanced import generate_story_with_status, synthesize_story_voice
-from backend.app.monitoring.metrics import metrics_collector
+from app.models.user import User
+from app.tasks.ai_enhanced import generate_story_with_status, synthesize_story_voice
+from app.monitoring.metrics import metrics_collector
 
 logger = get_logger(__name__)
 
@@ -260,7 +260,7 @@ class AsyncOrchestrationWrapper:
 # Factory function for creating async wrapper
 def create_async_orchestrator() -> AsyncOrchestrationWrapper:
     """Create async orchestration wrapper with initialized orchestrator."""
-    from backend.app.core.unified_ai_client import UnifiedAIClient
+    from app.core.unified_ai_client import UnifiedAIClient
     
     ai_client = UnifiedAIClient()
     orchestrator = MasterOrchestrationAgent(ai_client)

@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException
 from typing import Dict, Optional
 from datetime import datetime
 
-from backend.app.core.ai_client import ai_client
-from backend.app.services.music_service import music_service
-from backend.app.services.tts_service import tts_synthesizer
+from app.core.ai_client import ai_client
+from app.services.music_service import music_service
+from app.services.tts_service import tts_synthesizer
 
 router = APIRouter()
 

@@ -11,10 +11,10 @@ import random
 import asyncio
 from collections import defaultdict
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.services.location_service import get_nearby_places
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.unified_ai_client import UnifiedAIClient
+from app.services.location_service import get_nearby_places
 
 
 class GameType(Enum):

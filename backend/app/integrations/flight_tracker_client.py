@@ -15,10 +15,10 @@ from enum import Enum
 import httpx
 from urllib.parse import quote
 
-from backend.app.core.logger import get_logger
-from backend.app.core.config import settings
-from backend.app.core.cache import cache_manager
-from backend.app.core.resilience import CircuitBreaker, with_circuit_breaker
+from app.core.logger import get_logger
+from app.core.config import settings
+from app.core.cache import cache_manager
+from app.core.resilience import CircuitBreaker, with_circuit_breaker
 
 logger = get_logger(__name__)
 

@@ -44,7 +44,7 @@ class BookingAgent:
         self.rec_gov_client = RecreationGovClient()
         try:
             self.viator_client = ViatorClient()
-        except:
+        except Exception as e:
             self.viator_client = None
         
     async def process_booking_request(self, user_input: str, context: Dict[str, Any], 

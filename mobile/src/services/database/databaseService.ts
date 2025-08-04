@@ -3,6 +3,7 @@ import { APIClient } from '@utils/apiUtils';
 import { Story } from '@/types/cultural';
 import { ConversationTopic, UserFeedback } from '../voice/sessionManager';
 
+import { logger } from '@/services/logger';
 interface SyncMetadata {
   lastSyncTimestamp: number;
   deviceId: string;
@@ -88,7 +89,7 @@ class DatabaseService {
         status: 'pending',
       });
     } catch (error) {
-      console.error('Failed to save story:', error);
+      logger.error('Failed to save story:', error);
       throw error;
     }
   }
@@ -109,7 +110,7 @@ class DatabaseService {
 
       return null;
     } catch (error) {
-      console.error('Failed to get story:', error);
+      logger.error('Failed to get story:', error);
       return null;
     }
   }
@@ -130,7 +131,7 @@ class DatabaseService {
         status: 'pending',
       });
     } catch (error) {
-      console.error('Failed to save conversation topic:', error);
+      logger.error('Failed to save conversation topic:', error);
       throw error;
     }
   }
@@ -150,7 +151,7 @@ class DatabaseService {
 
       return null;
     } catch (error) {
-      console.error('Failed to get conversation topic:', error);
+      logger.error('Failed to get conversation topic:', error);
       return null;
     }
   }
@@ -171,7 +172,7 @@ class DatabaseService {
         status: 'pending',
       });
     } catch (error) {
-      console.error('Failed to save user feedback:', error);
+      logger.error('Failed to save user feedback:', error);
       throw error;
     }
   }
@@ -213,7 +214,7 @@ class DatabaseService {
       if (this.isConflictError(error)) {
         await this.handleConflict(operation);
       } else {
-        console.error('Sync operation failed:', error);
+        logger.error('Sync operation failed:', error);
         operation.status = 'failed';
         await AsyncStorage.setItem('@sync_queue', JSON.stringify(this.syncQueue));
       }
@@ -288,7 +289,7 @@ class DatabaseService {
       this.syncQueue = this.syncQueue.filter(op => op.id !== operationId);
       await AsyncStorage.setItem('@sync_queue', JSON.stringify(this.syncQueue));
     } catch (error) {
-      console.error('Failed to resolve conflict:', error);
+      logger.error('Failed to resolve conflict:', error);
       throw error;
     }
   }

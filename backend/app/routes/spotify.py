@@ -9,14 +9,14 @@ from typing import Optional, List
 import secrets
 from datetime import datetime, timedelta
 
-from backend.app.database import get_db
-from backend.app.core.auth import get_current_user
-from backend.app.core.cache import get_cache
-from backend.app.core.logger import get_logger
-from backend.app.services.spotify_service import spotify_service
-from backend.app.services.music_service import music_service
-from backend.app.models.user import User
-from backend.app.schemas.user import User as UserSchema
+from app.database import get_db
+from app.core.auth import get_current_user
+from app.core.cache import get_cache
+from app.core.logger import get_logger
+from app.services.spotify_service import spotify_service
+from app.services.music_service import music_service
+from app.models.user import User
+from app.schemas.user import User as UserSchema
 
 logger = get_logger(__name__)
 cache = get_cache()

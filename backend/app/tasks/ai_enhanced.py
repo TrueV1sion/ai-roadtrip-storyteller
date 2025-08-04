@@ -19,15 +19,15 @@ from celery.result import AsyncResult
 import hashlib
 import json
 
-from backend.app.core.celery_app import celery_app
-from backend.app.core.database_manager import DatabaseManager
-from backend.app.core.cache import cache_manager
-from backend.app.services.master_orchestration_agent import MasterOrchestrationAgent
-from backend.app.services.voice_synthesis_engine import VoiceSynthesisEngine
-from backend.app.services.story_generation_agent import StoryGenerationAgent
-from backend.app.core.logger import get_logger
-from backend.app.monitoring.metrics import metrics_collector
-from backend.app.models.story import Story, StoryStatus
+from app.core.celery_app import celery_app
+from app.core.database_manager import DatabaseManager
+from app.core.cache import cache_manager
+from app.services.master_orchestration_agent import MasterOrchestrationAgent
+from app.services.voice_synthesis_engine import VoiceSynthesisEngine
+from app.services.story_generation_agent import StoryGenerationAgent
+from app.core.logger import get_logger
+from app.monitoring.metrics import metrics_collector
+from app.models.story import Story, StoryStatus
 
 logger = get_logger(__name__)
 
@@ -52,7 +52,7 @@ class EnhancedAITask(Task):
     @property
     def orchestrator(self):
         if self._orchestrator is None:
-            from backend.app.core.unified_ai_client import UnifiedAIClient
+            from app.core.unified_ai_client import UnifiedAIClient
             ai_client = UnifiedAIClient()
             self._orchestrator = MasterOrchestrationAgent(ai_client)
         return self._orchestrator
@@ -66,7 +66,7 @@ class EnhancedAITask(Task):
     @property
     def story_agent(self):
         if self._story_agent is None:
-            from backend.app.core.unified_ai_client import UnifiedAIClient
+            from app.core.unified_ai_client import UnifiedAIClient
             ai_client = UnifiedAIClient()
             self._story_agent = StoryGenerationAgent(ai_client)
         return self._story_agent

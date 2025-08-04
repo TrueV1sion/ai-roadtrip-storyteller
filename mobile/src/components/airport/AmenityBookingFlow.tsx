@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -82,7 +83,7 @@ export const AmenityBookingFlow: React.FC = () => {
       );
       setAccessOptions(response.data);
     } catch (error) {
-      console.error('Failed to load access options:', error);
+      logger.error('Failed to load access options:', error);
     } finally {
       setLoading(false);
     }
@@ -111,7 +112,7 @@ export const AmenityBookingFlow: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Booking failed:', error);
+      logger.error('Booking failed:', error);
       Alert.alert('Booking Failed', 'Unable to complete your booking. Please try again.');
     } finally {
       setConfirmationLoading(false);

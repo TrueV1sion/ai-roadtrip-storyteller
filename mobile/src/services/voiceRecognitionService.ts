@@ -12,6 +12,7 @@ import Voice, {
 } from '@react-native-voice/voice';
 import { Platform } from 'react-native';
 
+import { logger } from '@/services/logger';
 export interface VoiceRecognitionOptions {
   language?: string;
   showPartialResults?: boolean;
@@ -55,14 +56,14 @@ class VoiceRecognitionService {
     try {
       const isAvailable = await Voice.isAvailable();
       if (!isAvailable) {
-        console.warn('Voice recognition is not available on this device');
+        logger.warn('Voice recognition is not available on this device');
         return false;
       }
       
-      console.log('Voice recognition service initialized');
+      logger.debug('Voice recognition service initialized');
       return true;
     } catch (error) {
-      console.error('Error initializing voice recognition:', error);
+      logger.error('Error initializing voice recognition:', error);
       return false;
     }
   }
@@ -75,7 +76,7 @@ class VoiceRecognitionService {
     callbacks?: VoiceRecognitionCallbacks
   ): Promise<void> {
     if (this.isListening) {
-      console.warn('Already listening');
+      logger.warn('Already listening');
       return;
     }
 
@@ -102,9 +103,9 @@ class VoiceRecognitionService {
       await Voice.start(recognitionOptions.language || 'en-US');
       this.isListening = true;
       
-      console.log('Started voice recognition');
+      logger.debug('Started voice recognition');
     } catch (error) {
-      console.error('Error starting voice recognition:', error);
+      logger.error('Error starting voice recognition:', error);
       this.callbacks.onError?.(error);
       throw error;
     }
@@ -121,9 +122,9 @@ class VoiceRecognitionService {
     try {
       await Voice.stop();
       this.isListening = false;
-      console.log('Stopped voice recognition');
+      logger.debug('Stopped voice recognition');
     } catch (error) {
-      console.error('Error stopping voice recognition:', error);
+      logger.error('Error stopping voice recognition:', error);
       throw error;
     }
   }
@@ -139,9 +140,9 @@ class VoiceRecognitionService {
     try {
       await Voice.cancel();
       this.isListening = false;
-      console.log('Cancelled voice recognition');
+      logger.debug('Cancelled voice recognition');
     } catch (error) {
-      console.error('Error cancelling voice recognition:', error);
+      logger.error('Error cancelling voice recognition:', error);
       throw error;
     }
   }
@@ -154,9 +155,9 @@ class VoiceRecognitionService {
       await Voice.destroy();
       this.isListening = false;
       this.callbacks = {};
-      console.log('Voice recognition service destroyed');
+      logger.debug('Voice recognition service destroyed');
     } catch (error) {
-      console.error('Error destroying voice recognition:', error);
+      logger.error('Error destroying voice recognition:', error);
     }
   }
 
@@ -175,7 +176,7 @@ class VoiceRecognitionService {
       const languages = await Voice.getSpeechRecognitionServices();
       return languages || ['en-US'];
     } catch (error) {
-      console.error('Error getting supported languages:', error);
+      logger.error('Error getting supported languages:', error);
       return ['en-US'];
     }
   }
@@ -249,32 +250,32 @@ class VoiceRecognitionService {
 
   // Event handlers
   private onSpeechStart(e: SpeechStartEvent): void {
-    console.log('Speech recognition started');
+    logger.debug('Speech recognition started');
     this.callbacks.onStart?.();
   }
 
   private onSpeechEnd(e: SpeechEndEvent): void {
-    console.log('Speech recognition ended');
+    logger.debug('Speech recognition ended');
     this.isListening = false;
     this.callbacks.onEnd?.();
   }
 
   private onSpeechError(e: SpeechErrorEvent): void {
-    console.error('Speech recognition error:', e.error);
+    logger.error('Speech recognition error:', e.error);
     this.isListening = false;
     this.callbacks.onError?.(e.error);
   }
 
   private onSpeechResults(e: SpeechResultsEvent): void {
     if (e.value) {
-      console.log('Speech recognition results:', e.value);
+      logger.debug('Speech recognition results:', e.value);
       this.callbacks.onResults?.(e.value);
     }
   }
 
   private onSpeechPartialResults(e: SpeechResultsEvent): void {
     if (e.value) {
-      console.log('Speech recognition partial results:', e.value);
+      logger.debug('Speech recognition partial results:', e.value);
       this.callbacks.onPartialResults?.(e.value);
     }
   }

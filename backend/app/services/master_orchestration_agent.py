@@ -23,8 +23,18 @@ from .navigation_voice_service import navigation_voice_service
 from .contextual_awareness_agent import ContextualAwarenessAgent
 from .local_expert_agent import LocalExpertAgent
 from .spatial_audio_engine import spatial_audio_engine, AudioEnvironment, SoundSource, SpatialAudioSource, AudioPosition
+from .story_timing_orchestrator import StoryTimingOrchestrator, TimingContext, JourneyPhase, DrivingComplexity
+from .passenger_engagement_tracker import PassengerEngagementTracker, EngagementEventType
 
 logger = logging.getLogger(__name__)
+
+# Try to import metrics, but make it optional
+try:
+    from app.monitoring.metrics import metrics
+    METRICS_AVAILABLE = True
+except ImportError:
+    METRICS_AVAILABLE = False
+    logger.warning("Metrics not available - metrics recording disabled")
 
 
 class IntentType(Enum):
@@ -175,7 +185,21 @@ class MasterOrchestrationAgent:
             'last_environment_update': None
         }
         
-        logger.info("Master Orchestration Agent initialized")
+        # Initialize dynamic story timing system
+        self.story_timing = StoryTimingOrchestrator()
+        self.engagement_trackers = {}  # user_id -> PassengerEngagementTracker
+        
+        # Story timing state
+        self.story_timing_state = {
+            'last_story_time': None,
+            'next_story_check_time': None,
+            'stories_told_count': 0,
+            'journey_start_time': None,
+            'total_journey_distance': None,
+            'last_timing_context': None
+        }
+        
+        logger.info("Master Orchestration Agent initialized with dynamic story timing")
     
     async def process_user_input(self, user_input: str, context: JourneyContext, 
                                user: User) -> AgentResponse:
@@ -927,3 +951,291 @@ class MasterOrchestrationAgent:
             )
         
         logger.info("Updated spatial audio preferences")
+    
+    async def check_story_opportunity(self, context: JourneyContext) -> bool:
+        """
+        Check if it's time for a new story based on dynamic timing.
+        
+        Returns True if a story should be generated now.
+        """
+        try:
+            # Initialize journey tracking if needed
+            if self.story_timing_state['journey_start_time'] is None:
+                self.story_timing_state['journey_start_time'] = context.current_time
+                self.story_timing_state['total_journey_distance'] = context.route_info.get('total_distance_km', 100)
+            
+            # Get or create engagement tracker for user
+            user_id = context.passengers[0].get('user_id', 'default') if context.passengers else 'default'
+            if user_id not in self.engagement_trackers:
+                self.engagement_trackers[user_id] = PassengerEngagementTracker(user_id)
+            
+            engagement_tracker = self.engagement_trackers[user_id]
+            
+            # Check if stories should be paused
+            if engagement_tracker.should_pause_stories():
+                logger.info("Stories paused due to low engagement or user request")
+                return False
+            
+            # Build timing context
+            timing_context = self._build_timing_context(context, engagement_tracker)
+            self.story_timing_state['last_timing_context'] = timing_context
+            
+            # Calculate next story time
+            next_story_minutes, reasoning = self.story_timing.calculate_next_story_time(timing_context)
+            
+            # Check if enough time has passed
+            minutes_since_last = self._minutes_since_last_story()
+            
+            if minutes_since_last is None or minutes_since_last >= next_story_minutes:
+                logger.info(
+                    f"Story opportunity detected: {minutes_since_last:.1f} min since last story >= {next_story_minutes:.1f} min threshold",
+                    extra={
+                        "reasoning": reasoning,
+                        "engagement_level": timing_context.engagement_level,
+                        "journey_phase": timing_context.journey_phase.value
+                    }
+                )
+                
+                # Record metrics if available
+                if METRICS_AVAILABLE:
+                    try:
+                        metrics.increment_counter("story_opportunity_checks_triggered", 1)
+                        if minutes_since_last is not None:
+                            metrics.observe_histogram("story_interval_actual_minutes", minutes_since_last)
+                    except Exception as e:
+                        logger.warning(f"Failed to record story opportunity metrics: {str(e)}")
+                
+                return True
+            else:
+                remaining_minutes = next_story_minutes - minutes_since_last
+                logger.debug(
+                    f"Not time for story yet: {remaining_minutes:.1f} min remaining",
+                    extra={"next_check_minutes": min(remaining_minutes, 1.0)}
+                )
+                
+                # Record metrics if available
+                if METRICS_AVAILABLE:
+                    try:
+                        metrics.increment_counter("story_opportunity_checks_skipped", 1)
+                        metrics.observe_histogram("story_timing_remaining_minutes", remaining_minutes)
+                    except Exception as e:
+                        logger.warning(f"Failed to record story opportunity metrics: {str(e)}")
+                
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error checking story opportunity: {str(e)}")
+            
+            # Record error metric if available
+            if METRICS_AVAILABLE:
+                try:
+                    metrics.increment_counter("story_opportunity_check_errors", 1)
+                except Exception as me:
+                    logger.warning(f"Failed to record error metric: {str(me)}")
+            
+            # Fallback to safe default
+            return self._minutes_since_last_story() is None or self._minutes_since_last_story() >= 5.0
+    
+    def _build_timing_context(self, journey_context: JourneyContext, engagement_tracker: PassengerEngagementTracker) -> TimingContext:
+        """Build timing context from journey state"""
+        # Calculate journey progress
+        journey_progress = self._calculate_journey_progress(journey_context)
+        
+        # Determine journey phase
+        journey_phase = self._determine_journey_phase(journey_progress)
+        
+        # Assess driving complexity
+        driving_complexity = self._assess_driving_complexity(journey_context)
+        
+        # Calculate elapsed time
+        elapsed_minutes = 0
+        if self.story_timing_state['journey_start_time']:
+            elapsed_minutes = (journey_context.current_time - self.story_timing_state['journey_start_time']).total_seconds() / 60
+        
+        # Extract passenger info
+        passenger_count = len(journey_context.passengers)
+        has_children = any(p.get('age', 100) < 12 for p in journey_context.passengers)
+        passenger_type = self._determine_passenger_type(journey_context.passengers)
+        
+        # Check for golden hour
+        is_golden_hour = self._is_golden_hour(journey_context.current_time)
+        
+        # Get POI information
+        nearest_poi = journey_context.route_info.get('nearest_poi', {})
+        
+        # Build context
+        return TimingContext(
+            # Journey information
+            journey_phase=journey_phase,
+            journey_progress=journey_progress,
+            total_distance_km=self.story_timing_state['total_journey_distance'] or 100,
+            remaining_distance_km=journey_context.route_info.get('remaining_distance_km', 50),
+            elapsed_time_minutes=elapsed_minutes,
+            
+            # Driving conditions
+            current_speed_kmh=journey_context.vehicle_info.get('speed_kmh', 60),
+            average_speed_kmh=journey_context.vehicle_info.get('average_speed_kmh', 60),
+            driving_complexity=driving_complexity,
+            is_highway=journey_context.route_info.get('road_type', '').lower() in ['highway', 'interstate'],
+            traffic_level=journey_context.route_info.get('traffic_level', 'moderate'),
+            weather_condition=journey_context.weather.get('condition', 'clear'),
+            
+            # Passenger context
+            engagement_level=engagement_tracker.get_current_engagement_level(),
+            passenger_count=passenger_count,
+            has_children=has_children,
+            passenger_type=passenger_type,
+            last_interaction_minutes=self._minutes_since_last_interaction(),
+            
+            # Environmental context
+            time_of_day=journey_context.current_time,
+            is_golden_hour=is_golden_hour,
+            is_night_driving=self._get_time_of_day() == "night",
+            
+            # POI context
+            nearest_poi_distance_km=nearest_poi.get('distance_km'),
+            nearest_poi_name=nearest_poi.get('name'),
+            nearest_poi_type=nearest_poi.get('type'),
+            
+            # Story context
+            stories_told_count=self.story_timing_state['stories_told_count'],
+            last_story_minutes_ago=self._minutes_since_last_story(),
+            last_story_was_interrupted=False,  # TODO: Track from story agent
+            user_requested_story=False  # This would be set by intent analysis
+        )
+    
+    def _calculate_journey_progress(self, context: JourneyContext) -> float:
+        """Calculate journey progress from 0.0 to 1.0"""
+        total_distance = self.story_timing_state['total_journey_distance'] or 100
+        remaining_distance = context.route_info.get('remaining_distance_km', 0)
+        
+        if total_distance > 0:
+            progress = (total_distance - remaining_distance) / total_distance
+            return max(0.0, min(1.0, progress))
+        return 0.5
+    
+    def _determine_journey_phase(self, progress: float) -> JourneyPhase:
+        """Determine journey phase based on progress"""
+        if progress < 0.05:
+            return JourneyPhase.DEPARTURE
+        elif progress < 0.2:
+            return JourneyPhase.EARLY
+        elif progress < 0.8:
+            return JourneyPhase.CRUISE
+        elif progress < 0.95:
+            return JourneyPhase.APPROACHING
+        else:
+            return JourneyPhase.ARRIVAL
+    
+    def _assess_driving_complexity(self, context: JourneyContext) -> DrivingComplexity:
+        """Assess current driving complexity"""
+        # Factors to consider
+        speed = context.vehicle_info.get('speed_kmh', 60)
+        traffic = context.route_info.get('traffic_level', 'moderate')
+        weather = context.weather.get('condition', 'clear')
+        road_type = context.route_info.get('road_type', '').lower()
+        
+        # Score complexity
+        complexity_score = 0
+        
+        # Speed factors
+        if speed < 20:  # Very slow/stopped
+            complexity_score += 2
+        elif speed > 100:  # Very fast
+            complexity_score += 1
+        
+        # Traffic factors
+        if traffic == 'heavy':
+            complexity_score += 3
+        elif traffic == 'moderate':
+            complexity_score += 1
+        
+        # Weather factors
+        if weather in ['rain', 'snow', 'fog']:
+            complexity_score += 2
+        elif weather == 'storm':
+            complexity_score += 3
+        
+        # Road type factors
+        if 'city' in road_type or 'urban' in road_type:
+            complexity_score += 2
+        elif 'highway' in road_type and traffic != 'heavy':
+            complexity_score -= 1
+        
+        # Map score to complexity level
+        if complexity_score <= 0:
+            return DrivingComplexity.VERY_LOW
+        elif complexity_score <= 2:
+            return DrivingComplexity.LOW
+        elif complexity_score <= 4:
+            return DrivingComplexity.MODERATE
+        elif complexity_score <= 6:
+            return DrivingComplexity.HIGH
+        else:
+            return DrivingComplexity.VERY_HIGH
+    
+    def _determine_passenger_type(self, passengers: List[Dict[str, Any]]) -> str:
+        """Determine passenger type from passenger list"""
+        if not passengers:
+            return "solo"
+        
+        # Check for children
+        if any(p.get('age', 100) < 12 for p in passengers):
+            return "children"
+        
+        # Check for family indicators
+        relationships = [p.get('relationship', '') for p in passengers]
+        if any(rel in ['spouse', 'parent', 'child', 'sibling'] for rel in relationships):
+            return "family"
+        
+        # Default to friends
+        return "friends"
+    
+    def _minutes_since_last_story(self) -> Optional[float]:
+        """Calculate minutes since last story"""
+        if self.story_timing_state['last_story_time'] is None:
+            return None
+        
+        elapsed = datetime.now() - self.story_timing_state['last_story_time']
+        return elapsed.total_seconds() / 60
+    
+    def _minutes_since_last_interaction(self) -> float:
+        """Calculate minutes since last user interaction"""
+        if not self.conversation_state.message_history:
+            return 999  # Large number if no interactions
+        
+        # Find last user message
+        for msg in reversed(self.conversation_state.message_history):
+            if msg['speaker'] == 'user':
+                elapsed = datetime.now() - msg['timestamp']
+                return elapsed.total_seconds() / 60
+        
+        return 999
+    
+    def _is_golden_hour(self, current_time: datetime) -> bool:
+        """Check if current time is during golden hour"""
+        hour = current_time.hour
+        # Golden hour: 1 hour after sunrise and before sunset
+        # Simplified: 6-7 AM and 6-7 PM
+        return hour in [6, 18]
+    
+    def record_story_delivered(self):
+        """Record that a story was delivered"""
+        self.story_timing_state['last_story_time'] = datetime.now()
+        self.story_timing_state['stories_told_count'] += 1
+        logger.info(f"Story delivered. Total count: {self.story_timing_state['stories_told_count']}")
+        
+        # Record metrics if available
+        if METRICS_AVAILABLE:
+            try:
+                metrics.increment_counter("stories_delivered_total", 1)
+                metrics.set_gauge("stories_told_in_journey", self.story_timing_state['stories_told_count'])
+            except Exception as e:
+                logger.warning(f"Failed to record story delivery metrics: {str(e)}")
+    
+    def record_engagement_event(self, user_id: str, event_type: EngagementEventType, metadata: Optional[Dict] = None):
+        """Record an engagement event for a user"""
+        if user_id not in self.engagement_trackers:
+            self.engagement_trackers[user_id] = PassengerEngagementTracker(user_id)
+        
+        self.engagement_trackers[user_id].record_event(event_type, metadata)

@@ -8,9 +8,9 @@ from typing import Optional, Tuple, Dict, Any
 from datetime import datetime, timedelta
 import json
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.config import settings
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.config import settings
 
 
 class DistributedRateLimiter:

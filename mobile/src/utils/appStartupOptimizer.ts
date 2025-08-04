@@ -8,6 +8,7 @@ import { setOfflineMode } from './connectionManager';
 import { ImageCacheManager } from './optimizedImage';
 import { optimizedApiClient } from '@/services/api/OptimizedApiClient';
 
+import { logger } from '@/services/logger';
 // Constants
 const STARTUP_TIMESTAMP_KEY = '@RoadTrip:startup_timestamp';
 const PRELOAD_ASSETS_KEY = '@RoadTrip:preload_assets';
@@ -80,7 +81,7 @@ async function checkColdStart(): Promise<boolean> {
     
     return isColdStart;
   } catch (error) {
-    console.warn('Error checking cold start:', error);
+    logger.warn('Error checking cold start:', error);
     return true;
   }
 }
@@ -106,7 +107,7 @@ async function loadConfigurations(): Promise<void> {
       };
     }
   } catch (error) {
-    console.warn('Error loading startup configurations:', error);
+    logger.warn('Error loading startup configurations:', error);
   }
 }
 
@@ -120,7 +121,7 @@ export async function updatePreloadAssets(newConfig: Partial<AssetPreloadConfig>
     
     await AsyncStorage.setItem(PRELOAD_ASSETS_KEY, JSON.stringify(preloadConfig));
   } catch (error) {
-    console.error('Failed to update preload assets config:', error);
+    logger.error('Failed to update preload assets config:', error);
   }
 }
 
@@ -134,7 +135,7 @@ export async function updateStartupConfig(newConfig: Partial<StartupConfig>): Pr
     
     await AsyncStorage.setItem(STARTUP_CONFIG_KEY, JSON.stringify(startupConfig));
   } catch (error) {
-    console.error('Failed to update startup config:', error);
+    logger.error('Failed to update startup config:', error);
   }
 }
 
@@ -166,7 +167,7 @@ async function performStartupCleanup(): Promise<void> {
       }
     }
   } catch (error) {
-    console.warn('Error during startup cleanup:', error);
+    logger.warn('Error during startup cleanup:', error);
   }
 }
 
@@ -209,12 +210,12 @@ async function preloadCriticalAssets(): Promise<void> {
             new Promise((_, reject) => setTimeout(() => reject(new Error('API Timeout')), apiTimeout))
           ]);
         } catch (error) {
-          console.warn(`Error preloading API ${apiEndpoint}:`, error);
+          logger.warn(`Error preloading API ${apiEndpoint}:`, error);
         }
       }
     }
   } catch (error) {
-    console.warn('Error preloading critical assets:', error);
+    logger.warn('Error preloading critical assets:', error);
   }
 }
 
@@ -250,7 +251,7 @@ async function preloadRemainingAssetsInBackground(): Promise<void> {
         await Promise.all(
           batch.map(imageUri => 
             ImageCacheManager.prefetchImage(imageUri)
-              .catch(error => console.warn(`Error prefetching image ${imageUri}:`, error))
+              .catch(error => logger.warn(`Error prefetching image ${imageUri}:`, error))
           )
         );
         
@@ -271,7 +272,7 @@ async function preloadRemainingAssetsInBackground(): Promise<void> {
         await Promise.all(
           batch.map(apiEndpoint => 
             optimizedApiClient.prefetch(apiEndpoint)
-              .catch(error => console.warn(`Error preloading API ${apiEndpoint}:`, error))
+              .catch(error => logger.warn(`Error preloading API ${apiEndpoint}:`, error))
           )
         );
         
@@ -285,7 +286,7 @@ async function preloadRemainingAssetsInBackground(): Promise<void> {
     await updatePreloadAssets(preloadConfig);
     
   } catch (error) {
-    console.warn('Error preloading assets in background:', error);
+    logger.warn('Error preloading assets in background:', error);
   }
 }
 
@@ -299,7 +300,7 @@ export async function initializeApp(): Promise<void> {
   try {
     await SplashScreen.preventAutoHideAsync();
   } catch (error) {
-    console.warn('Error preventing splash screen auto hide:', error);
+    logger.warn('Error preventing splash screen auto hide:', error);
   }
   
   // Check if this is a cold start
@@ -348,9 +349,9 @@ export async function completeStartup(): Promise<void> {
       preloadRemainingAssetsInBackground();
     }
     
-    console.log(`App startup completed in ${totalStartupTime}ms (${isColdStart ? 'cold' : 'warm'} start)`);
+    logger.debug(`App startup completed in ${totalStartupTime}ms (${isColdStart ? 'cold' : 'warm'} start)`);
   } catch (error) {
-    console.error('Error completing startup:', error);
+    logger.error('Error completing startup:', error);
   }
 }
 
@@ -390,9 +391,9 @@ export async function resetStartupOptimization(): Promise<void> {
     preloadConfig = { ...defaultAssetPreloadConfig };
     startupConfig = { ...defaultStartupConfig };
     
-    console.log('Startup optimization reset');
+    logger.debug('Startup optimization reset');
   } catch (error) {
-    console.error('Failed to reset startup optimization:', error);
+    logger.error('Failed to reset startup optimization:', error);
   }
 }
 

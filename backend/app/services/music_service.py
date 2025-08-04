@@ -7,10 +7,10 @@ import asyncio
 import random
 from datetime import datetime
 
-from backend.app.core.logger import get_logger
-from backend.app.core.cache import get_cache
-from backend.app.core.config import get_settings
-from backend.app.services.spotify_service import spotify_service, SpotifyPlaylist, SpotifyTrack
+from app.core.logger import get_logger
+from app.core.cache import get_cache
+from app.core.config import get_settings
+from app.services.spotify_service import spotify_service, SpotifyPlaylist, SpotifyTrack
 
 settings = get_settings()
 logger = get_logger(__name__)

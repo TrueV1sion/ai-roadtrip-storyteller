@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   ScrollView,
@@ -86,7 +87,7 @@ export const VoicePersonalityTestScreen: React.FC = () => {
         },
       });
     } catch (error) {
-      console.error('Failed to play personality:', error);
+      logger.error('Failed to play personality:', error);
       setIsLoading(false);
       setIsPlaying(false);
       setTestResults(prev => ({ ...prev, [personalityId]: false }));

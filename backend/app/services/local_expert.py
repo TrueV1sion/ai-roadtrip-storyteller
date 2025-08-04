@@ -376,7 +376,7 @@ class LocalExpert:
                     base_score += 0.05
                 elif days_ago > 365:
                     base_score -= 0.1
-            except:
+            except Exception as e:
                 # If date parsing fails, don't adjust the score
                 pass
         
@@ -592,7 +592,7 @@ class LocalExpert:
                     base_score += 0.05
                 elif days_ago > 365:
                     base_score -= 0.1
-            except:
+            except Exception as e:
                 # If date parsing fails, don't adjust the score
                 pass
         

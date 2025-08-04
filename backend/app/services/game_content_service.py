@@ -11,11 +11,11 @@ from enum import Enum
 from dataclasses import dataclass
 import random
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.unified_ai_client import UnifiedAIClient
-from backend.app.models.story import Location
-from backend.app.services.factVerificationService import FactVerificationService
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.unified_ai_client import UnifiedAIClient
+from app.models.story import Location
+from app.services.factVerificationService import FactVerificationService
 
 
 class ContentCategory(Enum):

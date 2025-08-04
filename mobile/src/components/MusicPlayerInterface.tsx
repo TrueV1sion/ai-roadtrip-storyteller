@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -74,7 +75,7 @@ export const MusicPlayerInterface: React.FC<MusicPlayerInterfaceProps> = ({
         setIsPlaying(false);
       }
     } catch (error) {
-      console.error('Failed to get playback state:', error);
+      logger.error('Failed to get playback state:', error);
     }
   };
 
@@ -85,7 +86,7 @@ export const MusicPlayerInterface: React.FC<MusicPlayerInterfaceProps> = ({
       await apiManager.post(`/spotify/playback/control/${action}`);
       setIsPlaying(!isPlaying);
     } catch (error) {
-      console.error('Failed to control playback:', error);
+      logger.error('Failed to control playback:', error);
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +98,7 @@ export const MusicPlayerInterface: React.FC<MusicPlayerInterfaceProps> = ({
       await apiManager.post('/spotify/playback/control/next');
       setTimeout(checkCurrentPlayback, 1000);
     } catch (error) {
-      console.error('Failed to skip track:', error);
+      logger.error('Failed to skip track:', error);
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +110,7 @@ export const MusicPlayerInterface: React.FC<MusicPlayerInterfaceProps> = ({
       await apiManager.post('/spotify/playback/control/previous');
       setTimeout(checkCurrentPlayback, 1000);
     } catch (error) {
-      console.error('Failed to go to previous track:', error);
+      logger.error('Failed to go to previous track:', error);
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +123,7 @@ export const MusicPlayerInterface: React.FC<MusicPlayerInterfaceProps> = ({
         volume_percent: Math.round(value),
       });
     } catch (error) {
-      console.error('Failed to set volume:', error);
+      logger.error('Failed to set volume:', error);
     }
   };
 

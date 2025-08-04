@@ -13,13 +13,13 @@ from dataclasses import dataclass, field
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.models.user import User
-from backend.app.models.trip import Trip
-from backend.app.models.story import Story
-from backend.app.services.master_orchestration_agent import MasterOrchestrationAgent
-from backend.app.core.standardized_errors import handle_errors
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.models.user import User
+from app.models.trip import Trip
+from app.models.story import Story
+from app.services.master_orchestration_agent import MasterOrchestrationAgent
+from app.core.standardized_errors import handle_errors
 
 
 class TripPhase(str, Enum):

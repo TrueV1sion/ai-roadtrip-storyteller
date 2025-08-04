@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -100,7 +101,7 @@ export const AudioSettingsPanel: React.FC = () => {
       setUnsavedChanges(false);
       Alert.alert('Success', 'Audio settings saved successfully');
     } catch (error) {
-      console.error('Error saving settings:', error);
+      logger.error('Error saving settings:', error);
       Alert.alert('Error', 'Failed to save audio settings');
     }
   }, [settings, token]);

@@ -5,6 +5,7 @@
 
 import { API_CONFIG, buildApiUrl } from '../config/api';
 
+import { logger } from '@/services/logger';
 // Types
 export interface VoiceCommandContext {
   location?: {
@@ -96,7 +97,7 @@ class VoiceAssistantServiceMVP {
         };
       }
 
-      console.error('Voice assistant error:', error);
+      logger.error('Voice assistant error:', error);
       return {
         success: false,
         error: error.message || 'Failed to process voice command',

@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { withRetry } from '@utils/async';
 import { LRUCache } from '@utils/cache';
 
+import { logger } from '@/services/logger';
 interface FactVerificationResult {
   isVerified: boolean;
   source: string;
@@ -74,7 +75,7 @@ class FactVerificationService {
         lastVerified: new Date(),
       };
     } catch (error) {
-      console.error('Fact verification failed:', error);
+      logger.error('Fact verification failed:', error);
       return {
         isVerified: false,
         source: 'verification_failed',

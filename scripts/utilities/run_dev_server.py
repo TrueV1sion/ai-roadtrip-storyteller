@@ -28,7 +28,7 @@ def check_service(host, port):
         result = sock.connect_ex((host, port))
         sock.close()
         return result == 0
-    except:
+    except Exception as e:
         return False
 
 

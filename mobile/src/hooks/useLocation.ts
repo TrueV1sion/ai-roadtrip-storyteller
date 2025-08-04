@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Location from 'expo-location';
 import { Alert } from 'react-native';
 
+import { logger } from '@/services/logger';
 interface LocationData {
   lat: number;
   lng: number;
@@ -41,7 +42,7 @@ export const useLocation = (): UseLocationResult => {
       return true;
     } catch (err) {
       setError('Failed to request location permission');
-      console.error('Permission error:', err);
+      logger.error('Permission error:', err);
       return false;
     }
   }, []);
@@ -66,7 +67,7 @@ export const useLocation = (): UseLocationResult => {
         };
       }
     } catch (err) {
-      console.error('Reverse geocoding error:', err);
+      logger.error('Reverse geocoding error:', err);
     }
     return { name: 'Unknown Location', address: '' };
   }, []);
@@ -99,7 +100,7 @@ export const useLocation = (): UseLocationResult => {
       setCurrentLocation(locationData);
     } catch (err) {
       setError('Failed to get current location');
-      console.error('Location error:', err);
+      logger.error('Location error:', err);
     } finally {
       setLoading(false);
     }

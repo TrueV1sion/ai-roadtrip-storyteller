@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiClient } from './api/ApiClient';
 import { VoicePersonality, UserPreferences } from '../types/voice';
 
+import { logger } from '@/services/logger';
 const PERSONALITY_CACHE_KEY = 'voice_personalities_cache';
 const SELECTED_PERSONALITY_KEY = 'selected_voice_personality';
 
@@ -33,7 +34,7 @@ class VoicePersonalityService {
         this.cachedPersonalities = JSON.parse(cached);
       }
     } catch (error) {
-      console.error('Failed to load cached personalities:', error);
+      logger.error('Failed to load cached personalities:', error);
     }
   }
 
@@ -48,7 +49,7 @@ class VoicePersonalityService {
       
       return personalities;
     } catch (error) {
-      console.error('Failed to fetch personalities:', error);
+      logger.error('Failed to fetch personalities:', error);
       // Return cached personalities as fallback
       return this.cachedPersonalities;
     }
@@ -59,7 +60,7 @@ class VoicePersonalityService {
       const response = await this.apiClient.post('/api/voice/contextual-personality', context);
       return response.data.personality;
     } catch (error) {
-      console.error('Failed to get contextual personality:', error);
+      logger.error('Failed to get contextual personality:', error);
       // Return default personality from cache
       return this.cachedPersonalities.find(p => p.id === 'friendly_guide') || null;
     }
@@ -69,7 +70,7 @@ class VoicePersonalityService {
     try {
       await AsyncStorage.setItem(SELECTED_PERSONALITY_KEY, personalityId);
     } catch (error) {
-      console.error('Failed to save selected personality:', error);
+      logger.error('Failed to save selected personality:', error);
     }
   }
 
@@ -77,7 +78,7 @@ class VoicePersonalityService {
     try {
       return await AsyncStorage.getItem(SELECTED_PERSONALITY_KEY);
     } catch (error) {
-      console.error('Failed to get selected personality:', error);
+      logger.error('Failed to get selected personality:', error);
       return null;
     }
   }
@@ -94,7 +95,7 @@ class VoicePersonalityService {
       const greetingUrl = response.data.audio_url;
 
       if (!greetingUrl) {
-        console.error('No greeting URL returned');
+        logger.error('No greeting URL returned');
         return;
       }
 
@@ -116,7 +117,7 @@ class VoicePersonalityService {
         }
       });
     } catch (error) {
-      console.error('Failed to play greeting sample:', error);
+      logger.error('Failed to play greeting sample:', error);
     }
   }
 
@@ -217,7 +218,7 @@ class VoicePersonalityService {
       // Default to contextual personality
       return await this.getContextualPersonality({ location: context.location });
     } catch (error) {
-      console.error('Failed to update personality for context:', error);
+      logger.error('Failed to update personality for context:', error);
       return null;
     }
   }

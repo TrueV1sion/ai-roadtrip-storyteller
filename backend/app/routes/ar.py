@@ -57,7 +57,7 @@ async def get_ar_points(
                 
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting AR points: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error getting AR points: {str(e)}")
 
 @router.post("/render", response_model=ARRenderResponse)
 async def render_ar_view(
@@ -108,7 +108,7 @@ async def render_ar_view(
             timestamp=datetime.now()
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error rendering AR view: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error rendering AR view: {str(e)}")
 
 @router.patch("/render/settings", response_model=Dict[str, Any])
 async def update_render_settings(
@@ -121,7 +121,7 @@ async def update_render_settings(
         updated_settings = ar_renderer.update_settings(settings.dict(exclude_unset=True))
         return updated_settings.dict()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error updating AR settings: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating AR settings: {str(e)}")
 
 @router.post("/historical/overlay", response_model=HistoricalOverlayResponse)
 async def get_historical_overlay(
@@ -140,4 +140,4 @@ async def get_historical_overlay(
         
         return HistoricalOverlayResponse(**overlay)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating historical overlay: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error generating historical overlay: {str(e)}")

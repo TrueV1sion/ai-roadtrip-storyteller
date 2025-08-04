@@ -1,2 +1,123 @@
-Dockerfile
-Dockerfile.mvp
+# This file specifies files that are *not* uploaded to Google Cloud
+# using gcloud. It follows the same syntax as .gitignore, with the addition of
+# "#!include" directives (which insert the entries of the given .gitignore-style
+# file at that point).
+#
+# For more information, run:
+#   $ gcloud topic gcloudignore
+#
+.gcloudignore
+.git
+.gitignore
+.github/
+
+# Python files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+*.log
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Development files
+*.md
+!README.md
+tests/
+docs/
+scripts/
+.env
+.env.*
+!.env.example
+docker-compose*.yml
+Dockerfile.dev
+Makefile
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+
+# Monitoring and profiling
+.profile
+*.prof
+performance_reports/
+
+# Security scanning
+security_reports/
+vulnerability_scan/
+
+# Local development
+local_data/
+sqlite.db
+*.db
+node_modules/
+
+# Documentation source files
+mkdocs.yml
+docs_src/
+
+# CI/CD files not needed in production
+.travis.yml
+.circleci/
+azure-pipelines.yml
+jenkins/
+
+# Test data and fixtures
+test_data/
+fixtures/
+mock_data/
+
+# Development scripts
+setup-secrets.sh
+dev_*.sh
+local_*.sh
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Media files (if any)
+*.mp4
+*.mp3
+*.jpg
+*.jpeg
+*.png
+*.gif
+!static/favicon.ico
+
+# Large data files
+*.csv
+*.xlsx
+*.xls
+data/
+datasets/

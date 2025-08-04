@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -35,7 +36,7 @@ export const VoicePersonalityScreen: React.FC = () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.log('Location permission not granted');
+        logger.debug('Location permission not granted');
         return;
       }
 
@@ -51,7 +52,7 @@ export const VoicePersonalityScreen: React.FC = () => {
         state: address?.region,
       });
     } catch (error) {
-      console.error('Failed to get location:', error);
+      logger.error('Failed to get location:', error);
     }
   };
 
@@ -87,7 +88,7 @@ export const VoicePersonalityScreen: React.FC = () => {
         throw new Error('Failed to save personality preference');
       }
     } catch (error) {
-      console.error('Failed to save personality preference:', error);
+      logger.error('Failed to save personality preference:', error);
     }
   };
 

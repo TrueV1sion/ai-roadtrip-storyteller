@@ -8,8 +8,8 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from backend.app.core.logger import logger
-from backend.app.core.distributed_rate_limiter import (
+from app.core.logger import logger
+from app.core.distributed_rate_limiter import (
     DistributedRateLimiter,
     get_api_rate_limiter,
     get_auth_rate_limiter,

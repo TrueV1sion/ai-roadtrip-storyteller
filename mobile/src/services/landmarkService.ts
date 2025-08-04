@@ -1,8 +1,8 @@
-import axios from 'axios';
 import { LocationData } from './locationService';
 import { withRetry } from '@utils/async';
 import { memoizeAsync } from '@utils/cache';
 
+import { logger } from '@/services/logger';
 export interface Landmark {
   name: string;
   distance: number;
@@ -25,8 +25,7 @@ export interface Landmark {
 }
 
 class LandmarkService {
-  private readonly GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY;
-  private readonly MAPBOX_API_KEY = process.env.EXPO_PUBLIC_MAPBOX_KEY;
+  // No API keys needed - all calls go through backend proxy
 
   getNearbyLandmarks = memoizeAsync(
     async (
@@ -63,17 +62,15 @@ class LandmarkService {
     radius: number,
     types: string[]
   ): Promise<Landmark[]> {
-    const response = await axios.get(
-      'https://maps.googleapis.com/maps/api/place/nearbysearch/json',
-      {
-        params: {
-          location: `${location.latitude},${location.longitude}`,
-          radius,
-          types: types.join('|'),
-          key: this.GOOGLE_PLACES_API_KEY,
-        },
-      }
-    );
+    // Import the maps proxy service
+    const { mapsProxy } = await import('@/services/api/mapsProxy');
+    
+    // Use backend proxy instead of direct API call
+    const response = await mapsProxy.searchPlaces({
+      location,
+      radius,
+      types,
+    });
 
     return response.data.results.map((place: any) => ({
       name: place.name,
@@ -90,9 +87,8 @@ class LandmarkService {
         longitude: place.geometry.location.lng,
       },
       rating: place.rating,
-      photos: place.photos?.map((photo: any) =>
-        `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${this.GOOGLE_PLACES_API_KEY}`
-      ),
+      photos: place.photos?.map((photo: any) => photo.photo_reference),
+      // Photo URLs will be constructed by the frontend component using the backend proxy
     }));
   }
 
@@ -100,33 +96,9 @@ class LandmarkService {
     location: LocationData,
     radius: number
   ): Promise<Landmark[]> {
-    const response = await axios.get(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${location.longitude},${location.latitude}.json`,
-      {
-        params: {
-          access_token: this.MAPBOX_API_KEY,
-          types: 'poi',
-          limit: 10,
-          radius,
-        },
-      }
-    );
-
-    return response.data.features.map((feature: any) => ({
-      name: feature.text,
-      distance: this.calculateDistance(
-        location,
-        {
-          latitude: feature.center[1],
-          longitude: feature.center[0],
-        }
-      ),
-      type: feature.properties.category,
-      coordinates: {
-        latitude: feature.center[1],
-        longitude: feature.center[0],
-      },
-    }));
+    // For now, return empty array - Mapbox integration should go through backend
+    // TODO: Add Mapbox proxy endpoint to backend if needed
+    return [];
   }
 
   private async enrichLandmarkDetails(landmarks: Landmark[]): Promise<Landmark[]> {
@@ -146,7 +118,7 @@ class LandmarkService {
             historicalSignificance: details.historicalSignificance,
           };
         } catch (error) {
-          console.error(`Error enriching landmark details for ${landmark.name}:`, error);
+          logger.error(`Error enriching landmark details for ${landmark.name}:`, error);
           return landmark;
         }
       })

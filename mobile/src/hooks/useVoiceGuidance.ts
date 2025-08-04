@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import * as Speech from 'expo-speech';
 import { useNavigationPreferences } from './useNavigationPreferences';
 
+import { logger } from '@/services/logger';
 export const useVoiceGuidance = () => {
   const { preferences } = useNavigationPreferences();
   const isSpeakingRef = useRef(false);
@@ -40,7 +41,7 @@ export const useVoiceGuidance = () => {
         },
       });
     } catch (error) {
-      console.error('Voice guidance error:', error);
+      logger.error('Voice guidance error:', error);
       isSpeakingRef.current = false;
     }
   }, [preferences.voiceSettings]);

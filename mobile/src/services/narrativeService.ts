@@ -1,4 +1,5 @@
 import { ApiClient } from './api/ApiClient';
+import { logger } from '@/services/logger';
 import {
   NarrativeGraphType,
   NarrativeStateType,
@@ -15,7 +16,7 @@ class NarrativeService {
     try {
       return await ApiClient.post<NarrativeGraphType>('/interactive-narrative/create', params);
     } catch (error) {
-      console.error('Error creating narrative:', error);
+      logger.error('Error creating narrative:', error);
       throw error;
     }
   }
@@ -29,7 +30,7 @@ class NarrativeService {
         `/interactive-narrative/initialize-state?narrative_id=${narrativeId}`
       );
     } catch (error) {
-      console.error('Error initializing narrative state:', error);
+      logger.error('Error initializing narrative state:', error);
       throw error;
     }
   }
@@ -49,7 +50,7 @@ class NarrativeService {
         choice_id: choiceId
       });
     } catch (error) {
-      console.error('Error making narrative choice:', error);
+      logger.error('Error making narrative choice:', error);
       throw error;
     }
   }
@@ -66,7 +67,7 @@ class NarrativeService {
         `/interactive-narrative/current-node/${stateId}?narrative_id=${narrativeId}`
       );
     } catch (error) {
-      console.error('Error getting current narrative node:', error);
+      logger.error('Error getting current narrative node:', error);
       throw error;
     }
   }
@@ -86,7 +87,7 @@ class NarrativeService {
         node_id: nodeId
       });
     } catch (error) {
-      console.error('Error getting narrative node content:', error);
+      logger.error('Error getting narrative node content:', error);
       throw error;
     }
   }
@@ -103,7 +104,7 @@ class NarrativeService {
         `/interactive-narrative/progress/${stateId}?narrative_id=${narrativeId}`
       );
     } catch (error) {
-      console.error('Error getting narrative progress:', error);
+      logger.error('Error getting narrative progress:', error);
       throw error;
     }
   }
@@ -115,7 +116,7 @@ class NarrativeService {
     try {
       return await ApiClient.get<NarrativeGraphType[]>('/interactive-narrative/narratives');
     } catch (error) {
-      console.error('Error getting narratives:', error);
+      logger.error('Error getting narratives:', error);
       throw error;
     }
   }
@@ -127,7 +128,7 @@ class NarrativeService {
     try {
       return await ApiClient.get<NarrativeStateType[]>('/interactive-narrative/states');
     } catch (error) {
-      console.error('Error getting narrative states:', error);
+      logger.error('Error getting narrative states:', error);
       throw error;
     }
   }

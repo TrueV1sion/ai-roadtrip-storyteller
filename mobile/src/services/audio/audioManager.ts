@@ -8,6 +8,7 @@ import { EventEmitter } from 'events';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+import { logger } from '@/services/logger';
 export enum AudioCategory {
   VOICE = 'voice',
   MUSIC = 'music',
@@ -94,7 +95,7 @@ class AudioManager extends EventEmitter {
       this.isInitialized = true;
       this.emit('initialized');
     } catch (error) {
-      console.error('Failed to initialize AudioManager:', error);
+      logger.error('Failed to initialize AudioManager:', error);
       this.emit('error', error);
     }
   }
@@ -154,7 +155,7 @@ class AudioManager extends EventEmitter {
       
       return streamId;
     } catch (error) {
-      console.error('Failed to play audio:', error);
+      logger.error('Failed to play audio:', error);
       this.emit('error', error);
       throw error;
     }
@@ -184,7 +185,7 @@ class AudioManager extends EventEmitter {
 
       this.emit('streamStopped', { streamId });
     } catch (error) {
-      console.error('Failed to stop audio:', error);
+      logger.error('Failed to stop audio:', error);
       this.emit('error', error);
     }
   }
@@ -340,7 +341,7 @@ class AudioManager extends EventEmitter {
     try {
       await stream.sound.setVolumeAsync(finalVolume);
     } catch (error) {
-      console.error('Failed to update stream volume:', error);
+      logger.error('Failed to update stream volume:', error);
     }
   }
 
@@ -401,7 +402,7 @@ class AudioManager extends EventEmitter {
         }
       }
     } catch (error) {
-      console.error('Failed to load audio preferences:', error);
+      logger.error('Failed to load audio preferences:', error);
     }
   }
 
@@ -413,7 +414,7 @@ class AudioManager extends EventEmitter {
       };
       await AsyncStorage.setItem('@audio_preferences', JSON.stringify(prefs));
     } catch (error) {
-      console.error('Failed to save audio preferences:', error);
+      logger.error('Failed to save audio preferences:', error);
     }
   }
 

@@ -11,11 +11,17 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 from enum import Enum
 import psutil
-import aioredis
+try:
+    import aioredis
+    HAS_AIOREDIS = True
+except (ImportError, TypeError):
+    # TypeError is for Python 3.13 compatibility issue
+    HAS_AIOREDIS = False
+    aioredis = None
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
-from app.core.database import get_db
+from app.database import get_db
 from app.core.cache import cache_manager
 from app.core.logger import get_logger
 

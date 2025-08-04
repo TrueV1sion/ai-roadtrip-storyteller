@@ -2,6 +2,7 @@
  * Optimized image component with lazy loading and caching
  */
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   Image,
   View,
@@ -236,7 +237,7 @@ export class ImagePreloader {
     try {
       await FastImage.preload(batch.map(uri => ({ uri })));
     } catch (error) {
-      console.warn('Image preload error:', error);
+      logger.warn('Image preload error:', error);
     }
 
     this.processing = false;

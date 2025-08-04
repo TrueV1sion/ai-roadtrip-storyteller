@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -76,7 +77,7 @@ const OfflineSettingsScreen: React.FC = () => {
         setShowBanner(true);
       }
     } catch (error) {
-      console.error('Error loading offline data:', error);
+      logger.error('Error loading offline data:', error);
       showToast('Failed to load offline data');
     } finally {
       setIsLoading(false);
@@ -88,7 +89,7 @@ const OfflineSettingsScreen: React.FC = () => {
       // In a real app, this would use AsyncStorage
       return defaultValue; // Placeholder
     } catch (error) {
-      console.error(`Error getting preference ${key}:`, error);
+      logger.error(`Error getting preference ${key}:`, error);
       return defaultValue;
     }
   };
@@ -104,7 +105,7 @@ const OfflineSettingsScreen: React.FC = () => {
       
       showToast(`Max storage set to ${value}MB`);
     } catch (error) {
-      console.error('Error setting max storage:', error);
+      logger.error('Error setting max storage:', error);
       showToast('Failed to update storage limit');
     }
   };
@@ -139,7 +140,7 @@ const OfflineSettingsScreen: React.FC = () => {
       
       showToast('Map region deleted');
     } catch (error) {
-      console.error('Error deleting region:', error);
+      logger.error('Error deleting region:', error);
       showToast('Failed to delete map region');
     } finally {
       setDeletingItem(null);
@@ -160,7 +161,7 @@ const OfflineSettingsScreen: React.FC = () => {
       
       showToast('Route deleted');
     } catch (error) {
-      console.error('Error deleting route:', error);
+      logger.error('Error deleting route:', error);
       showToast('Failed to delete route');
     } finally {
       setDeletingItem(null);

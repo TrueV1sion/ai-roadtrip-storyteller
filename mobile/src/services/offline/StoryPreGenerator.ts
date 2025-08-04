@@ -11,6 +11,7 @@ import { offlineManager } from '../OfflineManager';
 import { performanceMonitor } from '../performanceMonitor';
 import { apiClient } from '../api/client';
 
+import { logger } from '@/services/logger';
 interface StoryPoint {
   id: string;
   location: Location;
@@ -98,7 +99,7 @@ class StoryPreGenerator {
       await this.loadCachedMetadata();
       
     } catch (error) {
-      console.error('Failed to initialize story storage:', error);
+      logger.error('Failed to initialize story storage:', error);
     }
   }
   
@@ -110,7 +111,7 @@ class StoryPreGenerator {
     
     // Check if already generating
     if (this.generationQueue.has(route.id)) {
-      console.log('Already generating stories for route:', route.id);
+      logger.debug('Already generating stories for route:', route.id);
       return;
     }
     
@@ -257,7 +258,7 @@ class StoryPreGenerator {
               stories.push(story);
             }
           } catch (error) {
-            console.error(`Failed to generate story for ${point.id} with ${personality}:`, error);
+            logger.error(`Failed to generate story for ${point.id} with ${personality}:`, error);
           }
         }
         
@@ -293,7 +294,7 @@ class StoryPreGenerator {
       });
       
     } catch (error) {
-      console.error('Story generation failed:', error);
+      logger.error('Story generation failed:', error);
       progress.status = 'failed';
     }
   }
@@ -310,7 +311,7 @@ class StoryPreGenerator {
       // Check if online
       const isOnline = await offlineManager.isOnline();
       if (!isOnline) {
-        console.log('Cannot generate stories offline');
+        logger.debug('Cannot generate stories offline');
         return null;
       }
       
@@ -345,7 +346,7 @@ class StoryPreGenerator {
       return story;
       
     } catch (error) {
-      console.error('Failed to generate story:', error);
+      logger.error('Failed to generate story:', error);
       return null;
     }
   }
@@ -369,10 +370,10 @@ class StoryPreGenerator {
       // Save metadata
       await this.saveCachedMetadata();
       
-      console.log(`Saved story bundle for route ${bundle.routeId}: ${bundle.stories.length} stories`);
+      logger.debug(`Saved story bundle for route ${bundle.routeId}: ${bundle.stories.length} stories`);
       
     } catch (error) {
-      console.error('Failed to save story bundle:', error);
+      logger.error('Failed to save story bundle:', error);
     }
   }
   
@@ -420,7 +421,7 @@ class StoryPreGenerator {
       return bundle;
       
     } catch (error) {
-      console.error('Failed to load story bundle:', error);
+      logger.error('Failed to load story bundle:', error);
       return null;
     }
   }
@@ -476,7 +477,7 @@ class StoryPreGenerator {
       this.storyCache.delete(routeId);
       this.generationQueue.delete(routeId);
     } catch (error) {
-      console.error('Failed to delete story bundle:', error);
+      logger.error('Failed to delete story bundle:', error);
     }
   }
   
@@ -628,7 +629,7 @@ class StoryPreGenerator {
         }
       }
     } catch (error) {
-      console.error('Failed to load cache metadata:', error);
+      logger.error('Failed to load cache metadata:', error);
     }
   }
   
@@ -640,7 +641,7 @@ class StoryPreGenerator {
       };
       await AsyncStorage.setItem('story_cache_metadata', JSON.stringify(metadata));
     } catch (error) {
-      console.error('Failed to save cache metadata:', error);
+      logger.error('Failed to save cache metadata:', error);
     }
   }
   
@@ -669,10 +670,10 @@ class StoryPreGenerator {
       // Clear metadata
       await AsyncStorage.removeItem('story_cache_metadata');
       
-      console.log('Cleared all cached stories');
+      logger.debug('Cleared all cached stories');
       
     } catch (error) {
-      console.error('Failed to clear stories:', error);
+      logger.error('Failed to clear stories:', error);
     }
   }
 }

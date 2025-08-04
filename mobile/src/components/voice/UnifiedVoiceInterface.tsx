@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -231,7 +232,7 @@ export const UnifiedVoiceInterface: React.FC<UnifiedVoiceInterfaceProps> = ({
       const message = isListening ? 'Stopped listening' : 'Listening for your command';
       AccessibilityInfo.announceForAccessibility(message);
     } catch (error) {
-      console.error('Voice interaction error:', error);
+      logger.error('Voice interaction error:', error);
     }
   }, [isListening]);
 

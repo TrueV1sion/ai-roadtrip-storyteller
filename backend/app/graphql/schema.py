@@ -7,8 +7,8 @@ from strawberry.extensions import Extension
 from strawberry.extensions.tracing import OpenTelemetryExtension
 from typing import Any, Dict
 
-from backend.app.graphql.resolvers import Query, Mutation, Subscription
-from backend.app.core.logger import get_logger
+from app.graphql.resolvers import Query, Mutation, Subscription
+from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 

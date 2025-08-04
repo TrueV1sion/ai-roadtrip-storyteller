@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 import functools
 from collections import deque
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
+from app.core.logger import logger
+from app.core.cache import cache_manager
 
 
 class CircuitState(Enum):

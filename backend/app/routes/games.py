@@ -9,11 +9,11 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
-from backend.app.core.db_optimized import get_db
-from backend.app.core.auth import get_current_user
-from backend.app.core.logger import logger
-from backend.app.models.user import User
-from backend.app.services.game_engine import (
+from app.core.db_optimized import get_db
+from app.core.auth import get_current_user
+from app.core.logger import logger
+from app.models.user import User
+from app.services.game_engine import (
     game_coordinator,
     trivia_engine,
     scavenger_engine,
@@ -21,7 +21,7 @@ from backend.app.services.game_engine import (
     Difficulty,
     Player
 )
-from backend.app.services.game_content_service import (
+from app.services.game_content_service import (
     game_content_service,
     ContentCategory
 )

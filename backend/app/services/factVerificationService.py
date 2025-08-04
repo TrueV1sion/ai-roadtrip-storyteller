@@ -7,9 +7,9 @@ from typing import Dict, List, Optional, Any
 import asyncio
 from datetime import datetime, timedelta
 
-from backend.app.core.logger import logger
-from backend.app.core.cache import cache_manager
-from backend.app.core.unified_ai_client import UnifiedAIClient
+from app.core.logger import logger
+from app.core.cache import cache_manager
+from app.core.unified_ai_client import UnifiedAIClient
 
 
 class FactVerificationService:

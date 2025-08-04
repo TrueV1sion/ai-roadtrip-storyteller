@@ -8,8 +8,8 @@ from typing import Optional, BinaryIO, Dict
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
 
-from backend.app.core.config import settings
-from backend.app.core.logger import logger
+from app.core.config import settings
+from app.core.logger import logger
 
 
 class PhotoStorageService:

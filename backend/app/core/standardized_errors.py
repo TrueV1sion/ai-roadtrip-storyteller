@@ -15,7 +15,7 @@ from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from backend.app.core.logger import logger
+from app.core.logger import logger
 
 
 class ErrorCategory(str, Enum):

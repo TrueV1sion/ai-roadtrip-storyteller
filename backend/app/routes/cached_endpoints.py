@@ -7,7 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
-from app.core.database_manager import get_db
+from app.database import get_db
 from app.core.response_cache import response_cache, CacheStrategy
 from app.core.auth import get_current_user_optional
 from app.models.user import User

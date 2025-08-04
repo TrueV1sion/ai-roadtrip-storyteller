@@ -3,19 +3,19 @@ from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 
-from backend.app.database import get_db
-from backend.app.core.auth import get_current_user
-from backend.app.models.user import User
-from backend.app.models.story import EventJourney
-from backend.app.schemas.story import (
+from app.database import get_db
+from app.core.auth import get_current_user
+from app.models.user import User
+from app.models.story import EventJourney
+from app.schemas.story import (
     EventJourneyRequest,
     EventJourneyResponse,
     EventJourneyUpdate,
     EventSearchRequest
 )
-from backend.app.services.event_journey_service import EventJourneyService
-from backend.app.integrations.ticketmaster_client import ticketmaster_client
-from backend.app.core.logger import logger
+from app.services.event_journey_service import EventJourneyService
+from app.integrations.ticketmaster_client import ticketmaster_client
+from app.core.logger import logger
 
 router = APIRouter(prefix="/api/event-journeys", tags=["event-journeys"])
 event_journey_service = EventJourneyService()

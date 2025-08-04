@@ -3,15 +3,15 @@ from datetime import datetime, timedelta
 import asyncio
 from geopy.distance import geodesic
 
-from backend.app.integrations.ticketmaster_client import ticketmaster_client
-from backend.app.services.venue_personality_mapper import VenuePersonalityMapper
-from backend.app.core.enhanced_ai_client import enhanced_ai_client
-from backend.app.core.cache import cache_manager
-from backend.app.core.logger import logger
-from backend.app.services.theme_engine import ThemeEngine
-from backend.app.services.directions_service import DirectionsService
-from backend.app.models.story import EventJourney
-from backend.app.schemas.story import EventJourneyCreate
+from app.integrations.ticketmaster_client import ticketmaster_client
+from app.services.venue_personality_mapper import VenuePersonalityMapper
+from app.core.enhanced_ai_client import enhanced_ai_client
+from app.core.cache import cache_manager
+from app.core.logger import logger
+from app.services.theme_engine import ThemeEngine
+from app.services.directions_service import DirectionsService
+from app.models.story import EventJourney
+from app.schemas.story import EventJourneyCreate
 
 
 class EventJourneyService:
@@ -243,7 +243,7 @@ class EventJourneyService:
             import json
             trivia = json.loads(trivia_response)
             return trivia
-        except:
+        except Exception as e:
             return []
     
     def _determine_journey_theme(self, event: Dict[str, Any]) -> str:
@@ -352,5 +352,5 @@ class EventJourneyService:
             import json
             suggestions = json.loads(suggestions_response)
             return suggestions
-        except:
+        except Exception as e:
             return []

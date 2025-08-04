@@ -5,13 +5,13 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from backend.app.core.auth import get_current_user
-from backend.app.core.authorization import require_permission
-from backend.app.database import get_db
-from backend.app.models.user import User
-from backend.app.services.revenue_analytics import RevenueAnalyticsService
-from backend.app.services.commission_calculator import CommissionCalculator
-from backend.app.core.logger import logger
+from app.core.auth import get_current_user
+from app.core.authorization import require_permission
+from app.database import get_db
+from app.models.user import User
+from app.services.revenue_analytics import RevenueAnalyticsService
+from app.services.commission_calculator import CommissionCalculator
+from app.core.logger import logger
 
 
 router = APIRouter(
@@ -172,7 +172,7 @@ async def get_commission_summary(
             return summary
         else:
             # Get summary for all partners
-            from backend.app.models.partner import Partner
+            from app.models.partner import Partner
             partners = db.query(Partner).filter(Partner.is_active == True).all()
             
             summaries = []

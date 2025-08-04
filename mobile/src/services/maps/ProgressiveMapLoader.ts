@@ -3,6 +3,7 @@ import * as SQLite from 'expo-sqlite';
 import { Region, Location, Route } from '../../types/location';
 import MapStorageOptimizer from './MapStorageOptimizer';
 
+import { logger } from '@/services/logger';
 // Priority levels for tile loading
 export enum Priority {
   IMMEDIATE = 4,
@@ -310,7 +311,7 @@ export class ProgressiveMapLoader {
         }
       }
     } catch (error) {
-      console.error(`Error loading tile ${tileKey}:`, error);
+      logger.error(`Error loading tile ${tileKey}:`, error);
     }
   }
   

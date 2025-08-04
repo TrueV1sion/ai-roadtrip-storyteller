@@ -8,6 +8,7 @@ import { useTranslation } from '../i18n';
 
 import { COLORS, SPACING } from '../theme';
 
+import { logger } from '@/services/logger';
 const { width } = Dimensions.get('window');
 
 const onboardingData = [
@@ -73,7 +74,7 @@ const OnboardingScreen = ({ navigation }) => {
       await AsyncStorage.setItem('hasCompletedOnboarding', 'true');
       navigation.navigate('Permissions');
     } catch (error) {
-      console.error('Error saving onboarding status:', error);
+      logger.error('Error saving onboarding status:', error);
     }
   };
 

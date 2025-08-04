@@ -13,7 +13,12 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.exc import SQLAlchemyError, DisconnectionError
 from sqlalchemy.pool import QueuePool
-import asyncpg
+try:
+    import asyncpg
+    HAS_ASYNCPG = True
+except ImportError:
+    asyncpg = None
+    HAS_ASYNCPG = False
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.core.config import settings
@@ -95,8 +100,8 @@ class DatabaseManager:
                 bind=self.sync_engine
             )
             
-            # Create async engine if URL supports it
-            if database_url.startswith("postgresql"):
+            # Create async engine if URL supports it and asyncpg is available
+            if database_url.startswith("postgresql") and HAS_ASYNCPG:
                 async_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
                 self.async_engine = create_async_engine(
                     async_url,
@@ -130,7 +135,7 @@ class DatabaseManager:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((SQLAlchemyError, asyncpg.PostgresError))
+        retry=retry_if_exception_type((SQLAlchemyError,) + ((asyncpg.PostgresError,) if HAS_ASYNCPG else ()))
     )
     def _test_connection(self) -> bool:
         """Test database connection with retry logic."""

@@ -9,9 +9,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
 
-from backend.app.core.celery_app import celery_app
-from backend.app.core.logger import get_logger
-from backend.app.core.config import settings
+from app.core.celery_app import celery_app
+from app.core.logger import get_logger
+from app.core.config import settings
 
 logger = get_logger(__name__)
 

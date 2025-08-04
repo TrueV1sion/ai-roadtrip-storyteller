@@ -241,7 +241,7 @@ class DatabaseBackupManager:
         """Ensure GCS bucket exists with proper configuration"""
         try:
             bucket = self.storage_client.get_bucket(self.backup_bucket)
-        except:
+        except Exception as e:
             logger.info(f"Creating bucket: {self.backup_bucket}")
             bucket = self.storage_client.create_bucket(
                 self.backup_bucket,

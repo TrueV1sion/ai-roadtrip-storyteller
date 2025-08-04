@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -58,7 +59,7 @@ const LocationEnrichmentCard: React.FC<LocationEnrichmentCardProps> = ({
         const enrichedData = await locationEnrichmentService.getEnrichedLocationInfo(location);
         setData(enrichedData);
       } catch (err) {
-        console.error('Error loading location enrichment data:', err);
+        logger.error('Error loading location enrichment data:', err);
         setError('Failed to load location information');
       } finally {
         setLoading(false);

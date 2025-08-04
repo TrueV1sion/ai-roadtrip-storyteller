@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -94,7 +95,7 @@ const MapDownloadScreen: React.FC = () => {
       
       setEstimatedSize(size);
     } catch (error) {
-      console.error('Error calculating size:', error);
+      logger.error('Error calculating size:', error);
       showToast('Failed to calculate download size');
     } finally {
       setIsCalculating(false);
@@ -174,7 +175,7 @@ const MapDownloadScreen: React.FC = () => {
       setDownloadComplete(true);
       showToast('Map region downloaded successfully');
     } catch (error) {
-      console.error('Error downloading region:', error);
+      logger.error('Error downloading region:', error);
       Alert.alert(
         'Download Failed',
         'Failed to download the map region. Please try again.',

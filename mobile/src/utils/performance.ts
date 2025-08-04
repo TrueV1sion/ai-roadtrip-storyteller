@@ -1,4 +1,5 @@
 import { Platform, InteractionManager } from 'react-native';
+import { logger } from '@/services/logger';
 import { PerformanceObserver } from 'perf_hooks'; // This is supported in React Native
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -89,9 +90,9 @@ export async function initPerformanceMonitoring(): Promise<void> {
       observer.observe({ entryTypes: ['measure', 'resource', 'longtask'] });
     }
 
-    console.log('Performance monitoring initialized');
+    logger.debug('Performance monitoring initialized');
   } catch (error) {
-    console.error('Failed to initialize performance monitoring:', error);
+    logger.error('Failed to initialize performance monitoring:', error);
   }
 }
 
@@ -165,7 +166,7 @@ export function recordMetric(
   // Check if this metric exceeds threshold
   const threshold = getThresholdForMetricType(type);
   if (threshold && duration > threshold) {
-    console.warn(`Performance threshold exceeded: ${type} took ${duration}ms (threshold: ${threshold}ms)`, metadata);
+    logger.warn(`Performance threshold exceeded: ${type} took ${duration}ms (threshold: ${threshold}ms)`, metadata);
     
     // Send to analytics in the background
     InteractionManager.runAfterInteractions(() => {
@@ -206,7 +207,7 @@ export async function saveMetrics(): Promise<void> {
   try {
     await AsyncStorage.setItem(PERFORMANCE_METRICS_KEY, JSON.stringify(performanceData));
   } catch (error) {
-    console.error('Failed to save performance metrics:', error);
+    logger.error('Failed to save performance metrics:', error);
   }
 }
 
@@ -216,7 +217,7 @@ export async function saveMetrics(): Promise<void> {
 function reportPerformanceIssue(metric: PerformanceMetric): void {
   // This would integrate with your analytics or error reporting system
   // For now, we'll just log it
-  console.warn('Performance issue detected:', metric);
+  logger.warn('Performance issue detected:', metric);
 }
 
 /**
@@ -227,7 +228,7 @@ export async function clearMetrics(): Promise<void> {
   try {
     await AsyncStorage.removeItem(PERFORMANCE_METRICS_KEY);
   } catch (error) {
-    console.error('Failed to clear performance metrics:', error);
+    logger.error('Failed to clear performance metrics:', error);
   }
 }
 
@@ -239,7 +240,7 @@ export async function updateThresholds(newThresholds: Partial<typeof DEFAULT_THR
   try {
     await AsyncStorage.setItem(METRIC_THRESHOLD_KEY, JSON.stringify(metricThresholds));
   } catch (error) {
-    console.error('Failed to update metric thresholds:', error);
+    logger.error('Failed to update metric thresholds:', error);
   }
 }
 
@@ -473,6 +474,6 @@ export function recordMemoryUsage(memoryUsageMB: number): void {
   
   // Check for memory warnings
   if (memoryUsageMB > metricThresholds.memoryWarningThreshold) {
-    console.warn(`High memory usage detected: ${memoryUsageMB}MB`);
+    logger.warn(`High memory usage detected: ${memoryUsageMB}MB`);
   }
 }

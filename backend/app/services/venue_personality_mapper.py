@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
 import random
 
-from backend.app.core.logger import logger
+from app.core.logger import logger
 
 
 class VenuePersonalityMapper:
@@ -227,7 +227,7 @@ class VenuePersonalityMapper:
                     elements["day_type"] = "weekend"
                 else:
                     elements["day_type"] = "weekday"
-            except:
+            except Exception as e:
                 pass
         
         # Weather considerations (would integrate with weather service)

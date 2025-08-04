@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   Text,
@@ -31,7 +32,7 @@ export const RideshareScreen = () => {
       const response = await api.get('/rideshare/mode');
       setCurrentMode(response.data.mode);
     } catch (error) {
-      console.error('Error checking rideshare mode:', error);
+      logger.error('Error checking rideshare mode:', error);
     } finally {
       setLoading(false);
     }

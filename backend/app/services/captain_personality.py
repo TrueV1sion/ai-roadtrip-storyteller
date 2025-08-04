@@ -8,8 +8,8 @@ that activates for all airport-related trips.
 from typing import Dict, List, Optional
 from datetime import datetime
 
-from backend.app.services.personality_engine import VoicePersonality, PersonalityType
-from backend.app.core.logger import get_logger
+from app.services.personality_engine import VoicePersonality, PersonalityType
+from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 

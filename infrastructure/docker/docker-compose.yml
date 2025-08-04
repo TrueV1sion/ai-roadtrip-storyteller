@@ -1,0 +1,220 @@
+version: '3.8'
+
+# Development Docker Compose Configuration
+# Includes Knowledge Graph as mandatory infrastructure
+
+services:
+  # Knowledge Graph - MUST start first
+  knowledge-graph:
+    build:
+      context: ../../knowledge_graph
+      dockerfile: Dockerfile
+    image: roadtrip-knowledge-graph:latest
+    container_name: roadtrip-kg
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - AUTO_ANALYZE=true
+      - CODEBASE_PATH=/app/codebase
+    volumes:
+      - ../../:/app/codebase:ro  # Mount entire codebase as read-only
+      - kg_data:/app/data
+    networks:
+      - roadtrip-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      - "com.roadtrip.critical=true"
+      - "com.roadtrip.description=Code intelligence and impact analysis"
+
+  # Backend API
+  backend:
+    build:
+      context: ../../
+      dockerfile: backend/Dockerfile
+      args:
+        - ENVIRONMENT=development
+    image: roadtrip-backend:development
+    container_name: roadtrip-backend
+    restart: unless-stopped
+    ports:
+      - "8001:8000"  # Different port to avoid conflict with KG
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://roadtrip:roadtrip@postgres:5432/roadtrip_dev
+      - REDIS_URL=redis://redis:6379/0
+      - KNOWLEDGE_GRAPH_URL=http://knowledge-graph:8000
+      - KNOWLEDGE_GRAPH_ENABLED=true
+      - AUTO_RELOAD=true
+      # New feature flags
+      - ENABLE_JOURNEY_TRACKING=true
+      - ENABLE_AR_FEATURES=true
+      - ENABLE_SPATIAL_AUDIO=true
+      - ENABLE_2FA=true
+      - STORY_CHECK_INTERVAL=300
+      - MIN_STORY_GAP_MINUTES=10
+      - MAX_STORIES_PER_HOUR=4
+    depends_on:
+      knowledge-graph:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../backend:/app
+      - ../../tests:/app/tests
+      - ../../alembic:/app/alembic
+      - ./uploads:/app/uploads
+      - ./audio_cache:/app/audio_cache
+      - ./ar_cache:/app/ar_cache
+      - ./memories:/app/memories
+    networks:
+      - roadtrip-dev
+    command: >
+      sh -c "
+        echo 'Waiting for Knowledge Graph...' &&
+        until curl -f http://knowledge-graph:8000/api/health; do sleep 1; done &&
+        echo 'Knowledge Graph is ready!' &&
+        alembic upgrade head &&
+        uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: roadtrip-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=roadtrip_dev
+      - POSTGRES_USER=roadtrip
+      - POSTGRES_PASSWORD=roadtrip
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - roadtrip-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roadtrip"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: roadtrip-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - roadtrip-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Celery Worker (for async tasks)
+  celery:
+    build:
+      context: ../../
+      dockerfile: backend/Dockerfile
+    image: roadtrip-backend:development
+    container_name: roadtrip-celery
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://roadtrip:roadtrip@postgres:5432/roadtrip_dev
+      - REDIS_URL=redis://redis:6379/0
+      - KNOWLEDGE_GRAPH_URL=http://knowledge-graph:8000
+      - ENABLE_JOURNEY_TRACKING=true
+      - ENABLE_AR_FEATURES=true
+      - ENABLE_SPATIAL_AUDIO=true
+    depends_on:
+      - backend
+      - redis
+      - postgres
+    volumes:
+      - ../../backend:/app
+    networks:
+      - roadtrip-dev
+    command: celery -A backend.app.celery_app worker --loglevel=info
+
+  # Celery Beat (for scheduled tasks)
+  celery-beat:
+    build:
+      context: ../../
+      dockerfile: backend/Dockerfile
+    image: roadtrip-backend:development
+    container_name: roadtrip-celery-beat
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://roadtrip:roadtrip@postgres:5432/roadtrip_dev
+      - REDIS_URL=redis://redis:6379/0
+      - KNOWLEDGE_GRAPH_URL=http://knowledge-graph:8000
+      - STORY_CHECK_INTERVAL=300
+    depends_on:
+      - backend
+      - redis
+      - postgres
+    volumes:
+      - ../../backend:/app
+    networks:
+      - roadtrip-dev
+    command: celery -A backend.app.celery_app beat --loglevel=info
+
+  # Flower (Celery monitoring)
+  flower:
+    build:
+      context: ../../
+      dockerfile: backend/Dockerfile
+    image: roadtrip-backend:development
+    container_name: roadtrip-flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      - ENVIRONMENT=development
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - celery
+      - redis
+    networks:
+      - roadtrip-dev
+    command: celery -A backend.app.celery_app flower
+
+  # Development DB Admin
+  adminer:
+    image: adminer
+    container_name: roadtrip-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - roadtrip-dev
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+  kg_data:
+
+networks:
+  roadtrip-dev:
+    driver: bridge
+
+# Health check order ensures Knowledge Graph starts first
+# All services that need KG wait for it to be healthy

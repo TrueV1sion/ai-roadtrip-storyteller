@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from backend.app.services.itinerary_service import generate_itinerary
+from app.services.itinerary_service import generate_itinerary
 
 router = APIRouter()
 

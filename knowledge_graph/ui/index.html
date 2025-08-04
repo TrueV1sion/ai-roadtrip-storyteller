@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Road Trip - Knowledge Graph Explorer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .graph-container { height: 600px; background: #0f172a; border-radius: 8px; }
+        .heatmap-cell { transition: all 0.3s ease; cursor: pointer; }
+        .heatmap-cell:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .code-viewer { font-family: 'Monaco', 'Menlo', monospace; }
+        .impact-high { background: #ef4444; }
+        .impact-medium { background: #f59e0b; }
+        .impact-low { background: #10b981; }
+        .sidebar { transition: transform 0.3s ease; }
+        .collapsed { transform: translateX(-100%); }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Header -->
+    <header class="bg-gray-800 shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-project-diagram mr-3 text-blue-500"></i>
+                    AI Road Trip Knowledge Graph
+                </h1>
+                <div class="flex space-x-4">
+                    <button onclick="analyzeCodebase()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+                        <i class="fas fa-sync-alt mr-2"></i>Analyze Codebase
+                    </button>
+                    <button onclick="openClaudeTerminal()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded">
+                        <i class="fas fa-terminal mr-2"></i>Claude CLI
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-12 gap-6">
+            <!-- Left Sidebar - File Explorer -->
+            <div class="col-span-3 bg-gray-800 rounded-lg p-4">
+                <h2 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-folder-tree mr-2"></i>File Explorer
+                </h2>
+                <div id="fileTree" class="text-sm">
+                    <!-- File tree will be populated here -->
+                </div>
+            </div>
+
+            <!-- Center - Graph Visualization -->
+            <div class="col-span-6">
+                <!-- Search Bar -->
+                <div class="bg-gray-800 rounded-lg p-4 mb-4">
+                    <div class="flex">
+                        <input id="searchInput" type="text" placeholder="Semantic search..." 
+                               class="flex-1 bg-gray-700 px-4 py-2 rounded-l focus:outline-none">
+                        <button onclick="performSearch()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-r">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="bg-gray-800 rounded-t-lg">
+                    <div class="flex border-b border-gray-700">
+                        <button onclick="switchTab('graph')" class="tab-btn px-6 py-3 hover:bg-gray-700 active">
+                            <i class="fas fa-network-wired mr-2"></i>Dependency Graph
+                        </button>
+                        <button onclick="switchTab('heatmap')" class="tab-btn px-6 py-3 hover:bg-gray-700">
+                            <i class="fas fa-fire mr-2"></i>Impact Heatmap
+                        </button>
+                        <button onclick="switchTab('architecture')" class="tab-btn px-6 py-3 hover:bg-gray-700">
+                            <i class="fas fa-sitemap mr-2"></i>Architecture
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="bg-gray-800 rounded-b-lg p-4">
+                    <div id="graphView" class="tab-content">
+                        <div id="dependencyGraph" class="graph-container"></div>
+                    </div>
+                    <div id="heatmapView" class="tab-content hidden">
+                        <div id="impactHeatmap" class="graph-container"></div>
+                    </div>
+                    <div id="architectureView" class="tab-content hidden">
+                        <div id="architectureDiagram" class="graph-container"></div>
+                    </div>
+                </div>
+
+                <!-- Agent Notes -->
+                <div class="bg-gray-800 rounded-lg p-4 mt-4">
+                    <h3 class="text-lg font-semibold mb-3">
+                        <i class="fas fa-robot mr-2"></i>Agent Observations
+                    </h3>
+                    <div id="agentNotes" class="space-y-2 max-h-40 overflow-y-auto">
+                        <!-- Agent notes will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Details -->
+            <div class="col-span-3 bg-gray-800 rounded-lg p-4">
+                <h2 class="text-lg font-semibold mb-4">Details</h2>
+                
+                <!-- Selected Node Info -->
+                <div id="nodeDetails" class="mb-6">
+                    <p class="text-gray-400">Select a node to view details</p>
+                </div>
+
+                <!-- Impact Summary -->
+                <div id="impactSummary" class="hidden">
+                    <h3 class="font-semibold mb-2">Impact Analysis</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span>High Impact:</span>
+                            <span id="highImpactCount" class="text-red-400">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Medium Impact:</span>
+                            <span id="mediumImpactCount" class="text-yellow-400">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Low Impact:</span>
+                            <span id="lowImpactCount" class="text-green-400">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Critical Paths -->
+                <div id="criticalPaths" class="mt-6 hidden">
+                    <h3 class="font-semibold mb-2">Critical Paths</h3>
+                    <div id="pathsList" class="text-sm space-y-1">
+                        <!-- Paths will be listed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claude Terminal Modal -->
+    <div id="claudeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-gray-800 rounded-lg w-4/5 h-4/5 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Claude Code Terminal</h2>
+                <button onclick="closeClaudeTerminal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="claudeTerminal" class="bg-black rounded p-4 h-full overflow-y-auto font-mono text-sm">
+                <!-- Terminal content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

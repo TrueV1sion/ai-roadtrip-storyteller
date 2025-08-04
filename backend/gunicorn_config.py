@@ -21,7 +21,7 @@ worker_connections = 1000
 # Worker lifecycle
 max_requests = 1000  # Restart workers after this many requests
 max_requests_jitter = 100  # Randomize restart to avoid thundering herd
-timeout = 120  # Kill workers that don't respond in 2 minutes
+timeout = 600  # Kill workers that don't respond in 10 minutes (matches Cloud Run timeout)
 graceful_timeout = 30  # Grace period for workers to finish requests
 keepalive = 5  # Keep connections alive for 5 seconds
 
@@ -45,7 +45,7 @@ if os.environ.get('ENABLE_STATSD', 'false').lower() == 'true':
 
 # Server mechanics
 proc_name = 'roadtrip-api'  # Process name for monitoring
-chdir = '/app/backend'  # Change to app directory
+chdir = '/app'  # Change to app directory (correct path in container)
 pidfile = '/tmp/gunicorn.pid'  # PID file location
 user = None  # Run as current user (container user)
 group = None  # Run as current group
@@ -81,7 +81,7 @@ def post_fork(server, worker):
     # Reset database connections in forked process
     # This is critical for connection pool safety
     try:
-        from backend.app.core.database import engine
+        from app.core.database import engine
         engine.dispose()
     except ImportError:
         pass
@@ -153,7 +153,7 @@ if os.environ.get('ENVIRONMENT') == 'production':
     # Production settings
     workers = min(workers, 8)  # Cap at 8 workers
     max_requests = 10000  # Higher request limit
-    timeout = 300  # 5 minute timeout for long AI operations
+    timeout = 600  # 10 minute timeout for long AI operations (matches Cloud Run)
     graceful_timeout = 60  # More grace time
     
     # Enable New Relic if available
@@ -167,7 +167,7 @@ if os.environ.get('ENVIRONMENT') == 'production':
 elif os.environ.get('ENVIRONMENT') == 'development':
     workers = 2  # Fewer workers for development
     reload = True  # Auto-reload on code changes
-    reload_extra_files = ['./backend/app/']  # Watch additional files
+    reload_extra_files = ['./app/']  # Watch additional files
     timeout = 600  # Longer timeout for debugging
 
 # Memory optimization settings
@@ -177,7 +177,6 @@ limit_request_field_size = 8192  # Max header size
 
 # Security headers (additional to app middleware)
 raw_env = [
-    'DJANGO_SETTINGS_MODULE=backend.settings',
     f'PROMETHEUS_MULTIPROC_DIR={os.environ.get("PROMETHEUS_MULTIPROC_DIR", "/tmp")}',
 ]
 

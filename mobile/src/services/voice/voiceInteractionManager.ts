@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { matchVoiceCommand, VOICE_FEEDBACK, SAFETY_PROMPTS } from './voiceCommandMapping';
 import { EventEmitter } from 'events';
 
+import { logger } from '@/services/logger';
 export interface VoiceInteractionState {
   isListening: boolean;
   currentCommand: string | null;
@@ -60,10 +61,10 @@ class VoiceInteractionManager extends EventEmitter {
       // Check if voice recognition is available
       const isAvailable = await Voice.isAvailable();
       if (!isAvailable) {
-        console.warn('Voice recognition not available');
+        logger.warn('Voice recognition not available');
       }
     } catch (error) {
-      console.error('Failed to initialize voice:', error);
+      logger.error('Failed to initialize voice:', error);
     }
   }
 
@@ -76,7 +77,7 @@ class VoiceInteractionManager extends EventEmitter {
         this.state.conversationContext.volume = volume ?? 1.0;
       }
     } catch (error) {
-      console.error('Failed to load preferences:', error);
+      logger.error('Failed to load preferences:', error);
     }
   }
 
@@ -94,7 +95,7 @@ class VoiceInteractionManager extends EventEmitter {
       this.state.isListening = true;
       this.emit('stateChange', this.state);
     } catch (error) {
-      console.error('Failed to start listening:', error);
+      logger.error('Failed to start listening:', error);
       this.speak('Sorry, I couldn\'t start listening. Please try again.');
     }
   }
@@ -108,7 +109,7 @@ class VoiceInteractionManager extends EventEmitter {
       this.state.isListening = false;
       this.emit('stateChange', this.state);
     } catch (error) {
-      console.error('Failed to stop listening:', error);
+      logger.error('Failed to stop listening:', error);
     }
   }
 
@@ -117,7 +118,7 @@ class VoiceInteractionManager extends EventEmitter {
     if (!e.value || e.value.length === 0) return;
 
     const speechText = e.value[0];
-    console.log('Speech recognized:', speechText);
+    logger.debug('Speech recognized:', speechText);
 
     // Add to conversation history
     this.state.conversationContext.previousCommands.push(speechText);
@@ -211,7 +212,7 @@ class VoiceInteractionManager extends EventEmitter {
         onError: () => this.processSpeechQueue(),
       });
     } catch (error) {
-      console.error('Speech error:', error);
+      logger.error('Speech error:', error);
       await this.processSpeechQueue();
     }
   }
@@ -301,19 +302,19 @@ class VoiceInteractionManager extends EventEmitter {
 
   // Voice recognition callbacks
   private onSpeechStart() {
-    console.log('Speech recognition started');
+    logger.debug('Speech recognition started');
     this.emit('speechStart');
   }
 
   private onSpeechEnd() {
-    console.log('Speech recognition ended');
+    logger.debug('Speech recognition ended');
     this.state.isListening = false;
     this.emit('speechEnd');
     this.emit('stateChange', this.state);
   }
 
   private onSpeechError(e: any) {
-    console.error('Speech recognition error:', e);
+    logger.error('Speech recognition error:', e);
     this.state.isListening = false;
     this.emit('speechError', e);
     this.emit('stateChange', this.state);

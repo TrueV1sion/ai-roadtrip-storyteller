@@ -4,7 +4,7 @@ Handles API version routing and compatibility
 """
 
 import re
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Optional, Callable, List
 from fastapi import Request, Response, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
@@ -150,7 +150,8 @@ class APIVersioningMiddleware(BaseHTTPMiddleware):
                         
                         # Store transformed body
                         request._body = json.dumps(data).encode()
-                except:
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse request body for version transformation: {e}")
                     pass
         
         return request

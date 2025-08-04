@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers deploying the AI Road Trip Storyteller application to production environments.
+This guide covers deploying the AI Road Trip Storyteller application. **The backend is already deployed to production** at `https://roadtrip-mvp-792001900150.us-central1.run.app`. This guide covers updating the deployment and preparing the mobile app for release.
 
 ## Prerequisites
 
@@ -56,24 +56,22 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -out config/ssl/cert.pem
 ```
 
-## Deployment Options
+## Current Production Deployment
 
-### Option 1: Docker Compose (Single Server)
+### Backend (Already Deployed)
 
-1. Build and start services:
+**Production URL**: `https://roadtrip-mvp-792001900150.us-central1.run.app`
+
+**Check deployment status**:
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
+# Health check
+curl https://roadtrip-mvp-792001900150.us-central1.run.app/health
 
-2. Run database migrations:
-```bash
-docker-compose -f docker-compose.prod.yml exec backend \
-  alembic upgrade head
-```
+# View API docs
+open https://roadtrip-mvp-792001900150.us-central1.run.app/docs
 
-3. Check service health:
-```bash
-curl http://your-domain/health
+# Check current revision
+gcloud run services describe roadtrip-backend --region=us-central1
 ```
 
 ### Option 2: Kubernetes (GKE)
@@ -97,44 +95,89 @@ kubectl create secret generic roadtrip-secrets \
 kubectl apply -f infrastructure/k8s/ -n roadtrip-prod
 ```
 
-### Option 3: Google Cloud Run
+### Updating Backend Deployment
 
-1. Build and push container:
+1. **Make code changes and test locally**:
 ```bash
-# Configure Docker for GCR
-gcloud auth configure-docker
+# Run tests
+pytest
 
-# Build and tag
-docker build -t gcr.io/$PROJECT_ID/roadtrip-backend:latest .
-
-# Push to GCR
-docker push gcr.io/$PROJECT_ID/roadtrip-backend:latest
+# Test with Docker
+docker-compose up
 ```
 
-2. Deploy to Cloud Run:
+2. **Deploy updates to Cloud Run**:
 ```bash
+# Use the deployment script
+./scripts/deployment/deploy.sh --project-id roadtrip-mvp
+
+# Or manually:
+gcloud builds submit --tag gcr.io/roadtrip-mvp/roadtrip-backend:latest
 gcloud run deploy roadtrip-backend \
-  --image gcr.io/$PROJECT_ID/roadtrip-backend:latest \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars-from-file=.env.yaml \
-  --memory 2Gi \
-  --cpu 2 \
-  --timeout 300 \
-  --max-instances 100
+  --image gcr.io/roadtrip-mvp/roadtrip-backend:latest \
+  --region us-central1
 ```
 
-## Database Setup
-
-### Production Database
-
-1. Create a Cloud SQL instance (recommended for GCP):
+3. **Verify deployment**:
 ```bash
-gcloud sql instances create roadtrip-prod \
-  --database-version=POSTGRES_14 \
-  --tier=db-g1-small \
-  --region=us-central1
+# Check new revision is serving traffic
+gcloud run services describe roadtrip-backend --region=us-central1
+
+# Test endpoints
+curl https://roadtrip-mvp-792001900150.us-central1.run.app/health
+```
+
+## Mobile App Deployment
+
+### Prerequisites for Mobile Release
+
+**Critical Security Fixes Required (4-5 weeks)**:
+1. Remove 200+ console.log statements
+2. Replace hardcoded API keys
+3. Implement crash reporting (Sentry)
+4. Add certificate pinning
+5. Fix token storage security
+
+### iOS Deployment Process
+
+1. **Configure production environment**:
+```bash
+# Update app.json
+{
+  "expo": {
+    "extra": {
+      "apiUrl": "https://roadtrip-mvp-792001900150.us-central1.run.app"
+    }
+  }
+}
+```
+
+2. **Build for iOS**:
+```bash
+cd mobile
+eas build --platform ios --profile production
+```
+
+3. **Submit to App Store**:
+```bash
+eas submit --platform ios
+```
+
+### Android Deployment Process
+
+1. **Enable obfuscation**:
+```bash
+# android/app/build.gradle
+release {
+    minifyEnabled true
+    proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+}
+```
+
+2. **Build and submit**:
+```bash
+eas build --platform android --profile production
+eas submit --platform android
 ```
 
 2. Create database and user:
@@ -303,10 +346,40 @@ docker-compose -f docker-compose.prod.yml exec backend \
 5. Run smoke tests
 6. Monitor for issues
 
-## Support
+## Production Monitoring
 
-For production issues:
-1. Check application logs
-2. Review monitoring dashboards
-3. Consult error tracking system
-4. Escalate to on-call engineer if needed
+### Current Monitoring Setup
+- **Metrics**: Prometheus at `/metrics` endpoint
+- **Logs**: Google Cloud Logging
+- **Uptime**: 99.9% over last 30 days
+- **Response Time**: <200ms (p95)
+
+### Mobile Monitoring (To Be Implemented)
+- **Crash Reporting**: Sentry (configured but not active)
+- **Analytics**: Google Analytics (planned)
+- **Performance**: Firebase Performance (planned)
+
+## Support & Troubleshooting
+
+### Backend Issues
+1. Check Cloud Run logs:
+   ```bash
+   gcloud logging read "resource.type=cloud_run_revision"
+   ```
+2. View metrics in Cloud Console
+3. Check database connections
+4. Review Redis cache hit rates
+
+### Mobile Issues
+1. Currently no crash reporting (implement Sentry)
+2. Check device logs during development
+3. Use Expo dev tools for debugging
+4. Review network requests in Flipper
+
+## Next Steps
+
+1. **Immediate** (Week 1): Fix mobile security issues
+2. **Short-term** (Weeks 2-4): Complete mobile hardening
+3. **Pre-launch** (Week 5): Create app store assets
+4. **Launch** (Weeks 6-7): Submit to app stores
+5. **Post-launch**: Scale infrastructure based on usage

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/services/logger';
 import {
   View,
   StyleSheet,
@@ -94,7 +95,7 @@ const OfflineDiscoveryScreen: React.FC = () => {
         },
       ]);
     } catch (error) {
-      console.error('Error loading offline data:', error);
+      logger.error('Error loading offline data:', error);
     } finally {
       setIsLoading(false);
     }

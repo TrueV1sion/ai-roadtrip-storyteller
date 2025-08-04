@@ -156,7 +156,7 @@ class VoiceFlowTester:
                     if response.status != 200:
                         print("❌ Backend not healthy!")
                         return
-        except:
+        except Exception as e:
             print("❌ Backend not running on localhost:8000")
             print("   Run: cd backend && uvicorn app.main:app --reload")
             return

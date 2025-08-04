@@ -131,7 +131,7 @@ class GameSessionManagerFixes:
 # Patch the existing classes with these fixes
 def apply_game_engine_fixes():
     """Apply all fixes to the game engine classes"""
-    from backend.app.services.game_engine import (
+    from app.services.game_engine import (
         TriviaGameEngine, 
         ScavengerHuntEngine
     )

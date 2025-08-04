@@ -12,6 +12,7 @@ import { offlineManager } from '../OfflineManager';
 import { performanceMonitor } from '../performanceMonitor';
 import { Route } from '../../types/location';
 
+import { logger } from '@/services/logger';
 interface SyncTask {
   id: string;
   type: 'maps' | 'routing' | 'stories' | 'voice';
@@ -196,25 +197,25 @@ class SyncOrchestrator {
     
     // Check network conditions
     if (!this.isNetworkSuitable()) {
-      console.log('Network conditions not suitable for sync');
+      logger.debug('Network conditions not suitable for sync');
       return;
     }
     
     // Check battery
     if (!(await this.isBatterySuitable())) {
-      console.log('Battery conditions not suitable for sync');
+      logger.debug('Battery conditions not suitable for sync');
       return;
     }
     
     // Check time window
     if (!this.isInSyncWindow()) {
-      console.log('Outside sync time window');
+      logger.debug('Outside sync time window');
       return;
     }
     
     // Check storage
     if (!(await this.hasEnoughStorage())) {
-      console.log('Insufficient storage for sync');
+      logger.debug('Insufficient storage for sync');
       return;
     }
     
@@ -271,7 +272,7 @@ class SyncOrchestrator {
       });
       
     } catch (error) {
-      console.error('Sync task failed:', error);
+      logger.error('Sync task failed:', error);
       nextTask.status = 'failed';
       nextTask.error = error.message;
       nextTask.retryCount++;
@@ -521,7 +522,7 @@ class SyncOrchestrator {
         this.syncPolicy = { ...this.syncPolicy, ...JSON.parse(saved) };
       }
     } catch (error) {
-      console.error('Failed to load sync policy:', error);
+      logger.error('Failed to load sync policy:', error);
     }
   }
   
@@ -529,7 +530,7 @@ class SyncOrchestrator {
     try {
       await AsyncStorage.setItem('sync_policy', JSON.stringify(this.syncPolicy));
     } catch (error) {
-      console.error('Failed to save sync policy:', error);
+      logger.error('Failed to save sync policy:', error);
     }
   }
   
@@ -680,7 +681,7 @@ class SyncOrchestrator {
         });
       }
     } catch (error) {
-      console.error('Failed to load pending tasks:', error);
+      logger.error('Failed to load pending tasks:', error);
     }
   }
   
@@ -689,7 +690,7 @@ class SyncOrchestrator {
       const tasks = Array.from(this.syncQueue.values());
       await AsyncStorage.setItem('sync_pending_tasks', JSON.stringify(tasks));
     } catch (error) {
-      console.error('Failed to save pending tasks:', error);
+      logger.error('Failed to save pending tasks:', error);
     }
   }
   

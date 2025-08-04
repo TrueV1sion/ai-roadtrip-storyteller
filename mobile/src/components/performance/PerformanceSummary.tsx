@@ -6,6 +6,7 @@ import { useApp } from '@/contexts/AppContext';
 import { formatBytes, formatDuration } from '@/utils/formatters';
 import { Stopwatch } from '@/utils/performance';
 
+import { logger } from '@/services/logger';
 // Types for the component props
 interface PerformanceSummaryProps {
   onClose?: () => void;
@@ -30,7 +31,7 @@ const PerformanceSummary: React.FC<PerformanceSummaryProps> = ({ onClose }) => {
     return () => {
       if (stopwatch.current) {
         const time = stopwatch.current.stop();
-        console.log(`PerformanceSummary unmounted after ${time}ms`);
+        logger.debug(`PerformanceSummary unmounted after ${time}ms`);
       }
     };
   }, []);

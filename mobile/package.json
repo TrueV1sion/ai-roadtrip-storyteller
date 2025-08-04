@@ -18,6 +18,7 @@
     "build:ios:mvp": "EXPO_PUBLIC_MVP_MODE=true expo build:ios --release-channel mvp",
     "build:android:mvp": "EXPO_PUBLIC_MVP_MODE=true expo build:android --release-channel mvp",
     "build:production": "./scripts/build-production.sh",
+    "build:web": "expo export --platform web",
     "build:obfuscated": "NODE_ENV=production expo build --config metro.config.obfuscation.js",
     "bundle:obfuscated:ios": "NODE_ENV=production npx react-native bundle --platform ios --dev false --entry-file index.ts --bundle-output ios/main.jsbundle --config metro.config.obfuscation.js",
     "bundle:obfuscated:android": "NODE_ENV=production npx react-native bundle --platform android --dev false --entry-file index.ts --bundle-output android/app/src/main/assets/index.android.bundle --config metro.config.obfuscation.js",

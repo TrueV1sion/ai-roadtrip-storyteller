@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Road Trip Storyteller - Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 1rem;
+        }
+        .content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 2rem;
+        }
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .link-card {
+            background: #f8f8f8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .link-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        .link-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #667eea;
+        }
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status.live {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.beta {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .tech-badge {
+            background: #e9ecef;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 AI Road Trip Storyteller</h1>
+        <p class="tagline">Transform drives into magical journeys through AI-powered storytelling</p>
+    </div>
+
+    <div class="content">
+        <div class="section">
+            <h2>Project Overview</h2>
+            <p>AI Road Trip Storyteller is a production-ready mobile application that enhances road trips with dynamic AI-generated stories, multiple voice personalities, and real-time booking integrations.</p>
+            
+            <div class="links">
+                <a href="https://roadtrip-mvp-792001900150.us-central1.run.app/docs" class="link-card">
+                    <h3>🔗 Live API</h3>
+                    <p>Interactive API documentation</p>
+                    <span class="status live">LIVE</span>
+                </a>
+                
+                <a href="https://github.com/TrueV1sion/ai-roadtrip-storyteller" class="link-card">
+                    <h3>📦 GitHub Repository</h3>
+                    <p>Source code and contribution guide</p>
+                    <span class="status live">PRIVATE</span>
+                </a>
+                
+                <a href="/guides/QUICK_START_GUIDE.html" class="link-card">
+                    <h3>🚀 Quick Start Guide</h3>
+                    <p>Get up and running in minutes</p>
+                </a>
+                
+                <a href="/architecture/SYSTEM_ARCHITECTURE_ASSESSMENT.html" class="link-card">
+                    <h3>🏗️ Architecture</h3>
+                    <p>System design and components</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Features</h2>
+            <ul>
+                <li>✅ <strong>AI Story Generation</strong>: Google Vertex AI (Gemini 1.5) creates contextual stories based on location</li>
+                <li>✅ <strong>20+ Voice Personalities</strong>: From Morgan Freeman to David Attenborough</li>
+                <li>✅ <strong>Real-time Bookings</strong>: Integrated with Ticketmaster, OpenTable, Recreation.gov, Viator</li>
+                <li>✅ <strong>Voice Commands</strong>: "Hey Roadtrip" wake word with natural language processing</li>
+                <li>✅ <strong>Offline Support</strong>: Pre-cached stories and maps for poor connectivity</li>
+                <li>✅ <strong>Secure Authentication</strong>: JWT with 2FA support</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Tech Stack</h2>
+            <div class="tech-stack">
+                <span class="tech-badge">FastAPI</span>
+                <span class="tech-badge">React Native</span>
+                <span class="tech-badge">TypeScript</span>
+                <span class="tech-badge">PostgreSQL</span>
+                <span class="tech-badge">Redis</span>
+                <span class="tech-badge">Google Cloud Run</span>
+                <span class="tech-badge">Vertex AI</span>
+                <span class="tech-badge">Cloud TTS/STT</span>
+                <span class="tech-badge">Docker</span>
+                <span class="tech-badge">Expo</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Documentation</h2>
+            <div class="links">
+                <a href="/guides/DEVELOPMENT_RUNNING.html" class="link-card">
+                    <h3>💻 Development Guide</h3>
+                    <p>Set up your local environment</p>
+                </a>
+                
+                <a href="/deployment/DEPLOYMENT_GUIDE.html" class="link-card">
+                    <h3>🚀 Deployment Guide</h3>
+                    <p>Deploy to production</p>
+                </a>
+                
+                <a href="/guides/MOBILE_APP_RUNNING.html" class="link-card">
+                    <h3>📱 Mobile Development</h3>
+                    <p>Build and test the mobile app</p>
+                </a>
+                
+                <a href="/security/SECURITY_CHECKLIST.html" class="link-card">
+                    <h3>🔒 Security Guide</h3>
+                    <p>Security best practices</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Current Status</h2>
+            <p><span class="status live">Backend: LIVE</span> - Deployed to Google Cloud Run</p>
+            <p><span class="status beta">Mobile: BETA</span> - Fully functional, needs security hardening (4-5 weeks)</p>
+        </div>
+    </div>
+</body>
+</html>

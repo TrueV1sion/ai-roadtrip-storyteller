@@ -1,0 +1,18 @@
+[build]
+  base = "mobile"
+  command = "npm install && npm run build:web"
+  publish = "web-build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  EXPO_PUBLIC_API_URL = "https://roadtrip-mvp-792001900150.us-central1.run.app"
+  EXPO_PUBLIC_ENVIRONMENT = "production"
+  EXPO_PUBLIC_MVP_MODE = "false"
+  EXPO_PUBLIC_ENABLE_BOOKING = "true"
+  EXPO_PUBLIC_ENABLE_VOICE = "true"
+  EXPO_PUBLIC_ENABLE_AR = "true"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
